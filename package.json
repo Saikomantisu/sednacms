@@ -1,7 +1,7 @@
 {
   "name": "sednacms",
   "version": "0.0.0",
-  "description": "Client-editable CMS for Astro with instant updates and no rebuilds.",
+  "description": "An open-source CMS for Astro. Clients edit content in an admin panel and changes go live within seconds.",
   "license": "MIT",
   "type": "module",
   "keywords": [

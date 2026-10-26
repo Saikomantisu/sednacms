@@ -1,7 +1,7 @@
 # Sedna CMS: v1 Spec
 
 ## What it is
-An Astro integration that gives Astro sites a client-editable CMS with **instant updates and no rebuilds**. Content lives in Postgres, images in object storage. Pages that show CMS content render on demand and are cached at the CDN, so visitors get static-like speed while edits appear within seconds.
+An open-source CMS for Astro, shipped as an integration. Clients edit content in an admin panel and changes go live within seconds. Content lives in Postgres, images in object storage. Pages that show CMS content render on demand and are cached at the CDN, so visitors get static-like speed.
 
 - npm package: `sednacms`
 - Open source. One site per install (no multi-tenancy in v1).
