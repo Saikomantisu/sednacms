@@ -4,14 +4,20 @@
   "description": "Client-editable CMS for Astro with instant updates and no rebuilds.",
   "license": "MIT",
   "type": "module",
-  "keywords": ["astro-integration", "withastro", "cms"],
+  "keywords": [
+    "astro-integration",
+    "withastro",
+    "cms"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"
@@ -20,7 +26,11 @@
     "astro": ">=6.0.0"
   },
   "devDependencies": {
+    "@types/node": "^24.19.2",
     "astro": "^7.4.2",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "postgres": "^3.4.9"
   }
 }
