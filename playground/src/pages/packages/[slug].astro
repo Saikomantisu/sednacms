@@ -1,0 +1,15 @@
+---
+export const prerender = false;
+import { getLiveEntry } from 'astro:content';
+const { entry } = await getLiveEntry('packages', Astro.params.slug!);
+if (!entry) return Astro.redirect('/404');
+---
+<html lang="en">
+  <head><meta charset="utf-8" /><title>{entry.data.title}</title></head>
+  <body>
+    <a href="/">All packages</a>
+    <h1>{entry.data.title}</h1>
+    {entry.data.price != null && <p>Price: {entry.data.price}</p>}
+    {entry.data.body && <div set:html={entry.data.body} />}
+  </body>
+</html>

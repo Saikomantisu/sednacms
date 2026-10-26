@@ -23,3 +23,24 @@ export const fields = {
 };
 
 export type Field = ReturnType<(typeof fields)[keyof typeof fields]>;
+
+export interface ImageValue {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+}
+
+interface FieldValues {
+  text: string;
+  richText: string;
+  number: number;
+  image: ImageValue;
+  boolean: boolean;
+  /** Calendar day as "YYYY-MM-DD". */
+  date: string;
+  slug: string;
+}
+
+// Every value can be null: columns are nullable and `required` is only checked when saving.
+export type FieldsData<F extends Record<string, Field>> = { [K in keyof F]: FieldValues[F[K]['type']] | null };

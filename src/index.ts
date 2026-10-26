@@ -7,7 +7,7 @@ import { ensureTables } from './db/tables.js';
 import { isSednaLoader, type CollectionConfig } from './loader.js';
 
 export { fields } from './fields.js';
-export type { Field, FieldType } from './fields.js';
+export type { Field, FieldType, FieldsData, ImageValue } from './fields.js';
 export { sednaLoader } from './loader.js';
 export type { CollectionConfig } from './loader.js';
 
@@ -48,6 +48,10 @@ export default function sedna(): AstroIntegration {
         logger.info('Sedna CMS loaded');
       },
       'astro:server:setup': async ({ server, logger }) => {
+        // The loader reads the connection string from process.env, which Vite does not fill from .env files.
+        const databaseUrl = loadEnv('development', root, 'SEDNA_').SEDNA_DATABASE_URL ?? process.env.SEDNA_DATABASE_URL;
+        if (databaseUrl) process.env.SEDNA_DATABASE_URL = databaseUrl;
+
         const runner = (server.environments.ssr as { runner?: { import: Import } }).runner;
         if (!runner) {
           logger.warn('Could not load src/live.config.ts in this environment. Skipping table setup.');
@@ -58,7 +62,6 @@ export default function sedna(): AstroIntegration {
           logger.info('No Sedna collections found in src/live.config.ts');
           return;
         }
-        const databaseUrl = loadEnv('development', root, 'SEDNA_').SEDNA_DATABASE_URL ?? process.env.SEDNA_DATABASE_URL;
         if (!databaseUrl) {
           logger.warn('SEDNA_DATABASE_URL is not set. Skipping table setup.');
           return;

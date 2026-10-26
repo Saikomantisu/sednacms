@@ -97,7 +97,7 @@ text, richText, number, image, boolean, date, slug (auto-generated from another 
 ### Database
 - On startup, create missing tables from the collection config. Never drop or overwrite existing data.
 - One table per collection, `sedna_<collection>`, one column per field, plus `id` (uuid), `status` (`draft` | `published`), `sort_order`, `created_at`, `updated_at`. Sedna's system tables are `sedna__<name>`; collection names can't start with `_`, so they never collide.
-- Column types: text, slug and richText → `text` (richText format, HTML or Markdown, decided with the admin editor); number → `double precision`; image → `jsonb` (`{src, width, height, alt}` for `<Image>`); boolean → `boolean`; date → `date` (calendar date).
+- Column types: text, slug and richText → `text` (richText format, HTML or Markdown, decided with the admin editor); number → `double precision`; image → `jsonb` (`{src, width, height, alt}` for `<Image>`); boolean → `boolean`; date → `date`, returned as a `"YYYY-MM-DD"` string (a calendar day has no timezone, so a JS `Date` would show the wrong day somewhere).
 - `required` is not a DB constraint (drafts may be incomplete); the API checks it on save.
 - Tables are created when the dev server starts. Production has no such hook, so the loader runs the same check once, on its first query. Changing `live.config.ts` needs a dev server restart.
 - Versioned migrations for Sedna's own system tables; assume an existing DB on every upgrade.

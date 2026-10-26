@@ -15,6 +15,8 @@ const COLUMN_TYPES: Record<FieldType, string> = {
 
 // Content tables are `sedna_<collection>`. Collection names cannot start with `_`,
 // so Sedna's own system tables use `sedna__<name>` and can never collide.
+export type Logger = Pick<AstroIntegrationLogger, 'info' | 'warn'>;
+
 export function tableName(collection: string) {
   return `sedna_${collection}`;
 }
@@ -23,7 +25,7 @@ export function tableName(collection: string) {
  * Create missing tables and columns for each collection. Only ever adds:
  * never drops, renames or changes existing columns.
  */
-export async function ensureTables(sql: Sql, collections: CollectionConfig[], logger: AstroIntegrationLogger) {
+export async function ensureTables(sql: Sql, collections: CollectionConfig[], logger: Logger) {
   for (const config of collections) {
     const table = tableName(config.collection);
 
