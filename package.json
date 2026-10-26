@@ -1,0 +1,26 @@
+{
+  "name": "sednacms",
+  "version": "0.0.0",
+  "description": "Client-editable CMS for Astro with instant updates and no rebuilds.",
+  "license": "MIT",
+  "type": "module",
+  "keywords": ["astro-integration", "withastro", "cms"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "peerDependencies": {
+    "astro": ">=6.0.0"
+  },
+  "devDependencies": {
+    "astro": "^7.4.2",
+    "typescript": "^7.0.2"
+  }
+}

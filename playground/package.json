@@ -1,0 +1,15 @@
+{
+  "name": "sednacms-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.9",
+    "astro": "^7.4.2",
+    "sednacms": "file:.."
+  }
+}
