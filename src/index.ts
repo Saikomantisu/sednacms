@@ -23,7 +23,7 @@ export type {
 export type { CacheOptions } from './cache.js';
 export type { Field, FieldsData, FieldType, ImageValue } from './fields.js';
 export { fields } from './fields.js';
-export type { CollectionConfig } from './loader.js';
+export type { CollectionConfig, CollectionFilter } from './loader.js';
 export { sednaLoader } from './loader.js';
 export type {
   ImageProcessingOptions,

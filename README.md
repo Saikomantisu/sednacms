@@ -42,6 +42,42 @@ export const collections = { packages };
 
 Set `SEDNA_DATABASE_URL` in `.env`. Tables are created when the dev server starts.
 
+## Paginating public collections
+
+`getLiveCollection` accepts optional SQL pagination filters:
+
+```ts
+const { entries, error } = await getLiveCollection('packages', {
+  limit: 11,
+  offset: (page - 1) * 10,
+});
+const hasNext = (entries?.length ?? 0) > 10;
+const visibleEntries = entries?.slice(0, 10);
+```
+
+The playground demonstrates a ten-item page with Previous/Next links. Fetching one
+extra entry detects the next page without a count query. `limit` must be an integer
+from 1 to 100. `offset` must be a nonnegative safe integer and requires a limit
+when greater than zero. Invalid filters return a loader error. Validate page numbers
+from the URL before calculating offsets. Ordering is `sort_order`, `created_at`, then
+`id`; content edits between requests can still move entries between pages.
+Omitting filters preserves the existing full-collection behavior. All configured
+fields are still returned; field selection is not part of this change.
+
+## Database connections
+
+The live loader, authentication, and content API each use their own pool per server process.
+Each pool defaults to five connections. Set `SEDNA_DATABASE_POOL_MAX` to a positive
+integer to change that limit. Budget for all three pools across all processes/instances;
+for example, a limit of 10 permits up to 30 runtime connections per process.
+Startup table synchronization uses a separate single-connection pool temporarily.
+
+`SEDNA_DATABASE_CONNECTION_TIMEOUT_MS` defaults to `10000`. It bounds waiting for
+a pool connection and opening a connection, so overload does not queue requests
+indefinitely. It does not impose a query execution timeout or cancel running SQL.
+Both settings are read when pools are created; restart the server after changing them.
+Increase pool size only after checking the database connection budget and measuring load.
+
 ## Freshness and optional caching
 
 By default, responses that read Sedna content send `Cache-Control: no-store`.
@@ -64,6 +100,13 @@ and shared caches may reuse the response for 60 seconds. Publishing does not
 purge those copies, so changes can remain invisible until they expire. Sedna
 does not add a stale-while-revalidate window or keep an in-memory response cache.
 Hosts that ignore `s-maxage` simply render each request as usual.
+
+A shared cache is a hosting/CDN service that keeps the rendered HTML and serves it
+without calling Astro or Postgres again until its TTL expires. The standalone Node
+server does not provide one. Leaving Sedna caching disabled is a valid choice when
+immediate freshness matters. When deploying with caching enabled, verify the host's
+cache-hit indicator, expiry, query-string handling for paginated URLs, and cookie
+bypasses. Sending the header alone does not establish that responses are being cached.
 
 Requests with cookies or authorization, responses setting cookies, redirects,
 errors, and loader failures use `no-store`. Opt-in responses include

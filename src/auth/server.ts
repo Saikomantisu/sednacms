@@ -29,7 +29,7 @@ export function createAuthServer(env: Record<string, string | undefined> = proce
   } catch {
     throw new AuthConfigurationError('sednacms: SEDNA_URL must be an HTTP or HTTPS site origin.');
   }
-  const pool = createPool(connectionString);
+  const pool = createPool(connectionString, undefined, env);
   const auth = betterAuth({
     database: pool,
     secret,

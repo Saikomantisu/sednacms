@@ -122,6 +122,9 @@ text, richText, number, image, boolean, date, slug (auto-generated from another 
 - Tables are created when the dev server starts. Production has no such hook, so the loader runs the same check once, on its first query. Changing `live.config.ts` needs a dev server restart.
 - Versioned migrations for Sedna's own system tables; assume an existing DB on every upgrade.
 - Loader only returns published entries; admin sees drafts.
+- Public live collections accept optional `limit` (1–100) and `offset` filters applied in SQL, ordered by `sort_order`, `created_at`, then `id`. Without filters the full collection is returned. The playground demonstrates ten-item pages. Field selection remains outside this change.
+- Entry lookups use indexed slug and typed UUID predicates without casting the ID column to text.
+- Each runtime pool defaults to five connections, configurable with `SEDNA_DATABASE_POOL_MAX`. `SEDNA_DATABASE_CONNECTION_TIMEOUT_MS` defaults to 10000 for connection acquisition/opening; it does not cancel running queries. The loader, authentication, and content API have three separate pools per process.
 
 ### Caching
 

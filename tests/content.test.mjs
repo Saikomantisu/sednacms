@@ -250,6 +250,27 @@ test('production Astro API creates and publishes live content', {
     // Exercise the remaining field types against the same isolated database.
     const db = createPool(url.href);
     try {
+      await db.query(`insert into sedna_packages (title, slug, status, sort_order)
+        select 'Page item ' || n, 'page-item-' || n, 'published', n from generate_series(1, 12) n`);
+      const firstPage = await (await publicPage('/')).text();
+      assert.match(firstPage, /Page item 10/);
+      assert.doesNotMatch(firstPage, /Page item 11/);
+      assert.match(firstPage, /rel="next"/);
+      const secondPage = await (await publicPage('/?page=2')).text();
+      assert.match(secondPage, /Page item 11/);
+      assert.match(secondPage, /Page item 12/);
+      assert.doesNotMatch(secondPage, /rel="next"/);
+      assert.match(secondPage, /rel="prev"/);
+      const {
+        rows: [lookup],
+      } = await db.query("select id from sedna_packages where slug = 'page-item-12'");
+      assert.match(await (await publicPage(`/packages/${lookup.id}`)).text(), /Page item 12/);
+      const uuidSlug = randomUUID();
+      await db.query('update sedna_packages set slug = $1 where id = $2', [uuidSlug, lookup.id]);
+      assert.match(await (await publicPage(`/packages/${uuidSlug}`)).text(), /Page item 12/);
+      const missing = await fetch(origin + '/packages/not-present', { redirect: 'manual' });
+      assert.equal(missing.status, 302);
+      assert.equal(missing.headers.get('cache-control'), 'no-store');
       const extra = createContentApi({
         db,
         origin,

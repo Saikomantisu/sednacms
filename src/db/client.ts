@@ -27,10 +27,27 @@ function explicitSslMode(connectionString: string) {
   return url.href;
 }
 
-export function createPool(connectionString: string, max = 5): Pool {
+function positiveInteger(value: string | undefined, fallback: number, name: string) {
+  const number = value === undefined ? fallback : Number(value);
+  if (!Number.isSafeInteger(number) || number < 1)
+    throw new Error(`sednacms: ${name} must be a positive integer.`);
+  return number;
+}
+
+export function createPool(
+  connectionString: string,
+  max?: number,
+  env: Record<string, string | undefined> = process.env,
+): Pool {
+  max ??= positiveInteger(env.SEDNA_DATABASE_POOL_MAX, 5, 'SEDNA_DATABASE_POOL_MAX');
   const pool = new Pool({
     connectionString: explicitSslMode(connectionString),
     max,
+    connectionTimeoutMillis: positiveInteger(
+      env.SEDNA_DATABASE_CONNECTION_TIMEOUT_MS,
+      10_000,
+      'SEDNA_DATABASE_CONNECTION_TIMEOUT_MS',
+    ),
     // pg closes idle connections after 10 seconds by default, and reopening one to a remote database
     // costs a full TLS handshake (over a second), so keep them open between requests.
     idleTimeoutMillis: 5 * 60_000,

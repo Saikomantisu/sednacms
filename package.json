@@ -32,7 +32,8 @@
     "test:admin": "npm run build && node --test tests/admin.test.mjs",
     "test:cache": "npm run build && node --test tests/cache.test.mjs",
     "test:uploads": "npm run build && node --test tests/uploads.test.mjs",
-    "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs"
+    "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs",
+    "test:loader": "npm run build && node --test tests/loader.test.mjs"
   },
   "peerDependencies": {
     "astro": ">=6.0.0"

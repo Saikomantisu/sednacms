@@ -3,7 +3,17 @@ export const prerender = false;
 
 import { getLiveCollection } from 'astro:content';
 
-const { entries, error } = await getLiveCollection('packages');
+const requestedPage = Number(Astro.url.searchParams.get('page') ?? 1);
+const page =
+  Number.isSafeInteger(requestedPage) && requestedPage > 0 && requestedPage <= 1_000_000
+    ? requestedPage
+    : 1;
+const pageSize = 10;
+const { entries, error } = await getLiveCollection('packages', {
+  limit: pageSize + 1,
+  offset: (page - 1) * pageSize,
+});
+const hasNext = (entries?.length ?? 0) > pageSize;
 ---
 
 <html lang="en">
@@ -15,12 +25,25 @@ const { entries, error } = await getLiveCollection('packages');
     <h1>Sedna playground</h1>
     {error && <p>Could not load packages: {error.message}</p>}
     <ul>
-      {entries?.map((entry) => (
+      {entries?.slice(0, pageSize).map((entry) => (
         <li>
           <a href={`/packages/${entry.id}`}>{entry.data.title}</a>{' '}
           {entry.data.price != null && `(${entry.data.price})`}
         </li>
       ))}
     </ul>
+    <nav aria-label="Pagination">
+      {page > 1 && (
+        <a href={`/?page=${page - 1}`} rel="prev">
+          Previous
+        </a>
+      )}
+      <span> Page {page} </span>
+      {!error && hasNext && (
+        <a href={`/?page=${page + 1}`} rel="next">
+          Next
+        </a>
+      )}
+    </nav>
   </body>
 </html>

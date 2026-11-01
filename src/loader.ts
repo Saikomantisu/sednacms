@@ -13,9 +13,14 @@ export interface CollectionConfig<F extends Fields = Fields> {
   pages?: string[];
 }
 
+export interface CollectionFilter {
+  limit?: number;
+  offset?: number;
+}
+
 // Astro turns `getLiveEntry(collection, "some-slug")` into `{ id: "some-slug" }`.
 export interface SednaLoader<F extends Fields = Fields>
-  extends LiveLoader<FieldsData<F>, { id: string }> {
+  extends LiveLoader<FieldsData<F>, { id: string }, CollectionFilter> {
   sedna: CollectionConfig;
 }
 
@@ -90,7 +95,7 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
   const fieldNames = Object.keys(config.fields);
   const slugField = fieldNames.find((name) => config.fields[name].type === 'slug');
   const columns = ['id', ...fieldNames].map(ident).join(', ');
-  const match = slugField ? `(${ident(slugField)} = $1 or id::text = $1)` : 'id::text = $1';
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // Entries are addressed by slug when the collection has one, so pages can use `getLiveEntry('packages', slug)`.
   function toEntry(row: Record<string, unknown>) {
@@ -104,13 +109,24 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
   return {
     name: 'sednacms',
     sedna: config,
-    loadCollection: async () => {
+    loadCollection: async ({ filter }) => {
       markContentRequest();
       try {
+        const { limit, offset = 0 } = filter ?? {};
+        if (
+          (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)) ||
+          !Number.isSafeInteger(offset) ||
+          offset < 0 ||
+          (offset > 0 && limit === undefined)
+        )
+          throw new Error(
+            'sednacms: pagination requires limit 1–100 and a nonnegative integer offset.',
+          );
         const pool = getPool();
         await ensureReady(pool, config);
         const { rows } = await pool.query(
-          `select ${columns} from ${ident(table)} where status = 'published' order by sort_order, created_at`,
+          `select ${columns} from ${ident(table)} where status = 'published' order by sort_order, created_at, id${limit === undefined ? '' : ' limit $1 offset $2'}`,
+          limit === undefined ? [] : [limit, offset],
         );
         return { entries: rows.map(toEntry) };
       } catch (error) {
@@ -121,13 +137,20 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
     loadEntry: async ({ filter }) => {
       markContentRequest();
       try {
+        const isUuid = uuid.test(filter.id);
+        if (!slugField && !isUuid) return undefined;
+        const match = slugField
+          ? isUuid
+            ? `(${ident(slugField)} = $1 or id = $2::uuid)`
+            : `${ident(slugField)} = $1`
+          : 'id = $1::uuid';
         const pool = getPool();
         await ensureReady(pool, config);
         const {
           rows: [row],
         } = await pool.query(
           `select ${columns} from ${ident(table)} where status = 'published' and ${match} limit 1`,
-          [filter.id],
+          slugField && isUuid ? [filter.id, filter.id] : [filter.id],
         );
         return row ? toEntry(row) : undefined;
       } catch (error) {
