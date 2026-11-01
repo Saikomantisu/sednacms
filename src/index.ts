@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration, AstroIntegrationLogger } from 'astro';
-import { loadEnv } from 'vite';
+import { loadEnv, searchForWorkspaceRoot } from 'vite';
 import { resolveAdminFavicon } from './admin/favicon.js';
 import { type CacheOptions, validateCache } from './cache.js';
 import { createPool } from './db/client.js';
@@ -109,6 +109,15 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
         updateConfig({
           image: { remotePatterns: [...config.image.remotePatterns, ...patterns] },
           vite: {
+            server: {
+              fs: {
+                // Workers and WASM assets can live outside the app in a linked install.
+                allow: [
+                  ...(config.vite.server?.fs?.allow ?? [searchForWorkspaceRoot(root)]),
+                  fileURLToPath(new URL('../', import.meta.url)),
+                ],
+              },
+            },
             plugins: [
               {
                 name: 'sedna-collections',
