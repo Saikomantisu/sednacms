@@ -1,6 +1,7 @@
 ---
 import './style.css';
 import { favicon } from 'virtual:sedna/admin';
+import { Github, Menu, X } from 'lucide-astro';
 export const prerender = false;
 Astro.response.headers.set('Cache-Control', 'no-store');
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
@@ -12,13 +13,31 @@ Astro.response.headers.set('X-Frame-Options', 'DENY');
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- viewport-fit=cover lets the top bar paint under the notch; style.css pads content back with env(safe-area-inset-*). -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    >
     <meta name="robots" content="noindex, nofollow">
+    <meta name="color-scheme" content="dark">
+    <!-- Matches the top bar (--sidebar), so the status bar blends into it. -->
     <meta name="theme-color" content="#0c0a09">
     <link rel="icon" href={favicon}>
     <title>Sedna | Content</title>
   </head>
   <body>
+    <!-- Keep the Astro-rendered icons available to the React dashboard. -->
+    <svg width="0" height="0" aria-hidden="true" style="position: absolute">
+      <symbol id="sedna-icon-github" viewBox="0 0 24 24">
+        <Github />
+      </symbol>
+      <symbol id="sedna-icon-menu" viewBox="0 0 24 24">
+        <Menu />
+      </symbol>
+      <symbol id="sedna-icon-close" viewBox="0 0 24 24">
+        <X />
+      </symbol>
+    </svg>
     <a class="skip" href="#main">Skip to content</a>
     <div id="app">
       <main id="main" class="loading"><p>Loading…</p></main>

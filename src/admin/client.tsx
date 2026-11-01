@@ -30,6 +30,8 @@ function App() {
   const dirty = useRef(false);
   const revision = useRef(0);
   const { confirm, dialog } = useConfirmation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const drawer = useRef<HTMLDialogElement>(null);
   const selected = screen.type === 'list' || screen.type === 'editor' ? screen.schema : null;
   function message(text: string, error = false) {
     if (error)
@@ -42,6 +44,7 @@ function App() {
   }
   function showAuth(setup: boolean, enabled = true) {
     dirty.current = false;
+    setMenuOpen(false);
     toast.dismiss('admin-message');
     setNotice('');
     setScreen({ type: 'auth', setup, enabled });
@@ -165,6 +168,21 @@ function App() {
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, []);
   useEffect(() => {
+    const panel = drawer.current;
+    if (!panel || menuOpen === panel.open) return;
+    if (!menuOpen) return panel.close();
+    panel.showModal();
+    // Start on the current collection rather than the GitHub link.
+    panel.querySelector<HTMLElement>('nav [aria-current="page"], nav button')?.focus();
+  }, [menuOpen]);
+  useEffect(() => {
+    // The drawer only exists in the phone layout; close it if the window widens past it.
+    const wide = matchMedia('(min-width: 751px)');
+    const close = () => wide.matches && setMenuOpen(false);
+    wide.addEventListener('change', close);
+    return () => wide.removeEventListener('change', close);
+  }, []);
+  useEffect(() => {
     document.title =
       screen.type === 'auth'
         ? screen.setup
@@ -216,6 +234,91 @@ function App() {
     await loadList(screen.schema, screen.filters);
     message('Order saved.');
   }
+  /* Desktop shows this in a fixed sidebar; phones open the same content in a drawer from the top bar. */
+  function sidebar(inDrawer = false) {
+    return (
+      <>
+        <div className="sidebar-brand">
+          <Brand />
+          <a
+            className="github-link"
+            href="https://github.com/Saikomantisu/sednacms"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Sedna on GitHub"
+          >
+            <span className="sr-only">Sedna on GitHub (opens in a new tab)</span>
+            <svg width="18" height="18" aria-hidden="true" focusable="false">
+              <use href="#sedna-icon-github" />
+            </svg>
+          </a>
+          {inDrawer && (
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+            >
+              <svg width="20" height="20" aria-hidden="true" focusable="false">
+                <use href="#sedna-icon-close" />
+              </svg>
+            </button>
+          )}
+        </div>
+        <p className="side-label">Collections</p>
+        <nav aria-label="Collections">
+          {schemas.map((schema) => (
+            <button
+              key={schema.collection}
+              type="button"
+              className={selected?.collection === schema.collection ? 'active' : ''}
+              aria-current={selected?.collection === schema.collection ? 'page' : undefined}
+              disabled={busy}
+              onClick={() => {
+                setMenuOpen(false);
+                void run(async () => {
+                  if (await canLeave()) await loadList(schema);
+                });
+              }}
+            >
+              {titleCase(schema.collection)}
+            </button>
+          ))}
+        </nav>
+        <footer>
+          <a className="side-link" href="/" target="_blank" rel="noopener">
+            View website ↗
+          </a>
+          <div className="account">
+            <span className="avatar" aria-hidden="true">
+              {userName.charAt(0).toUpperCase()}
+            </span>
+            <div className="account-text">
+              <span className="user-name" title={userName}>
+                {userName}
+              </span>
+              <button
+                type="button"
+                className="text-link"
+                disabled={busy}
+                onClick={() =>
+                  void run(async () => {
+                    setMenuOpen(false);
+                    if (!(await canLeave())) return;
+                    await api('auth/sign-out', 'POST', {});
+                    history.replaceState(null, '', location.pathname);
+                    showAuth(false);
+                  })
+                }
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </footer>
+      </>
+    );
+  }
   return (
     <>
       <div className="admin-app" aria-busy={busy}>
@@ -243,58 +346,35 @@ function App() {
           />
         ) : (
           <div className="layout">
-            <aside className="sidebar">
+            <header className="topbar">
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Open menu"
+                aria-expanded={menuOpen}
+                aria-controls="drawer"
+                onClick={() => setMenuOpen(true)}
+              >
+                <svg width="22" height="22" aria-hidden="true" focusable="false">
+                  <use href="#sedna-icon-menu" />
+                </svg>
+              </button>
               <Brand />
-              <p className="side-label">Collections</p>
-              <nav aria-label="Collections">
-                {schemas.map((schema) => (
-                  <button
-                    key={schema.collection}
-                    type="button"
-                    className={selected?.collection === schema.collection ? 'active' : ''}
-                    aria-current={selected?.collection === schema.collection ? 'page' : undefined}
-                    disabled={busy}
-                    onClick={() =>
-                      void run(async () => {
-                        if (await canLeave()) await loadList(schema);
-                      })
-                    }
-                  >
-                    {titleCase(schema.collection)}
-                  </button>
-                ))}
-              </nav>
-              <footer>
-                <a className="side-link" href="/" target="_blank" rel="noopener">
-                  View website ↗
-                </a>
-                <div className="account">
-                  <span className="avatar" aria-hidden="true">
-                    {userName.charAt(0).toUpperCase()}
-                  </span>
-                  <div className="account-text">
-                    <span className="user-name" title={userName}>
-                      {userName}
-                    </span>
-                    <button
-                      type="button"
-                      className="text-link"
-                      disabled={busy}
-                      onClick={() =>
-                        void run(async () => {
-                          if (!(await canLeave())) return;
-                          await api('auth/sign-out', 'POST', {});
-                          history.replaceState(null, '', location.pathname);
-                          showAuth(false);
-                        })
-                      }
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              </footer>
-            </aside>
+            </header>
+            <aside className="sidebar">{sidebar()}</aside>
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: a click on the dialog element itself is a backdrop tap; Escape already closes a modal dialog. */}
+            <dialog
+              id="drawer"
+              className="drawer"
+              aria-label="Menu"
+              ref={drawer}
+              onClose={() => setMenuOpen(false)}
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setMenuOpen(false);
+              }}
+            >
+              <div className="sidebar">{sidebar(true)}</div>
+            </dialog>
             <main id="main" className="main">
               {screen.type === 'empty' ? (
                 <>

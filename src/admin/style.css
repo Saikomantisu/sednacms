@@ -48,6 +48,11 @@
 * {
   box-sizing: border-box;
 }
+/* No gray tap flash: every control has its own :active state instead. */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
 body {
   margin: 0;
 }
@@ -58,13 +63,16 @@ select {
   font: inherit;
   color: inherit;
 }
+/* Taps fire immediately (no double-tap-zoom wait); long-press on a control doesn't select its label. */
 button,
 a,
-input,
-textarea,
 select,
-[contenteditable] {
-  -webkit-tap-highlight-color: transparent;
+label {
+  touch-action: manipulation;
+}
+button {
+  -webkit-user-select: none;
+  user-select: none;
 }
 h1,
 h2,
@@ -88,15 +96,22 @@ a {
   color: var(--accent-text);
   text-decoration: none;
 }
-a:hover {
-  text-decoration: underline;
-}
 :focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
 }
 .muted {
   color: var(--ink-3);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 .hint {
   color: var(--ink-3);
@@ -126,9 +141,6 @@ button {
     transform 100ms var(--ease-out),
     opacity 0s;
 }
-button:hover:not(:disabled) {
-  background: var(--card-hover);
-}
 button:active:not(:disabled) {
   transform: scale(0.97);
 }
@@ -147,34 +159,20 @@ button.primary {
   box-shadow: var(--button-depth-color);
   color: white;
 }
-button.primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
 button.quiet,
 button.danger {
   border-color: transparent;
   background: none;
   box-shadow: none;
 }
-button.quiet:hover:not(:disabled) {
-  background: var(--hover);
-}
 button.danger {
   color: var(--danger-text);
-}
-button.danger:hover:not(:disabled) {
-  background: var(--danger-wash);
 }
 dialog button.danger {
   background: var(--danger);
   border-color: var(--danger);
   box-shadow: var(--button-depth-color);
   color: white;
-}
-dialog button.danger:hover:not(:disabled) {
-  background: #e0464b;
-  border-color: #e0464b;
 }
 button.small {
   height: 30px;
@@ -248,22 +246,103 @@ dialog::backdrop {
 
 /* Shell */
 .layout {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
 }
 .sidebar {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 20px 12px 12px;
+  padding: 20px 12px 12px max(12px, env(safe-area-inset-left, 0px));
   background: var(--sidebar);
   border-right: 1px solid var(--line-soft);
 }
-.sidebar > .brand {
-  padding: 0 8px;
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 0 0 8px;
+}
+.sidebar-brand .brand {
+  margin-right: auto;
+}
+button.icon-button {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+  color: var(--ink-2);
+}
+
+/* Phone top bar: the menu button opens the sidebar as a drawer. Hidden in the desktop layout. */
+.topbar {
+  display: none;
+}
+dialog.drawer {
+  inset: 0 auto 0 0;
+  width: min(300px, calc(100% - 56px));
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 0 16px 16px 0;
+  background: var(--sidebar);
+  box-shadow:
+    1px 0 0 var(--line-soft),
+    16px 0 48px rgb(0 0 0 / 0.5);
+  overscroll-behavior: contain;
+  /* iOS sheet curve. allow-discrete keeps the dialog rendered while it slides out. */
+  transition:
+    transform 400ms cubic-bezier(0.32, 0.72, 0, 1),
+    display 400ms allow-discrete,
+    overlay 400ms allow-discrete;
+}
+dialog.drawer:not([open]) {
+  transform: translateX(-100%);
+}
+dialog.drawer::backdrop {
+  transition:
+    opacity 400ms,
+    display 400ms allow-discrete,
+    overlay 400ms allow-discrete;
+}
+dialog.drawer:not([open])::backdrop {
+  opacity: 0;
+}
+@starting-style {
+  dialog.drawer[open] {
+    opacity: 1;
+    transform: translateX(-100%);
+  }
+  dialog.drawer[open]::backdrop {
+    opacity: 0;
+  }
+}
+.drawer > .sidebar {
+  position: static;
+  height: 100%;
+  overflow-y: auto;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 12px
+    calc(12px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  border-right: 0;
+}
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  color: var(--ink-3);
 }
 .side-label {
   margin: 32px 10px 6px;
@@ -286,9 +365,6 @@ dialog::backdrop {
   font-weight: 500;
   color: var(--ink-2);
 }
-.sidebar :where(nav) button:hover:not(:disabled, .active) {
-  background: var(--hover);
-}
 .sidebar :where(nav) button.active {
   background: var(--accent-wash);
   color: var(--ink);
@@ -310,10 +386,6 @@ dialog::backdrop {
   font-weight: 500;
   color: var(--ink-2);
 }
-.side-link:hover {
-  background: var(--hover);
-  text-decoration: none;
-}
 .account {
   display: flex;
   align-items: center;
@@ -326,14 +398,15 @@ dialog::backdrop {
   flex: none;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--accent-wash);
   color: var(--accent-text);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 650;
 }
+/* Fixed line heights so the name and Sign out stack to the avatar's height. */
 .account-text {
   flex: 1;
   min-width: 0;
@@ -348,17 +421,14 @@ button.text-link {
   box-shadow: none;
   font-size: 12px;
   font-weight: 500;
+  line-height: 16px;
   color: var(--ink-3);
-}
-button.text-link:hover:not(:disabled) {
-  background: none;
-  color: var(--ink);
-  text-decoration: underline;
 }
 .user-name {
   max-width: 100%;
   font-size: 13px;
   font-weight: 500;
+  line-height: 18px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -419,9 +489,6 @@ button.text-link:hover:not(:disabled) {
   font-weight: 500;
   color: var(--ink-3);
 }
-.crumbs button:hover:not(:disabled) {
-  color: var(--ink);
-}
 
 /* Cards */
 .card {
@@ -467,11 +534,15 @@ button.text-link:hover:not(:disabled) {
   background-repeat: no-repeat;
   background-position: right 10px center;
 }
-.list-filters :is(input, select):hover {
-  border-color: rgb(255 255 255 / 0.18);
-}
 .list-filters :is(input, select):focus-visible {
   border-color: var(--accent);
+}
+.list-filters input[type="date"] {
+  display: flex;
+  align-items: center;
+}
+.list-filters input::-webkit-date-and-time-value {
+  text-align: left;
 }
 .list-filters input::-webkit-calendar-picker-indicator {
   width: 14px;
@@ -503,6 +574,9 @@ button.text-link:hover:not(:disabled) {
   min-height: 68px;
   padding: 12px 12px 12px 8px;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   transition: background-color 120ms;
 }
 /* Inset separators start at the text, like a grouped list. */
@@ -514,9 +588,6 @@ button.text-link:hover:not(:disabled) {
   right: 0;
   height: 1px;
   background: var(--line-soft);
-}
-.entry-row:hover {
-  background: var(--hover);
 }
 .entry-row:active {
   background: rgb(255 255 255 / 0.07);
@@ -547,9 +618,6 @@ button.text-link:hover:not(:disabled) {
   text-align: left;
   white-space: normal;
   overflow-wrap: anywhere;
-}
-.entry-name:hover:not(:disabled) {
-  background: none;
 }
 .entry-name:active:not(:disabled) {
   transform: none;
@@ -594,7 +662,6 @@ button.text-link:hover:not(:disabled) {
   z-index: 1;
   display: flex;
   gap: 2px;
-  opacity: 0;
   transition: opacity 120ms;
 }
 .order-controls button {
@@ -606,11 +673,6 @@ button.text-link:hover:not(:disabled) {
   box-shadow: none;
   color: var(--ink-3);
 }
-.order-controls button:hover:not(:disabled) {
-  background: var(--hover);
-  color: var(--ink);
-}
-.entry-row:hover :is(.drag-handle, .order-controls),
 .entry-row:focus-within .order-controls {
   opacity: 1;
 }
@@ -683,9 +745,6 @@ button.text-link:hover:not(:disabled) {
   padding: 10px 12px;
   resize: vertical;
 }
-.field :is(input, textarea, select):hover {
-  border-color: rgb(255 255 255 / 0.18);
-}
 .field :is(input, textarea, select):focus,
 .rich:focus-within {
   outline: none;
@@ -753,10 +812,6 @@ button.text-link:hover:not(:disabled) {
     background-color 120ms,
     color 120ms;
 }
-.toolbar .tool:hover:not(:disabled) {
-  background: var(--hover);
-  color: var(--ink);
-}
 .toolbar .tool:disabled {
   color: var(--ink-4);
   opacity: 0.6;
@@ -787,9 +842,6 @@ button.text-link:hover:not(:disabled) {
   font-weight: 500;
   color: var(--ink);
   cursor: pointer;
-}
-.field .toolbar .block-select:hover:not(:disabled) {
-  background-color: var(--hover);
 }
 .block-select option {
   background: var(--card);
@@ -883,7 +935,7 @@ button.text-link:hover:not(:disabled) {
   justify-content: space-between;
   gap: 12px;
   margin: 0 -28px;
-  padding: 12px 16px 12px 20px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) 20px;
   border-top: 1px solid var(--line-soft);
   border-radius: 0 0 12px 12px;
   background: rgb(26 22 21 / 0.82);
@@ -909,7 +961,7 @@ button.text-link:hover:not(:disabled) {
 }
 /* Sign in and setup */
 .auth-page {
-  min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   place-items: center;
   padding: 40px 20px;
@@ -954,7 +1006,7 @@ button.text-link:hover:not(:disabled) {
   display: grid;
   place-items: center;
   gap: 16px;
-  min-height: 70vh;
+  min-height: 70svh;
   color: var(--ink-3);
 }
 .skip {
@@ -969,92 +1021,118 @@ button.text-link:hover:not(:disabled) {
   top: 10px;
 }
 
-/* Touch screens have no hover, so row controls stay visible. */
-@media (hover: none) {
-  .order-controls {
-    opacity: 1;
-  }
-}
+/*
+  Phone layout: one column under a sticky top bar; the sidebar moves into the drawer.
+  Edge padding respects the notch and rounded corners in landscape (viewport-fit=cover).
+*/
 @media (max-width: 750px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
   }
-  .sidebar {
-    position: static;
-    height: auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+  .layout > .sidebar {
+    display: none;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-right: 0;
+    gap: 6px;
+    padding: calc(6px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+      6px max(8px, env(safe-area-inset-left, 0px));
     border-bottom: 1px solid var(--line-soft);
+    background: rgb(12 10 9 / 0.82);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(180%);
   }
-  .sidebar > .brand {
-    padding: 0;
-  }
-  .side-label {
-    display: none;
-  }
-  .sidebar nav {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    display: flex;
-    overflow-x: auto;
-  }
-  .sidebar footer {
-    grid-column: 2;
-    grid-row: 1;
-    margin: 0;
-    display: flex;
-    align-items: center;
-  }
-  .account {
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  .user-name,
-  .avatar {
-    display: none;
-  }
-  button.text-link {
-    font-size: 13px;
-    color: var(--ink-2);
+  .topbar .brand {
+    font-size: 19px;
   }
   .main {
-    padding: 28px 16px 96px;
+    padding: 24px max(16px, env(safe-area-inset-right, 0px)) 96px
+      max(16px, env(safe-area-inset-left, 0px));
   }
   h1 {
     font-size: 24px;
   }
+  /* Title left, primary action right, the way a native list screen reads. */
   .page-head {
-    align-items: flex-start;
-    flex-direction: column;
+    margin-bottom: 20px;
+  }
+  .editor-head > .entry-dates {
+    margin-left: 0;
+    max-width: none;
+    text-align: left;
+  }
+  .list-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 16px;
+  }
+  .list-filters :is(input, select) {
+    width: 100%;
+  }
+  .list-filters button {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
   .drag-handle {
     display: none;
   }
+  /* Rows stack: title, status, then dates, with the reorder buttons in a column on the right. */
   .entry-row {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    padding-left: 16px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "info order"
+      "dates order";
+    gap: 4px 8px;
+    padding: 14px 8px 14px 16px;
   }
   .entry-row + .entry-row::before {
     left: 16px;
   }
+  .entry-info {
+    grid-area: info;
+  }
+  .entry-row .entry-dates {
+    grid-area: dates;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 6px;
+    max-width: none;
+    text-align: left;
+    color: var(--ink-3);
+  }
+  .entry-row .entry-date {
+    color: inherit;
+  }
+  .entry-row .entry-edited {
+    font-size: 13px;
+  }
+  .entry-row .entry-edited::before {
+    content: "·" / "";
+    margin-right: 6px;
+  }
   .order-controls {
-    opacity: 1;
+    grid-area: order;
   }
   .editor {
-    padding: 20px 20px 0;
+    padding: 20px 16px 0;
   }
+  /* The save bar's buttons share the width so each is an easy thumb target. */
   .editor-bar {
-    margin: 0 -20px;
-    padding: 12px 16px;
+    margin: 0 -16px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
     flex-wrap: wrap;
   }
-  .editor-bar button {
+  .editor-bar .actions {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+  }
+  .editor-bar .actions button {
+    flex: 1 1 auto;
     padding: 0 12px;
   }
   .field-grid {
@@ -1062,6 +1140,139 @@ button.text-link:hover:not(:disabled) {
   }
   .auth-card {
     padding: 24px;
+  }
+}
+/*
+  Touch: iOS zooms into any input under 16px and never zooms back, so inputs go to 16px.
+  Targets grow toward the 44px guideline.
+*/
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select,
+  .list-filters :is(input, select),
+  .field .toolbar .block-select {
+    font-size: 16px;
+  }
+  button {
+    height: 44px;
+  }
+  button.small {
+    height: 36px;
+  }
+  .list-filters :is(input, select),
+  .field input:not([type="checkbox"]),
+  .field select {
+    height: 44px;
+  }
+  .sidebar :where(nav) button,
+  .side-link {
+    height: 40px;
+  }
+  /* Keep the link compact next to the name; an invisible pseudo-element extends the tap area to ~44px. */
+  button.text-link {
+    position: relative;
+  }
+  button.text-link::after {
+    content: "";
+    position: absolute;
+    inset: -12px -10px;
+  }
+  .github-link {
+    width: 40px;
+    height: 40px;
+  }
+  button.icon-button {
+    width: 44px;
+    height: 44px;
+  }
+  .crumbs button {
+    height: 36px;
+  }
+  .order-controls button {
+    width: 44px;
+    height: 44px;
+  }
+  .toolbar .tool {
+    width: 40px;
+    height: 40px;
+  }
+  .field .toolbar .block-select {
+    height: 40px;
+  }
+}
+/*
+  Hover only where a precise pointer can hover. On touch, browsers apply :hover on tap and leave it stuck;
+  touch gets :active feedback instead.
+*/
+@media (hover: hover) and (pointer: fine) {
+  a:hover {
+    text-decoration: underline;
+  }
+  button:hover:not(:disabled) {
+    background: var(--card-hover);
+  }
+  button.primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
+  button.quiet:hover:not(:disabled) {
+    background: var(--hover);
+  }
+  button.danger:hover:not(:disabled) {
+    background: var(--danger-wash);
+  }
+  dialog button.danger:hover:not(:disabled) {
+    background: #e0464b;
+    border-color: #e0464b;
+  }
+  .github-link:hover,
+  button.icon-button:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--hover);
+  }
+  .sidebar :where(nav) button:hover:not(:disabled, .active) {
+    background: var(--hover);
+  }
+  .side-link:hover {
+    background: var(--hover);
+    text-decoration: none;
+  }
+  button.text-link:hover:not(:disabled) {
+    background: none;
+    color: var(--ink);
+    text-decoration: underline;
+  }
+  .crumbs button:hover:not(:disabled) {
+    color: var(--ink);
+  }
+  .list-filters :is(input, select):hover:not(:focus-visible),
+  .field :is(input, textarea, select):hover:not(:focus) {
+    border-color: rgb(255 255 255 / 0.18);
+  }
+  .entry-row:hover:not(:active) {
+    background: var(--hover);
+  }
+  .entry-name:hover:not(:disabled) {
+    background: none;
+  }
+  .order-controls button:hover:not(:disabled) {
+    background: var(--hover);
+    color: var(--ink);
+  }
+  .toolbar .tool:hover:not(:disabled) {
+    background: var(--hover);
+    color: var(--ink);
+  }
+  .field .toolbar .block-select:hover:not(:disabled) {
+    background-color: var(--hover);
+  }
+  /* Reorder controls stay out of the way until the pointer is on the row. */
+  .order-controls {
+    opacity: 0;
+  }
+  .entry-row:hover :is(.drag-handle, .order-controls) {
+    opacity: 1;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1076,8 +1287,30 @@ button.text-link:hover:not(:disabled) {
       transform: none;
     }
   }
+  dialog.drawer,
+  dialog.drawer::backdrop {
+    transition:
+      opacity 150ms,
+      display 150ms allow-discrete,
+      overlay 150ms allow-discrete;
+  }
+  dialog.drawer:not([open]) {
+    opacity: 0;
+    transform: none;
+  }
+  @starting-style {
+    dialog.drawer[open] {
+      opacity: 0;
+      transform: none;
+    }
+  }
 }
 @media (prefers-reduced-transparency: reduce) {
+  .topbar {
+    background: var(--sidebar);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
   .editor-bar {
     background: var(--card);
     -webkit-backdrop-filter: none;
