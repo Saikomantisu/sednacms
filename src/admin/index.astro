@@ -1,0 +1,31 @@
+---
+import './style.css';
+import { favicon } from 'virtual:sedna/admin';
+export const prerender = false;
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+Astro.response.headers.set('Referrer-Policy', 'same-origin');
+Astro.response.headers.set('X-Frame-Options', 'DENY');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#0c0a09">
+    <link rel="icon" href={favicon}>
+    <title>Sedna | Content</title>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div id="app">
+      <main id="main" class="loading"><p>Loading…</p></main>
+    </div>
+    <noscript>Enable JavaScript to use the content editor.</noscript>
+    <script>
+    import './client.js';
+    </script>
+  </body>
+</html>

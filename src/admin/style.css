@@ -1,0 +1,1096 @@
+/*
+  Dark, warm neutrals with one accent: Sedna's rust red-brown, stepped by lightness: sidebar < paper < card.
+  Depth comes from a faint light ring on cards; borders are only for inputs and dividers.
+  Spacing is on a 4px grid.
+*/
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+  color: var(--ink);
+  background: var(--paper);
+
+  --ink: #f0ebe8;
+  --ink-2: #c0b6b1;
+  --ink-3: #958a85;
+  --ink-4: #655b57;
+  --paper: #110e0d;
+  --sidebar: #0c0a09;
+  --card: #1a1615;
+  --card-hover: #231e1c;
+  --field: #141110;
+  --line: rgb(255 255 255 / 0.1);
+  --line-soft: rgb(255 255 255 / 0.06);
+  --hover: rgb(255 255 255 / 0.05);
+  /* Fill for buttons and focus; --accent-text is the readable tint for text on dark surfaces. */
+  --accent: #b5523f;
+  --accent-hover: #c45f4b;
+  --accent-text: #e8a593;
+  --accent-wash: rgb(196 104 84 / 0.16);
+  --danger: #d13b40;
+  --danger-text: #ff8a8a;
+  --danger-wash: rgb(229 72 77 / 0.14);
+  --ring:
+    0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 12px rgb(0 0 0 / 0.2);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Inner shadows that give filled buttons a little depth: a light top edge and a darker base. */
+  --button-depth:
+    inset 0 1px 0 rgb(255 255 255 / 0.07), inset 0 -1px 0 rgb(0 0 0 / 0.35),
+    inset 0 -8px 12px -8px rgb(0 0 0 / 0.35);
+  --button-depth-color:
+    inset 0 1px 0 rgb(255 255 255 / 0.24), inset 0 -1px 0 rgb(0 0 0 / 0.22),
+    inset 0 -8px 12px -8px rgb(0 0 0 / 0.3);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+button,
+a,
+input,
+textarea,
+select,
+[contenteditable] {
+  -webkit-tap-highlight-color: transparent;
+}
+h1,
+h2,
+p {
+  margin: 0;
+}
+h1 {
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+h2 {
+  font-size: 17px;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+}
+a {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+.muted {
+  color: var(--ink-3);
+}
+.hint {
+  color: var(--ink-3);
+  font-size: 13px;
+  margin-top: 6px;
+  text-wrap: pretty;
+}
+
+/* Buttons */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: var(--button-depth);
+  font-size: 14px;
+  font-weight: 550;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 120ms,
+    transform 100ms var(--ease-out),
+    opacity 0s;
+}
+button:hover:not(:disabled) {
+  background: var(--card-hover);
+}
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.4;
+  /* Only fade controls when a request is slow, so quick saves don't flicker. */
+  transition-delay: 0s, 0s, 300ms;
+}
+.admin-app[aria-busy="true"] {
+  cursor: progress;
+}
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--button-depth-color);
+  color: white;
+}
+button.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+button.quiet,
+button.danger {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+button.quiet:hover:not(:disabled) {
+  background: var(--hover);
+}
+button.danger {
+  color: var(--danger-text);
+}
+button.danger:hover:not(:disabled) {
+  background: var(--danger-wash);
+}
+dialog button.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  box-shadow: var(--button-depth-color);
+  color: white;
+}
+dialog button.danger:hover:not(:disabled) {
+  background: #e0464b;
+  border-color: #e0464b;
+}
+button.small {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Dialog */
+dialog {
+  width: calc(100% - 32px);
+  max-width: 400px;
+  padding: 24px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--card);
+  color: inherit;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 24px 48px rgb(0 0 0 / 0.5);
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+dialog > p {
+  margin: 8px 0 24px;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+dialog > .actions {
+  justify-content: flex-end;
+}
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.55);
+  transition: opacity 200ms;
+}
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* Brand */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+/* A planet crossed by a tilted orbit, after Sedna's long, eccentric path. Painted in the planet's rust. */
+.mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  background: var(--accent-text);
+  mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cmask id='m'%3E%3Ccircle cx='12' cy='12' r='11' fill='%23fff'/%3E%3Cellipse cx='12' cy='12' rx='15' ry='5.2' transform='rotate(-28 12 12)' fill='none' stroke='%23000' stroke-width='1.8'/%3E%3C/mask%3E%3Ccircle cx='12' cy='12' r='11' fill='%23fff' mask='url(%23m)'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+/* Shell */
+.layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 12px 12px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar > .brand {
+  padding: 0 8px;
+}
+.side-label {
+  margin: 32px 10px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.sidebar nav {
+  display: grid;
+  gap: 2px;
+}
+.sidebar :where(nav) button {
+  justify-content: flex-start;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  box-shadow: none;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.sidebar :where(nav) button:hover:not(:disabled, .active) {
+  background: var(--hover);
+}
+.sidebar :where(nav) button.active {
+  background: var(--accent-wash);
+  color: var(--ink);
+  font-weight: 600;
+}
+.sidebar footer {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+.side-link {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.side-link:hover {
+  background: var(--hover);
+  text-decoration: none;
+}
+.account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px 4px 10px;
+  border-top: 1px solid var(--line-soft);
+  margin-top: 8px;
+}
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-wash);
+  color: var(--accent-text);
+  font-size: 13px;
+  font-weight: 650;
+}
+.account-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+}
+button.text-link {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+button.text-link:hover:not(:disabled) {
+  background: none;
+  color: var(--ink);
+  text-decoration: underline;
+}
+.user-name {
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.main {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 40px 96px;
+  align-self: start;
+}
+
+/* Page header */
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.page-head > div {
+  min-width: 0;
+}
+.page-head.editor-head {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.editor-title {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.page-sub {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.crumbs > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: 4px;
+}
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 12px -6px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.crumbs button {
+  height: 28px;
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.crumbs button:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: var(--ring);
+}
+
+/* Entry list */
+.list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.list-filters label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 500;
+}
+.list-filters :is(input, select) {
+  width: 160px;
+  max-width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 400;
+  transition: border-color 120ms;
+}
+.list-filters select {
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23958a85' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.list-filters :is(input, select):hover {
+  border-color: rgb(255 255 255 / 0.18);
+}
+.list-filters :is(input, select):focus-visible {
+  border-color: var(--accent);
+}
+.list-filters input::-webkit-calendar-picker-indicator {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.list-filters button {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.entry-row.filtered :is(.drag-handle, .order-controls) {
+  visibility: hidden;
+}
+.entry-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+.entry-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 12px 12px 12px 8px;
+  cursor: pointer;
+  transition: background-color 120ms;
+}
+/* Inset separators start at the text, like a grouped list. */
+.entry-row + .entry-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 40px;
+  right: 0;
+  height: 1px;
+  background: var(--line-soft);
+}
+.entry-row:hover {
+  background: var(--hover);
+}
+.entry-row:active {
+  background: rgb(255 255 255 / 0.07);
+}
+.entry-row.dragging {
+  opacity: 0.5;
+}
+.entry-row.drop-target {
+  box-shadow: inset 0 2px var(--accent-text);
+}
+.drag-handle {
+  color: var(--ink-4);
+  text-align: center;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.entry-name {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.entry-name:hover:not(:disabled) {
+  background: none;
+}
+.entry-name:active:not(:disabled) {
+  transform: none;
+}
+.entry-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.status {
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.status.published {
+  color: var(--accent-text);
+}
+.entry-dates {
+  display: grid;
+  gap: 2px;
+  max-width: 180px;
+  font-size: 13px;
+  text-align: right;
+}
+.editor-head > .entry-dates {
+  margin-left: auto;
+}
+.entry-date {
+  color: var(--ink-2);
+}
+.entry-edited {
+  color: var(--ink-3);
+  font-size: 11px;
+}
+.order-controls {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.order-controls button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ink-3);
+}
+.order-controls button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--ink);
+}
+.entry-row:hover :is(.drag-handle, .order-controls),
+.entry-row:focus-within .order-controls {
+  opacity: 1;
+}
+.order-controls button:disabled {
+  opacity: 0.3;
+}
+.list-note {
+  margin-top: 12px;
+  padding: 0 16px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.empty {
+  padding: 64px 24px;
+  text-align: center;
+}
+.empty p {
+  max-width: 340px;
+  margin: 8px auto 20px;
+  color: var(--ink-3);
+  text-wrap: pretty;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Editor */
+.editor {
+  padding: 28px 28px 0;
+}
+.field {
+  margin-bottom: 24px;
+}
+.field > .field-label,
+.field > label,
+.field > legend {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.required {
+  color: var(--ink-4);
+  font-weight: 500;
+}
+.field input:not([type="checkbox"]),
+.field textarea,
+.field select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms;
+}
+.field textarea {
+  height: auto;
+  min-height: 130px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.field :is(input, textarea, select):hover {
+  border-color: rgb(255 255 255 / 0.18);
+}
+.field :is(input, textarea, select):focus,
+.rich:focus-within {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(196 104 84 / 0.28);
+}
+.field input::placeholder,
+.rich-editor p.is-editor-empty:first-child::before {
+  color: var(--ink-4);
+}
+.field fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field .field {
+  margin-bottom: 12px;
+}
+.field .field > label {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.rich {
+  container-type: inline-size;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--card);
+}
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--line);
+}
+.toolbar .tool {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
+  color: var(--ink-2);
+  transition:
+    background-color 120ms,
+    color 120ms;
+}
+.toolbar .tool:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--ink);
+}
+.toolbar .tool:disabled {
+  color: var(--ink-4);
+  opacity: 0.6;
+}
+.toolbar .tool[aria-pressed="true"] {
+  background: var(--accent-wash);
+  color: var(--accent-text);
+}
+.field .toolbar :is(.tool, .block-select):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* Raised specificity: the editor sits inside .field, whose select styles are for form inputs. */
+.field .toolbar .block-select {
+  appearance: none;
+  display: block;
+  width: auto;
+  box-shadow: none;
+  height: 32px;
+  min-width: 120px;
+  padding: 0 28px 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b8b9c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 10px center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+.field .toolbar .block-select:hover:not(:disabled) {
+  background-color: var(--hover);
+}
+.block-select option {
+  background: var(--card);
+  color: var(--ink);
+}
+/* When the editor is too narrow for one row, the style picker gets its own row above the icons. */
+@container (max-width: 440px) {
+  .field .toolbar .block-select {
+    flex: 1 0 100%;
+  }
+  .block-select + .toolbar-divider {
+    display: none;
+  }
+}
+.rich-editor {
+  min-height: 220px;
+  padding: 18px 20px 24px;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  outline: none;
+}
+.rich-editor > * + * {
+  margin-top: 12px;
+}
+.rich-editor :is(h2, h3) {
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.rich-editor h2 {
+  font-size: 22px;
+}
+.rich-editor h3 {
+  font-size: 18px;
+}
+.rich-editor * + :is(h2, h3) {
+  margin-top: 20px;
+}
+.rich-editor :is(ul, ol) {
+  margin-bottom: 0;
+  padding-left: 22px;
+}
+.rich-editor blockquote {
+  margin: 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--line);
+  color: var(--ink-2);
+}
+.rich-editor a {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+/* Tiptap's Placeholder extension marks the empty first paragraph. */
+.rich-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.link-field {
+  margin: 16px 0 24px;
+}
+.link-error {
+  color: var(--danger-text);
+}
+.image-preview:not([hidden]) {
+  display: block;
+}
+.image-preview {
+  max-width: 240px;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: 8px;
+  outline: 1px solid rgb(255 255 255 / 0.08);
+  outline-offset: -1px;
+  margin-top: 4px;
+}
+.editor-note {
+  padding-bottom: 20px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+/* Save bar stays in reach on long forms; content scrolls under a translucent material. */
+.editor-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -28px;
+  padding: 12px 16px 12px 20px;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0 0 12px 12px;
+  background: rgb(26 22 21 / 0.82);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+}
+.editor-bar .actions {
+  margin-left: auto;
+}
+
+/* Status messages */
+.notice {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--accent-wash);
+  color: #f2cfc4;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.notice.error {
+  background: var(--danger-wash);
+  color: var(--danger-text);
+}
+/* Sign in and setup */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+}
+.auth-wrap {
+  width: 100%;
+  max-width: 400px;
+}
+.auth-wrap > .brand {
+  justify-content: center;
+  margin-bottom: 28px;
+}
+.auth-card {
+  padding: 32px;
+  border-radius: 14px;
+}
+.auth-card h1 {
+  font-size: 24px;
+}
+.auth-card > p {
+  margin-top: 6px;
+}
+.auth-card .notice {
+  margin: 20px 0 0;
+}
+.auth-card form {
+  margin-top: 24px;
+}
+.auth-card .field {
+  margin-bottom: 16px;
+}
+.auth-card .primary {
+  width: 100%;
+  height: 40px;
+  margin-top: 8px;
+}
+.setup-off {
+  margin-top: 20px;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  gap: 16px;
+  min-height: 70vh;
+  color: var(--ink-3);
+}
+.skip {
+  position: absolute;
+  top: -100px;
+  left: 12px;
+  padding: 10px;
+  background: var(--card);
+  z-index: 20;
+}
+.skip:focus {
+  top: 10px;
+}
+
+/* Touch screens have no hover, so row controls stay visible. */
+@media (hover: none) {
+  .order-controls {
+    opacity: 1;
+  }
+}
+@media (max-width: 750px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+  .sidebar {
+    position: static;
+    height: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .sidebar > .brand {
+    padding: 0;
+  }
+  .side-label {
+    display: none;
+  }
+  .sidebar nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    overflow-x: auto;
+  }
+  .sidebar footer {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    display: flex;
+    align-items: center;
+  }
+  .account {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .user-name,
+  .avatar {
+    display: none;
+  }
+  button.text-link {
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .main {
+    padding: 28px 16px 96px;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  .page-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .drag-handle {
+    display: none;
+  }
+  .entry-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    padding-left: 16px;
+  }
+  .entry-row + .entry-row::before {
+    left: 16px;
+  }
+  .order-controls {
+    opacity: 1;
+  }
+  .editor {
+    padding: 20px 20px 0;
+  }
+  .editor-bar {
+    margin: 0 -20px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+  .editor-bar button {
+    padding: 0 12px;
+  }
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+  .auth-card {
+    padding: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled) {
+    transform: none;
+  }
+  dialog {
+    transition: opacity 150ms;
+  }
+  @starting-style {
+    dialog[open] {
+      transform: none;
+    }
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .editor-bar {
+    background: var(--card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Extend the title button across the row while keeping reorder controls clickable. */
+.entry-name::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.toolbar-group {
+  display: contents;
+}

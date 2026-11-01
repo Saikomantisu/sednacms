@@ -1,22 +1,79 @@
-import postgres from 'postgres';
+import { Pool, type PoolClient, types } from 'pg';
 
-export type Sql = postgres.Sql;
+export type { Pool, PoolClient };
+/** Anything that can run a query: the pool, or a client inside a transaction. */
+export type Queryable = Pick<PoolClient, 'query'>;
 
-export function createSql(url: string): Sql {
-  return postgres(url, {
-    // Pooled connections (PgBouncer, Neon pooler) run in transaction mode, which does not support prepared statements.
-    prepare: false,
-    // Hide "already exists, skipping" notices from IF NOT EXISTS statements.
-    onnotice: () => {},
+const DATE_OID = 1082;
+
+// pg 8 treats sslmode=prefer, require and verify-ca as verify-full, and warns on every start that pg 9
+// will weaken them to their libpq meaning. Hosts like Neon hand out `sslmode=require` URLs. Writing
+// verify-full out keeps today's behavior, silences the warning, and stays strict after the pg 9 upgrade.
+function explicitSslMode(connectionString: string) {
+  let url: URL;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    return connectionString;
+  }
+  const mode = url.searchParams.get('sslmode');
+  if (
+    url.searchParams.has('uselibpqcompat') ||
+    !['prefer', 'require', 'verify-ca'].includes(mode ?? '')
+  ) {
+    return connectionString;
+  }
+  url.searchParams.set('sslmode', 'verify-full');
+  return url.href;
+}
+
+export function createPool(connectionString: string, max = 5): Pool {
+  const pool = new Pool({
+    connectionString: explicitSslMode(connectionString),
+    max,
+    // pg closes idle connections after 10 seconds by default, and reopening one to a remote database
+    // costs a full TLS handshake (over a second), so keep them open between requests.
+    idleTimeoutMillis: 5 * 60_000,
     types: {
       // A `date` column is a calendar day with no timezone. Keep it as the "YYYY-MM-DD" string
       // Postgres sends, instead of a JS Date that would land on a different day in some timezones.
-      calendarDate: {
-        to: 1082,
-        from: [1082],
-        serialize: (value: string) => value,
-        parse: (value: string) => value,
-      },
+      getTypeParser: ((oid: number, format?: 'text' | 'binary') =>
+        oid === DATE_OID
+          ? (value: string) => value
+          : types.getTypeParser(oid, format)) as typeof types.getTypeParser,
     },
   });
+  // The database can drop an idle connection (Neon suspends idle computes). The pool replaces it on
+  // the next query; without this listener the dropped connection's error would crash the server.
+  pool.on('error', (error) =>
+    console.warn(`[sednacms] Database connection closed: ${error.message}`),
+  );
+  return pool;
+}
+
+/** Quote a table or column name. Names are validated before they get here; this also escapes quotes. */
+export function ident(name: string) {
+  return `"${name.replaceAll('"', '""')}"`;
+}
+
+export async function transaction<T>(
+  pool: Pool,
+  run: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await pool.connect();
+  let broken: Error | undefined;
+  try {
+    await client.query('begin');
+    const result = await run(client);
+    await client.query('commit');
+    return result;
+  } catch (error) {
+    // If rollback fails the connection is unusable, so the pool discards it instead of reusing it.
+    await client.query('rollback').catch((rollbackError: Error) => {
+      broken = rollbackError;
+    });
+    throw error;
+  } finally {
+    client.release(broken);
+  }
 }

@@ -19,9 +19,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsc && node scripts/copy-admin.mjs",
+    "dev": "npm run build && tsc --watch",
     "test:auth": "npm run build && node --test tests/auth.test.mjs",
+    "test:admin": "npm run build && node --test tests/admin.test.mjs",
     "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs"
   },
   "peerDependencies": {
@@ -30,12 +31,21 @@
   "devDependencies": {
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "astro": "^7.4.2",
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "@tiptap/core": "^3.32.2",
+    "@tiptap/extensions": "^3.32.2",
+    "@tiptap/pm": "^3.32.2",
+    "@tiptap/starter-kit": "^3.32.2",
     "better-auth": "1.7.14",
+    "dompurify": "^3.4.17",
     "pg": "^8.23.1",
-    "postgres": "^3.4.9"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sonner": "^2.0.8"
   }
 }

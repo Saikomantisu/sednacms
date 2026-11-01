@@ -2,21 +2,40 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration, AstroIntegrationLogger } from 'astro';
 import { loadEnv } from 'vite';
-import { createSql } from './db/client.js';
+import { resolveAdminFavicon } from './admin/favicon.js';
+import { createPool } from './db/client.js';
 import { ensureTables } from './db/tables.js';
-import { isSednaLoader, type CollectionConfig } from './loader.js';
+import { type CollectionConfig, isSednaLoader } from './loader.js';
 
+export type {
+  ApiErrorResponse,
+  CmsEntry,
+  EntriesResponse,
+  EntryResponse,
+  EntryStatus,
+  EntryWrite,
+  ReorderRequest,
+  ReorderResponse,
+  SchemaResponse,
+} from './api/types.js';
+export type { Field, FieldsData, FieldType, ImageValue } from './fields.js';
 export { fields } from './fields.js';
-export type { Field, FieldType, FieldsData, ImageValue } from './fields.js';
-export { sednaLoader } from './loader.js';
 export type { CollectionConfig } from './loader.js';
-export type { CmsEntry, EntryStatus, EntryWrite, EntryResponse, EntriesResponse, ApiErrorResponse, ReorderRequest, SchemaResponse, ReorderResponse } from './api/types.js';
+export { sednaLoader } from './loader.js';
 
-const LIVE_CONFIG_FILES = ['live.config.ts', 'live.config.mts', 'live.config.js', 'live.config.mjs'];
+const LIVE_CONFIG_FILES = [
+  'live.config.ts',
+  'live.config.mts',
+  'live.config.js',
+  'live.config.mjs',
+];
 
 type Import = (path: string) => Promise<Record<string, unknown>>;
 
-async function readCollections(srcDir: string, importModule: Import): Promise<CollectionConfig[] | undefined> {
+async function readCollections(
+  srcDir: string,
+  importModule: Import,
+): Promise<CollectionConfig[] | undefined> {
   const file = LIVE_CONFIG_FILES.map((name) => srcDir + name).find((path) => existsSync(path));
   if (!file) return undefined;
   const mod = await importModule(file);
@@ -27,16 +46,27 @@ async function readCollections(srcDir: string, importModule: Import): Promise<Co
     .map((loader) => loader.sedna);
 }
 
-async function syncTables(databaseUrl: string, collections: CollectionConfig[], logger: AstroIntegrationLogger) {
-  const sql = createSql(databaseUrl);
+async function syncTables(
+  databaseUrl: string,
+  collections: CollectionConfig[],
+  logger: AstroIntegrationLogger,
+) {
+  const pool = createPool(databaseUrl, 1);
   try {
-    await ensureTables(sql, collections, logger);
+    await ensureTables(pool, collections, logger);
   } finally {
-    await sql.end();
+    await pool.end();
   }
 }
 
-export default function sedna(): AstroIntegration {
+export interface SednaOptions {
+  admin?: {
+    /** Admin favicon URL. Defaults to the site's public/favicon.svg, .ico, or .png. */
+    favicon?: string;
+  };
+}
+
+export default function sedna(options: SednaOptions = {}): AstroIntegration {
   let root = '';
   let srcDir = '';
 
@@ -46,17 +76,41 @@ export default function sedna(): AstroIntegration {
       'astro:config:setup': ({ config, logger, injectRoute, updateConfig }) => {
         root = fileURLToPath(config.root);
         srcDir = fileURLToPath(config.srcDir);
-        const liveConfig = LIVE_CONFIG_FILES.map(name => srcDir + name).find(path => existsSync(path));
-        updateConfig({ vite: { plugins: [{
-          name: 'sedna-collections',
-          resolveId(id) { if (id === 'virtual:sedna/collections') return '\0virtual:sedna/collections'; },
-          load(id) {
-            if (id === '\0virtual:sedna/collections') return liveConfig
-              ? `export { collections } from ${JSON.stringify(liveConfig)};`
-              : 'export const collections = {};';
+        const liveConfig = LIVE_CONFIG_FILES.map((name) => srcDir + name).find((path) =>
+          existsSync(path),
+        );
+        updateConfig({
+          vite: {
+            plugins: [
+              {
+                name: 'sedna-collections',
+                resolveId(id) {
+                  if (id === 'virtual:sedna/collections') return '\0virtual:sedna/collections';
+                  if (id === 'virtual:sedna/admin') return '\0virtual:sedna/admin';
+                },
+                load(id) {
+                  if (id === '\0virtual:sedna/admin') {
+                    return `export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.admin?.favicon))};`;
+                  }
+                  if (id === '\0virtual:sedna/collections')
+                    return liveConfig
+                      ? `export { collections } from ${JSON.stringify(liveConfig)};`
+                      : 'export const collections = {};';
+                },
+              },
+            ],
           },
-        }] } });
-        injectRoute({ pattern: '/api/cms/[...path]', entrypoint: fileURLToPath(new URL('./api/route.js', import.meta.url)), prerender: false });
+        });
+        injectRoute({
+          pattern: '/admin/[...path]',
+          entrypoint: fileURLToPath(new URL('./admin/index.astro', import.meta.url)),
+          prerender: false,
+        });
+        injectRoute({
+          pattern: '/api/cms/[...path]',
+          entrypoint: fileURLToPath(new URL('./api/route.js', import.meta.url)),
+          prerender: false,
+        });
         logger.info('Sedna CMS loaded');
       },
       'astro:server:setup': async ({ server, logger }) => {
@@ -68,7 +122,9 @@ export default function sedna(): AstroIntegration {
 
         const runner = (server.environments.ssr as { runner?: { import: Import } }).runner;
         if (!runner) {
-          logger.warn('Could not load src/live.config.ts in this environment. Skipping table setup.');
+          logger.warn(
+            'Could not load src/live.config.ts in this environment. Skipping table setup.',
+          );
           return;
         }
         const collections = await readCollections(srcDir, (path) => runner.import(path));

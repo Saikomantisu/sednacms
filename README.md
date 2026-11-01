@@ -58,8 +58,12 @@ MIT
 
 ## Authentication
 
-Sedna uses Better Auth for email/password login and database-backed sessions.
-Public registration is disabled. The admin UI and editor invitations are not implemented yet.
+Sedna uses Better Auth for email/password login with a signed, HttpOnly session
+cookie cache. Requests validate the cached session locally for five minutes, then
+recheck the database and renew the cache. Session records remain in Postgres for
+expiry and revocation. Logout revokes the record and clears the browser's cookies;
+a copied cookie can remain valid for up to five minutes after revocation.
+Public registration is disabled. The admin UI is available at `/admin`; editor invitations are not implemented yet.
 
 Configure `SEDNA_URL` with the site's origin, `SEDNA_SECRET` with a random secret
 of at least 32 characters, and `SEDNA_SETUP_TOKEN` with a separate random token
@@ -125,3 +129,40 @@ Unknown fields and system-column writes are rejected. Duplicate slugs return 409
 Run `npm run test:api` with `SEDNA_TEST_DATABASE_URL` set to verify the production
 Astro server against a temporary database schema, including publishing content
 and seeing it on the playground without rebuilding.
+
+## Admin UI
+
+The admin uses `favicon.svg`, `favicon.ico`, or `favicon.png` from your Astro
+public directory, in that order. If none exists, it uses the Sedna favicon.
+To use a different icon, or a site favicon with another filename, set
+`admin.favicon` to its URL:
+
+```js
+integrations: [sedna({ admin: { favicon: '/my-site-icon.svg' } })],
+```
+
+The override is used as written. Include your site's base path if needed, or
+use an absolute URL. Automatic discovery respects Astro's `publicDir` and `base`.
+Restart the dev server or rebuild after changing favicon configuration or files.
+
+The admin UI uses React components written in TypeScript. Astro serves the page,
+and React manages the screens, forms, and rich-text editor.
+
+Open `/admin` to manage content. On a new database, the setup screen asks for
+your name, email, password, and setup token. Once the first account exists,
+Sedna shows the login screen instead.
+
+The sidebar lists configured collections. Add an entry or select an existing
+one to edit it. Forms are generated from the collection fields, with a basic
+rich-text editor, date and number inputs, and an image URL form. Images can use
+existing URLs; uploading and browsing stored images are the next step.
+
+Save incomplete entries as drafts, publish when ready, or save a published entry
+as a draft to remove it from the public site. Drag entries or use their arrow
+buttons to change the order. Reordering supports up to 1,000 entries per collection.
+Deletion requires confirmation, and leaving an edited form prompts you to
+discard unsaved changes.
+
+`npm run build` compiles the package and copies the admin page and stylesheet
+into `dist`. When changing those assets during package development, rerun the
+build before refreshing the playground.
