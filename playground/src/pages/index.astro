@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import { getLiveCollection } from 'astro:content';
+import Site from '../layouts/Site.astro';
 
 const requestedPage = Number(Astro.url.searchParams.get('page') ?? 1);
 const page =
@@ -9,41 +10,54 @@ const page =
     ? requestedPage
     : 1;
 const pageSize = 10;
-const { entries, error } = await getLiveCollection('packages', {
-  limit: pageSize + 1,
-  offset: (page - 1) * pageSize,
-});
-const hasNext = (entries?.length ?? 0) > pageSize;
+const [posts, testimonials] = await Promise.all([
+  getLiveCollection('posts', { limit: pageSize + 1, offset: (page - 1) * pageSize }),
+  getLiveCollection('testimonials'),
+]);
+const hasNext = (posts.entries?.length ?? 0) > pageSize;
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Sedna playground</title>
-  </head>
-  <body>
-    <h1>Sedna playground</h1>
-    {error && <p>Could not load packages: {error.message}</p>}
+<Site>
+  <h1>Playground</h1>
+  <h2>Posts</h2>
+  {posts.error ? (
+    <p role="status">Could not load posts.</p>
+  ) : (
     <ul>
-      {entries?.slice(0, pageSize).map((entry) => (
+      {posts.entries?.slice(0, pageSize).map(({ id, data }) => (
         <li>
-          <a href={`/packages/${entry.id}`}>{entry.data.title}</a>{' '}
-          {entry.data.price != null && `(${entry.data.price})`}
+          <a href={`/posts/${encodeURIComponent(id)}`}>{data.title}</a>
         </li>
       ))}
     </ul>
+  )}
+  {!posts.error && !posts.entries?.length && <p>No posts.</p>}
+  {(page > 1 || hasNext) && (
     <nav aria-label="Pagination">
       {page > 1 && (
         <a href={`/?page=${page - 1}`} rel="prev">
           Previous
         </a>
-      )}
-      <span> Page {page} </span>
-      {!error && hasNext && (
+      )}{' '}
+      Page {page}{' '}
+      {!posts.error && hasNext && (
         <a href={`/?page=${page + 1}`} rel="next">
           Next
         </a>
       )}
     </nav>
-  </body>
-</html>
+  )}
+
+  <h2>Testimonials</h2>
+  {testimonials.error ? (
+    <p role="status">Could not load testimonials.</p>
+  ) : (
+    testimonials.entries?.map(({ data }) => (
+      <figure>
+        <blockquote>{data.quote}</blockquote>
+        <figcaption>{[data.name, data.role, data.company].filter(Boolean).join(' · ')}</figcaption>
+      </figure>
+    ))
+  )}
+  {!testimonials.error && !testimonials.entries?.length && <p>No testimonials.</p>}
+</Site>

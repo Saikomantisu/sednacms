@@ -1,7 +1,10 @@
+import { adapter } from 'virtual:sedna/adapter';
+import { disposableDemo } from 'virtual:sedna/admin';
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { CmsEntry, EntriesResponse, EntryResponse, SchemaResponse } from '../api/types.js';
 import type { CollectionConfig } from '../loader.js';
+import { setAdminAdapter } from './adapter.js';
 import { api, RequestError } from './api.js';
 import { AuthScreen, type Credentials } from './auth.js';
 import {
@@ -14,6 +17,8 @@ import {
 import { EntryEditor } from './entry-editor.js';
 import { Notifications, toast } from './toasts.js';
 import { Brand, entryTitle, titleCase, useConfirmation } from './ui.js';
+
+setAdminAdapter(adapter);
 
 type Screen =
   | { type: 'loading' | 'error' | 'empty' }
@@ -286,8 +291,21 @@ function App() {
           ))}
         </nav>
         <footer>
-          <a className="side-link" href="/" target="_blank" rel="noopener">
-            View website ↗
+          <a
+            className="side-link"
+            href="/"
+            target="_blank"
+            rel="noopener"
+            onClick={
+              disposableDemo
+                ? (event) => {
+                    event.preventDefault();
+                    window.dispatchEvent(new Event('sedna-demo-preview'));
+                  }
+                : undefined
+            }
+          >
+            {disposableDemo ? 'Preview my changes ↗' : 'View website ↗'}
           </a>
           <div className="account">
             <span className="avatar" aria-hidden="true">
@@ -305,13 +323,17 @@ function App() {
                   void run(async () => {
                     setMenuOpen(false);
                     if (!(await canLeave())) return;
+                    if (disposableDemo) {
+                      location.reload();
+                      return;
+                    }
                     await api('auth/sign-out', 'POST', {});
                     history.replaceState(null, '', location.pathname);
                     showAuth(false);
                   })
                 }
               >
-                Sign out
+                {disposableDemo ? 'Reset demo' : 'Sign out'}
               </button>
             </div>
           </div>

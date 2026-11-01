@@ -13,6 +13,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./demo": {
+      "types": "./dist/demo/index.d.ts",
+      "default": "./dist/demo/index.js"
+    },
+    "./fields": {
+      "types": "./dist/fields.d.ts",
+      "default": "./dist/fields.js"
     }
   },
   "files": [
@@ -33,7 +41,8 @@
     "test:cache": "npm run build && node --test tests/cache.test.mjs",
     "test:uploads": "npm run build && node --test tests/uploads.test.mjs",
     "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs",
-    "test:loader": "npm run build && node --test tests/loader.test.mjs"
+    "test:loader": "npm run build && node --test tests/loader.test.mjs",
+    "test:demo": "npm run build && node --test tests/demo.test.mjs"
   },
   "peerDependencies": {
     "astro": ">=6.0.0"

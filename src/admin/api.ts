@@ -1,3 +1,4 @@
+import { getAdminAdapter } from './adapter.js';
 export class RequestError extends Error {
   constructor(
     message: string,
@@ -14,12 +15,15 @@ export async function api<T>(
   body?: unknown,
   headers: Record<string, string> = {},
 ): Promise<T> {
-  const response = await fetch('/api/cms/' + path, {
-    method,
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
+  const adapter = getAdminAdapter();
+  const response = adapter
+    ? await adapter.request(path, method, body, headers)
+    : await fetch('/api/cms/' + path, {
+        method,
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
   const data = response.status === 204 ? null : await response.json();
   if (!response.ok)
     throw new RequestError(

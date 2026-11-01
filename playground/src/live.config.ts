@@ -1,31 +1,13 @@
 import { defineLiveCollection } from 'astro:content';
-import { fields, sednaLoader } from 'sednacms';
+import { sednaLoader } from 'sednacms';
+import { postFields, testimonialFields } from './schema';
 
-const packages = defineLiveCollection({
-  loader: sednaLoader({
-    collection: 'packages',
-    fields: {
-      title: fields.text({ required: true }),
-      slug: fields.slug({ from: 'title' }),
-      price: fields.number(),
-      cover: fields.image(),
-      body: fields.richText(),
-    },
-    pages: ['/', '/packages'],
-  }),
+const posts = defineLiveCollection({
+  loader: sednaLoader({ collection: 'posts', fields: postFields }),
 });
 
 const testimonials = defineLiveCollection({
-  loader: sednaLoader({
-    collection: 'testimonials',
-    fields: {
-      name: fields.text({ required: true }),
-      quote: fields.text({ required: true }),
-      role: fields.text(),
-      company: fields.text(),
-      avatar: fields.image(),
-    },
-  }),
+  loader: sednaLoader({ collection: 'testimonials', fields: testimonialFields }),
 });
 
-export const collections = { packages, testimonials };
+export const collections = { posts, testimonials };

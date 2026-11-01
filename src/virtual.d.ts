@@ -4,6 +4,7 @@ declare module 'virtual:sedna/collections' {
 declare module 'virtual:sedna/admin' {
   export const favicon: string;
   export const uploadsEnabled: boolean;
+  export const disposableDemo: boolean;
 }
 declare module 'virtual:sedna/storage' {
   export const storage: import('./storage/config.js').StorageAdapter | null;
@@ -14,4 +15,8 @@ declare module 'virtual:sedna/cache' {
 declare module '*.wasm?url' {
   const url: string;
   export default url;
+}
+
+declare module 'virtual:sedna/adapter' {
+  export const adapter: import('./admin/adapter.js').AdminAdapter | null;
 }

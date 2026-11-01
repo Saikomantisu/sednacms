@@ -111,7 +111,7 @@ test('production Astro API creates and publishes live content', {
     assert.equal((await fetch(origin + script[1])).status, 200);
     await expect('/api/cms/schema', 'GET', undefined, 401);
     await expect('/api/cms/uploads', 'GET', undefined, 401);
-    await expect('/api/cms/collections/packages', 'POST', { data: { title: 'Unauthorized' } }, 401);
+    await expect('/api/cms/collections/posts', 'POST', { data: { title: 'Unauthorized' } }, 401);
     await expect(
       '/api/cms/setup',
       'POST',
@@ -129,7 +129,7 @@ test('production Astro API creates and publishes live content', {
       .map((value) => value.split(';')[0])
       .join('; ');
     const config = await expect('/api/cms/schema', 'GET');
-    assert.equal(config.collections[0].collection, 'packages');
+    assert.equal(config.collections[0].collection, 'posts');
     assert.equal(config.collections[0].fields.title.required, true);
     const uploadConfig = await expect('/api/cms/uploads', 'GET');
     assert.equal(uploadConfig.provider, 'uploadthing');
@@ -138,30 +138,30 @@ test('production Astro API creates and publishes live content', {
     await expect('/api/cms/uploads?slug=image&actionType=upload', 'POST', {}, 403, {
       origin: 'https://evil.example',
     });
-    const base = '/api/cms/collections/packages';
+    const base = '/api/cms/collections/posts';
     const { entry: blank } = await expect(base, 'POST', { data: {} }, 201);
     await expect(`${base}/${blank.id}`, 'PATCH', { status: 'published' }, 400);
     await expect(`${base}/${blank.id}`, 'DELETE', undefined, 204);
-    await expect(base, 'POST', { data: { title: 'Bad', price: '123' } }, 400);
+    await expect(base, 'POST', { data: { title: 'Bad', reading_time: '123' } }, 400);
     await expect(base, 'POST', { data: { id: randomUUID() } }, 400);
     const { entry } = await expect(
       base,
       'POST',
       {
         data: {
-          title: 'API Test Package',
-          price: 123,
-          cover: { src: 'https://example.com/photo.jpg', width: 800, height: 600, alt: 'Photo' },
+          title: 'API Test Post',
+          reading_time: 123,
+          image: { src: 'https://example.com/photo.jpg', width: 800, height: 600, alt: 'Photo' },
         },
       },
       201,
     );
-    assert.equal(entry.data.slug, 'api-test-package');
+    assert.equal(entry.data.slug, 'api-test-post');
     assert.equal(entry.status, 'draft');
     assert.equal(entry.published_at, null);
-    assert.equal(entry.data.cover.width, 800);
-    assert.ok(!(await (await publicPage('/')).text()).includes('API Test Package'));
-    await expect(base, 'POST', { data: { title: 'API Test Package' } }, 409);
+    assert.equal(entry.data.image.width, 800);
+    assert.ok(!(await (await publicPage('/')).text()).includes('API Test Post'));
+    await expect(base, 'POST', { data: { title: 'API Test Post' } }, 409);
     const { entry: published } = await expect(
       `${base}/${entry.id}`,
       'PATCH',
@@ -169,24 +169,17 @@ test('production Astro API creates and publishes live content', {
       200,
     );
     assert.ok(Number.isFinite(Date.parse(published.published_at)));
-    assert.ok((await (await publicPage('/')).text()).includes('API Test Package'));
-    assert.ok(
-      (await (await publicPage('/packages/api-test-package')).text()).includes('API Test Package'),
-    );
+    assert.ok((await (await publicPage('/')).text()).includes('API Test Post'));
+    assert.ok((await (await publicPage('/posts/api-test-post')).text()).includes('API Test Post'));
     const { entry: edited } = await expect(`${base}/${entry.id}`, 'PATCH', {
-      data: { title: 'Updated Package' },
+      data: { title: 'Updated Post' },
     });
     assert.equal(edited.published_at, published.published_at, 'editing preserves publication date');
-    const detail = await (await publicPage('/packages/api-test-package')).text();
+    const detail = await (await publicPage('/posts/api-test-post')).text();
     assert.match(detail, /alt="Photo"/);
     assert.match(detail, /width="800"/);
-    assert.ok(detail.includes('Updated Package'));
-    const { entry: second } = await expect(
-      base,
-      'POST',
-      { data: { title: 'Second Package' } },
-      201,
-    );
+    assert.ok(detail.includes('Updated Post'));
+    const { entry: second } = await expect(base, 'POST', { data: { title: 'Second Post' } }, 201);
     await expect(base + '/reorder', 'POST', { ids: [second.id, entry.id] });
     const list = await expect(base, 'GET');
     assert.deepEqual(
@@ -239,18 +232,18 @@ test('production Astro API creates and publishes live content', {
     );
     await expect(base + '?limit=1&offset=1', 'GET');
     await expect(base + '?limit=101', 'GET', undefined, 400);
-    await expect(`${base}/${entry.id}`, 'PATCH', { data: { price: 999 } }, 403, {
+    await expect(`${base}/${entry.id}`, 'PATCH', { data: { reading_time: 999 } }, 403, {
       origin: 'https://evil.example',
     });
     await expect('/api/cms/collections/sedna__user', 'GET', undefined, 404);
     await expect(`${base}/${randomUUID()}`, 'GET', undefined, 404);
     await expect(`${base}/${entry.id}`, 'DELETE', undefined, 204);
     await expect(`${base}/${second.id}`, 'DELETE', undefined, 204);
-    assert.ok(!(await (await publicPage('/')).text()).includes('Updated Package'));
+    assert.ok(!(await (await publicPage('/')).text()).includes('Updated Post'));
     // Exercise the remaining field types against the same isolated database.
     const db = createPool(url.href);
     try {
-      await db.query(`insert into sedna_packages (title, slug, status, sort_order)
+      await db.query(`insert into sedna_posts (title, slug, status, sort_order)
         select 'Page item ' || n, 'page-item-' || n, 'published', n from generate_series(1, 12) n`);
       const firstPage = await (await publicPage('/')).text();
       assert.match(firstPage, /Page item 10/);
@@ -263,12 +256,12 @@ test('production Astro API creates and publishes live content', {
       assert.match(secondPage, /rel="prev"/);
       const {
         rows: [lookup],
-      } = await db.query("select id from sedna_packages where slug = 'page-item-12'");
-      assert.match(await (await publicPage(`/packages/${lookup.id}`)).text(), /Page item 12/);
+      } = await db.query("select id from sedna_posts where slug = 'page-item-12'");
+      assert.match(await (await publicPage(`/posts/${lookup.id}`)).text(), /Page item 12/);
       const uuidSlug = randomUUID();
-      await db.query('update sedna_packages set slug = $1 where id = $2', [uuidSlug, lookup.id]);
-      assert.match(await (await publicPage(`/packages/${uuidSlug}`)).text(), /Page item 12/);
-      const missing = await fetch(origin + '/packages/not-present', { redirect: 'manual' });
+      await db.query('update sedna_posts set slug = $1 where id = $2', [uuidSlug, lookup.id]);
+      assert.match(await (await publicPage(`/posts/${uuidSlug}`)).text(), /Page item 12/);
+      const missing = await fetch(origin + '/posts/not-present', { redirect: 'manual' });
       assert.equal(missing.status, 302);
       assert.equal(missing.headers.get('cache-control'), 'no-store');
       const extra = createContentApi({

@@ -1,17 +1,19 @@
 import type { ImageValue } from '../fields.js';
 import type { SignedUpload, UploadConfig } from '../storage/config.js';
 import type { UploadthingRouter } from '../storage/uploadthing.js';
+import type { UploadProgress } from './adapter.js';
+import { getAdminAdapter } from './adapter.js';
 import { api } from './api.js';
 import { prepareImage } from './image-processing.js';
 
-export type UploadProgress =
-  | { stage: 'preparing' | 'finalizing' }
-  | { stage: 'uploading'; percent?: number };
+export type { UploadProgress } from './adapter.js';
 
 export async function uploadImage(
   file: File,
   progress: (progress: UploadProgress) => void,
 ): Promise<ImageValue> {
+  const adapter = getAdminAdapter();
+  if (adapter) return adapter.uploadImage(file, progress);
   progress({ stage: 'preparing' });
   const config = await api<UploadConfig>('uploads');
   const prepared = await prepareImage(file, config.image);

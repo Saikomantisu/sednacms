@@ -123,17 +123,19 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
                 name: 'sedna-collections',
                 resolveId(id) {
                   if (id === 'virtual:sedna/collections') return '\0virtual:sedna/collections';
+                  if (id === 'virtual:sedna/adapter') return '\0virtual:sedna/adapter';
                   if (id === 'virtual:sedna/admin') return '\0virtual:sedna/admin';
                   if (id === 'virtual:sedna/storage') return '\0virtual:sedna/storage';
                   if (id === 'virtual:sedna/cache') return '\0virtual:sedna/cache';
                 },
                 load(id) {
+                  if (id === '\0virtual:sedna/adapter') return 'export const adapter = null;';
                   if (id === '\0virtual:sedna/cache')
                     return `export const cache = ${JSON.stringify(options.cache ?? false)};`;
                   if (id === '\0virtual:sedna/storage')
                     return `export const storage = ${JSON.stringify(options.storage ?? null)};`;
                   if (id === '\0virtual:sedna/admin') {
-                    return `export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.admin?.favicon))}; export const uploadsEnabled = ${Boolean(options.storage)};`;
+                    return `export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.admin?.favicon))}; export const uploadsEnabled = ${Boolean(options.storage)}; export const disposableDemo = false;`;
                   }
                   if (id === '\0virtual:sedna/collections')
                     return liveConfig

@@ -1,0 +1,34 @@
+---
+export const prerender = false;
+
+import { Image } from 'astro:assets';
+import { getLiveEntry } from 'astro:content';
+import Site from '../../layouts/Site.astro';
+
+const slug = Astro.params.slug;
+if (!slug) return Astro.redirect('/404');
+const { entry, error } = await getLiveEntry('posts', slug);
+if (!entry && (!error || error.name === 'LiveEntryNotFoundError')) return Astro.redirect('/404');
+if (error) Astro.response.status = 503;
+const data = entry?.data;
+---
+
+<Site title={`${data?.title || 'Post unavailable'} | Playground`}>
+  {error ? (
+    <p role="status">Could not load this post.</p>
+  ) : (
+    data && (
+      <article>
+        <h1>{data.title}</h1>
+        {data.date && (
+          <p>
+            <time datetime={data.date}>{data.date}</time>
+          </p>
+        )}
+        {data.reading_time != null && <p>{data.reading_time} minute read</p>}
+        {data.image && <Image {...data.image} loading="eager" />}
+        {data.body && <div set:html={data.body} />}
+      </article>
+    )
+  )}
+</Site>

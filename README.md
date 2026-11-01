@@ -26,18 +26,18 @@ export default defineConfig({
 import { defineLiveCollection } from 'astro:content';
 import { fields, sednaLoader } from 'sednacms';
 
-const packages = defineLiveCollection({
+const posts = defineLiveCollection({
   loader: sednaLoader({
-    collection: 'packages',
+    collection: 'posts',
     fields: {
       title: fields.text({ required: true }),
       slug: fields.slug({ from: 'title' }),
-      price: fields.number(),
+      reading_time: fields.number(),
     },
   }),
 });
 
-export const collections = { packages };
+export const collections = { posts };
 ```
 
 Set `SEDNA_DATABASE_URL` in `.env`. Tables are created when the dev server starts.
@@ -47,7 +47,7 @@ Set `SEDNA_DATABASE_URL` in `.env`. Tables are created when the dev server start
 `getLiveCollection` accepts optional SQL pagination filters:
 
 ```ts
-const { entries, error } = await getLiveCollection('packages', {
+const { entries, error } = await getLiveCollection('posts', {
   limit: 11,
   offset: (page - 1) * 10,
 });
@@ -368,8 +368,34 @@ signature verification, and UploadThing signing and callback tests. Codec tests
 encode actual files in all three formats and independently decode them with Sharp.
 Provider tests use test credentials and mock
 the provider's metadata endpoint. They do not upload to a real account. The
-playground package detail page renders its cover with Astro's `<Image>`.
+playground post detail page renders its image with Astro's `<Image>`.
 
 UploadThing currently pins an older Effect release. The npm override selects
 Effect 3.22.4 to include its security fixes; upload tests exercise the SDK with
 that version.
+
+## Disposable public demos
+
+The `playground/` app uses the real database and storage services for development.
+Public demo applications should live in a separate repository and use
+`sednacms/demo` in place of the live Sedna integration:
+
+```js
+import sednaDemo from 'sednacms/demo';
+
+// Inside defineConfig({ integrations: [...] })
+sednaDemo({ adapter: new URL('./src/demo/adapter.ts', import.meta.url) });
+```
+
+The adapter module exports a default object implementing `AdminAdapter` from
+`sednacms/demo`. Its `request(path, method, body, headers)` method returns a
+`Response`; `uploadImage(file, progress)` returns an `ImageValue`. Both run only
+in the browser. Return normal API response shapes so the same Sedna editor can
+create, edit, publish, delete and reorder content with your transport.
+
+The demo integration installs the editor and an API route that always returns
+403. It installs no authentication, database setup or upload handlers, and
+refuses to run alongside the live integration. The application supplies its own
+fixture loader, disposable adapter, preview UI and security headers. Do not give
+the public deployment database or storage credentials. Import schema field
+helpers from `sednacms/fields` in browser code to avoid server-only imports.

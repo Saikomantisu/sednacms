@@ -1,9 +1,15 @@
-import { uploadsEnabled } from 'virtual:sedna/admin';
+import { disposableDemo, uploadsEnabled } from 'virtual:sedna/admin';
 import { type InputHTMLAttributes, useState } from 'react';
 import type { Field, ImageValue } from '../fields.js';
 import { RichText } from './rich-text.js';
 import { titleCase } from './ui.js';
 import { type UploadProgress, uploadImage } from './uploads.js';
+
+// Only the isolated demo accepts browser-local images. Live CMS validation stays unchanged.
+const validImageSource = (src: string) =>
+  disposableDemo
+    ? src.startsWith('/images/') || src.startsWith(`blob:${location.origin}/`)
+    : /^https?:\/\//.test(src);
 
 type ImageDraft = { src: string; width: string; height: string; alt: string };
 export type FieldValue = string | boolean | number | ImageDraft | null;
@@ -36,7 +42,7 @@ export function readValues(fields: Record<string, Field>, values: Record<string,
         const image = value as ImageDraft;
         if (!image.src && !image.width && !image.height && !image.alt) return [name, null];
         if (
-          !/^https?:\/\//.test(image.src) ||
+          !validImageSource(image.src) ||
           !Number.isInteger(Number(image.width)) ||
           Number(image.width) < 1 ||
           !Number.isInteger(Number(image.height)) ||
@@ -207,7 +213,9 @@ function ImageControl({
             }}
           />
           <p className="hint" id={`${id}-upload-hint`}>
-            JPEG, PNG, WebP, GIF, or AVIF, up to 32 MB.
+            {disposableDemo
+              ? 'Local preview only. Up to 5 MB per image and 25 MB per session. Nothing is uploaded.'
+              : 'JPEG, PNG, WebP, GIF, or AVIF, up to 32 MB.'}
           </p>
           {progress && (
             <div className="upload-progress">
@@ -220,16 +228,18 @@ function ImageControl({
           )}
         </div>
       )}
-      {input('src', 'Image URL', 'url')}
+      {input('src', 'Image URL', disposableDemo ? 'text' : 'url')}
       <div className="field-grid">
         {input('width', 'Width', 'number')}
         {input('height', 'Height', 'number')}
       </div>
       {input('alt', 'Image description', 'text')}
       <p className="hint">
-        {uploadsEnabled
-          ? 'You can also paste an existing image URL and enter its dimensions.'
-          : 'Paste an existing image URL and enter its dimensions. Ask your website developer to configure storage to enable uploads.'}
+        {disposableDemo
+          ? 'Use bundled /images/ paths or choose a local image. External images are blocked in this demo.'
+          : uploadsEnabled
+            ? 'You can also paste an existing image URL and enter its dimensions.'
+            : 'Paste an existing image URL and enter its dimensions. Ask your website developer to configure storage to enable uploads.'}
       </p>
       {value.src && (
         <button
@@ -240,7 +250,7 @@ function ImageControl({
           Remove image
         </button>
       )}
-      {/^https?:\/\//.test(value.src) && failed !== value.src && (
+      {validImageSource(value.src) && failed !== value.src && (
         <img
           className="image-preview"
           src={value.src}
