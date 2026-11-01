@@ -42,14 +42,17 @@ export default function sedna(): AstroIntegration {
   return {
     name: 'sednacms',
     hooks: {
-      'astro:config:setup': ({ config, logger }) => {
+      'astro:config:setup': ({ config, logger, injectRoute }) => {
         root = fileURLToPath(config.root);
         srcDir = fileURLToPath(config.srcDir);
+        injectRoute({ pattern: '/api/cms/[...path]', entrypoint: fileURLToPath(new URL('./api/route.js', import.meta.url)), prerender: false });
         logger.info('Sedna CMS loaded');
       },
       'astro:server:setup': async ({ server, logger }) => {
         // The loader reads the connection string from process.env, which Vite does not fill from .env files.
-        const databaseUrl = loadEnv('development', root, 'SEDNA_').SEDNA_DATABASE_URL ?? process.env.SEDNA_DATABASE_URL;
+        const env = loadEnv('development', root, 'SEDNA_');
+        for (const [key, value] of Object.entries(env)) process.env[key] ??= value;
+        const databaseUrl = process.env.SEDNA_DATABASE_URL;
         if (databaseUrl) process.env.SEDNA_DATABASE_URL = databaseUrl;
 
         const runner = (server.environments.ssr as { runner?: { import: Import } }).runner;

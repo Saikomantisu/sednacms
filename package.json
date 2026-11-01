@@ -20,17 +20,21 @@
   ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test:auth": "npm run build && node --test tests/auth.test.mjs"
   },
   "peerDependencies": {
     "astro": ">=6.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
     "astro": "^7.4.2",
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "better-auth": "1.7.14",
+    "pg": "^8.23.1",
     "postgres": "^3.4.9"
   }
 }

@@ -34,7 +34,9 @@ npx astro add netlify   # any SSR adapter
 ### Env vars
 ```env
 SEDNA_DATABASE_URL=postgres://...
-SEDNA_SECRET=random-string        # signs sessions
+SEDNA_SECRET=random-string        # at least 32 characters, signs sessions
+SEDNA_URL=https://example.com      # site origin
+SEDNA_SETUP_TOKEN=random-string   # separate 32+ character token; remove after first-admin setup
 # storage, one of:
 UPLOADTHING_TOKEN=...
 SEDNA_S3_ENDPOINT= / SEDNA_S3_BUCKET= / SEDNA_S3_KEY= / SEDNA_S3_SECRET= / SEDNA_S3_PUBLIC_URL=
@@ -82,7 +84,7 @@ text, richText, number, image, boolean, date, slug (auto-generated from another 
 
 ### Admin (`/admin`)
 - First run with empty DB: one-time setup screen to create the first admin account (no default password).
-- Login / logout, session cookie signed with `SEDNA_SECRET`.
+- Login / logout via Better Auth email/password, database-backed session cookie signed with `SEDNA_SECRET`. Public registration disabled.
 - Invite additional editors.
 - Per collection: list, add, edit, delete, drag to reorder, draft vs published.
 - Image picker with upload.

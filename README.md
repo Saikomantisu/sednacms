@@ -55,3 +55,40 @@ npm run dev
 ## License
 
 MIT
+
+## Authentication
+
+Sedna uses Better Auth for email/password login and database-backed sessions.
+Public registration is disabled. The admin UI and editor invitations are not implemented yet.
+
+Configure `SEDNA_URL` with the site's origin, `SEDNA_SECRET` with a random secret
+of at least 32 characters, and `SEDNA_SETUP_TOKEN` with a separate random token
+of at least 32 characters. Generate each with `openssl rand -hex 32`.
+Use HTTPS in production. Set these as runtime environment variables on your host;
+the playground also loads them from `.env` during development.
+
+Create the first admin with `POST /api/cms/setup`, sending JSON with `name`,
+`email`, and `password` (12–128 characters). Include `Origin: <SEDNA_URL>` and
+`X-Sedna-Setup-Token: <SEDNA_SETUP_TOKEN>` headers. This creates the account but
+does not log it in. Setup is atomic and returns 409 once an account exists.
+Remove `SEDNA_SETUP_TOKEN` after setup.
+
+Available auth endpoints:
+
+- `POST /api/cms/auth/sign-in/email`: JSON `{ "email": "...", "password": "..." }`.
+- `GET /api/cms/auth/get-session`: current session, or `null`.
+- `POST /api/cms/auth/sign-out`: revoke the session.
+
+Use same-origin requests and retain the session cookie. Write requests require
+an `Origin` header. Authentication responses are not cached. Rate limits are stored
+in Postgres and use Astro's client address rather than caller-supplied IP headers.
+
+Auth tables use the reserved `sedna__` prefix. On the first auth request per
+process, Sedna applies Better Auth's schema migrations under a database lock.
+Better Auth is pinned to an exact version so schema changes are reviewed with
+package upgrades. Password reset email delivery is not configured yet.
+
+Run the auth integration test with `SEDNA_TEST_DATABASE_URL` set to a test Postgres
+connection and `npm run test:auth`. It creates and removes a temporary schema;
+Neon tests use the direct endpoint because the pooler rejects `search_path` startup
+options. Without a test connection, the test is skipped.
