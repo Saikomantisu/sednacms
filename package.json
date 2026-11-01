@@ -19,6 +19,13 @@
     "dist"
   ],
   "scripts": {
+    "prepare": "husky",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "build": "tsc && node scripts/copy-admin.mjs",
     "dev": "npm run build && tsc --watch",
     "test:auth": "npm run build && node --test tests/auth.test.mjs",
@@ -29,11 +36,13 @@
     "astro": ">=6.0.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.4",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "astro": "^7.4.2",
+    "husky": "^9.1.7",
     "typescript": "^7.0.2"
   },
   "dependencies": {

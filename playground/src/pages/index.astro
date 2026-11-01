@@ -1,12 +1,14 @@
 ---
 export const prerender = false;
-import { getLiveCollection } from "astro:content";
-const { entries, error } = await getLiveCollection("packages");
+
+import { getLiveCollection } from 'astro:content';
+
+const { entries, error } = await getLiveCollection('packages');
 ---
 
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <title>Sedna playground</title>
   </head>
   <body>
@@ -15,7 +17,7 @@ const { entries, error } = await getLiveCollection("packages");
     <ul>
       {entries?.map((entry) => (
         <li>
-          <a href={`/packages/${entry.id}`}>{entry.data.title}</a>{" "}
+          <a href={`/packages/${entry.id}`}>{entry.data.title}</a>{' '}
           {entry.data.price != null && `(${entry.data.price})`}
         </li>
       ))}

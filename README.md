@@ -52,6 +52,26 @@ cp .env.example .env          # add your database URL
 npm run dev
 ```
 
+Run code quality commands from the repository root. They cover the package and
+playground, respect `.gitignore`, and exclude npm lockfiles.
+
+```bash
+npm run check          # check formatting, lint rules, and import organization
+npm run check:fix      # apply formatting and safe lint/import fixes
+npm run lint           # check lint rules only
+npm run lint:fix       # apply safe lint fixes
+npm run format         # format files
+npm run format:check   # check formatting without changing files
+```
+
+Biome uses two-space indentation and single quotes in JavaScript and TypeScript.
+Astro markup formatting and linting use Biome's experimental full HTML support.
+
+`npm install` installs the Husky Git hooks. Before each commit, `npm run check`
+checks formatting, lint rules, and import organization across the repository.
+Errors block the commit without changing files. Run `npm run check:fix` to apply
+safe fixes, review and stage the changes, then commit again.
+
 ## License
 
 MIT

@@ -43,4 +43,6 @@ interface FieldValues {
 }
 
 // Every value can be null: columns are nullable and `required` is only checked when saving.
-export type FieldsData<F extends Record<string, Field>> = { [K in keyof F]: FieldValues[F[K]['type']] | null };
+export type FieldsData<F extends Record<string, Field>> = {
+  [K in keyof F]: FieldValues[F[K]['type']] | null;
+};
