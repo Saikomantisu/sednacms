@@ -1,6 +1,7 @@
 ---
 export const prerender = false;
 
+import { Image } from 'astro:assets';
 import { getLiveEntry } from 'astro:content';
 
 const { entry } = await getLiveEntry('packages', Astro.params.slug!);
@@ -15,6 +16,7 @@ if (!entry) return Astro.redirect('/404');
   <body>
     <a href="/">All packages</a>
     <h1>{entry.data.title}</h1>
+    {entry.data.cover && <Image {...entry.data.cover} />}
     {entry.data.price != null && <p>Price: {entry.data.price}</p>}
     {entry.data.body && <div set:html={entry.data.body} />}
   </body>

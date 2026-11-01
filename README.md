@@ -174,8 +174,8 @@ Sedna shows the login screen instead.
 
 The sidebar lists configured collections. Add an entry or select an existing
 one to edit it. Forms are generated from the collection fields, with a basic
-rich-text editor, date and number inputs, and an image URL form. Images can use
-existing URLs; uploading and browsing stored images are the next step.
+rich-text editor, date and number inputs, and image fields. Configure storage to
+upload images, or paste an existing image URL with its dimensions.
 
 Save incomplete entries as drafts, publish when ready, or save a published entry
 as a draft to remove it from the public site. Drag entries or use their arrow
@@ -186,3 +186,107 @@ discard unsaved changes.
 `npm run build` compiles the package and copies the admin page and stylesheet
 into `dist`. When changing those assets during package development, rerun the
 build before refreshing the playground.
+
+## Image uploads
+
+Configure one storage adapter in `astro.config.mjs`:
+
+```js
+import sedna, { uploadthingStorage } from 'sednacms';
+
+// Inside defineConfig:
+integrations: [sedna({ storage: uploadthingStorage() })],
+```
+
+Set `UPLOADTHING_TOKEN` from your UploadThing dashboard in your server's runtime
+environment. The playground uses this adapter and loads the token from `.env`
+during development. Restart the dev server after changing storage configuration.
+The SDK handles upload signatures and verifies provider callbacks at
+`/api/cms/uploads`. Uploads finish without waiting for the callback, so local
+development does not require a public tunnel.
+
+Alternatively use `storage: s3Storage()`, importing `s3Storage` from `sednacms`,
+and set these environment variables:
+
+```env
+SEDNA_S3_ENDPOINT=https://s3.example.com
+SEDNA_S3_BUCKET=site-images
+SEDNA_S3_KEY=your-access-key
+SEDNA_S3_SECRET=your-secret-key
+SEDNA_S3_REGION=auto
+SEDNA_S3_PUBLIC_URL=https://images.example.com
+```
+
+For Amazon S3, use your bucket's region instead of `auto`. The bucket must allow
+public reads through `SEDNA_S3_PUBLIC_URL`. This URL may include a path prefix.
+Set it during builds as well as at runtime so Sedna can authorize the image host
+for Astro's `<Image>`. UploadThing's `*.ufs.sh` image hosts are added automatically.
+Configure your bucket's CORS rules for your site's exact origin, `PUT`, and the
+`Content-Type` header, for example:
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://your-site.example"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["Content-Type"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Editors can upload JPEG, PNG, WebP, GIF, and AVIF images up to 32 MB. The browser
+resizes images to fit within 2560 × 2560 pixels without enlarging them, preserves
+their proportions, and converts them to WebP at 80% quality by default before uploading
+directly to storage. Saved dimensions describe the processed image. Transparency
+is preserved for WebP and AVIF; JPG uses a white background. Animated images
+become still images, and embedded metadata is removed.
+
+Processing uses jSquash's resize and WebP, MozJPEG, and AVIF WebAssembly codecs
+in a browser worker. Only the selected encoder and, when needed, the resizer
+are downloaded on upload. The site serves these assets locally; no conversion
+service receives the image. Processing times out after two minutes with an error.
+If your site has a Content Security Policy, allow same-origin workers and
+WebAssembly compilation, for example `worker-src 'self'` and
+`script-src 'self' 'wasm-unsafe-eval'` alongside your existing directives.
+
+Both adapters accept image settings:
+
+```js
+uploadthingStorage({
+  image: { format: 'avif', quality: 0.85, maxWidth: 1920, maxHeight: 1920 },
+});
+s3Storage({ image: { format: 'jpg', quality: 0.9 } });
+s3Storage({ image: false }); // Keep original files and animations.
+```
+
+`format` accepts `'webp'`, `'jpg'`, or `'avif'`. Quality is between 0 and 1 for all
+formats, so `0.85` means 85%. Quality values are encoder-specific; equal numbers
+across formats do not guarantee the same visual quality or file size.
+Dimensions must be integers between 1 and 16384. Restart the dev server after
+changing these settings.
+These settings apply to new admin uploads. Existing images and pasted URLs stay
+as they are. Processing runs in the admin browser; upload signing endpoints do
+not enforce the image dimensions or output format.
+
+The CMS receives file descriptors and signs uploads, never file
+contents. Signing requires a session and a matching `Origin`. S3 signatures bind
+the file size and content type and expire in five minutes.
+
+The image field shows a progress bar with preparation, upload, and finishing
+states and a preview, preserves the image description
+when replacing a file, and saves `{ src, width, height, alt }` with the entry.
+Removing an image clears the field. It does not delete the stored file, since
+other entries may use it. Discarded entries can also leave unused files in storage.
+There is no shared media library yet.
+
+Run `npm run test:uploads` for image processing, authorization, validation, S3
+signature verification, and UploadThing signing and callback tests. Codec tests
+encode actual files in all three formats and independently decode them with Sharp.
+Provider tests use test credentials and mock
+the provider's metadata endpoint. They do not upload to a real account. The
+playground package detail page renders its cover with Astro's `<Image>`.
+
+UploadThing currently pins an older Effect release. The npm override selects
+Effect 3.22.4 to include its security fixes; upload tests exercise the SDK with
+that version.

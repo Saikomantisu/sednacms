@@ -15,4 +15,17 @@ const packages = defineLiveCollection({
   }),
 });
 
-export const collections = { packages };
+const testimonials = defineLiveCollection({
+  loader: sednaLoader({
+    collection: 'testimonials',
+    fields: {
+      name: fields.text({ required: true }),
+      quote: fields.text({ required: true }),
+      role: fields.text(),
+      company: fields.text(),
+      avatar: fields.image(),
+    },
+  }),
+});
+
+export const collections = { packages, testimonials };

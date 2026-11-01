@@ -6,6 +6,7 @@ import { resolveAdminFavicon } from './admin/favicon.js';
 import { createPool } from './db/client.js';
 import { ensureTables } from './db/tables.js';
 import { type CollectionConfig, isSednaLoader } from './loader.js';
+import type { StorageAdapter } from './storage/config.js';
 
 export type {
   ApiErrorResponse,
@@ -22,6 +23,13 @@ export type { Field, FieldsData, FieldType, ImageValue } from './fields.js';
 export { fields } from './fields.js';
 export type { CollectionConfig } from './loader.js';
 export { sednaLoader } from './loader.js';
+export type {
+  ImageProcessingOptions,
+  SignedUpload,
+  StorageAdapter,
+  UploadConfig,
+} from './storage/config.js';
+export { s3Storage, uploadthingStorage } from './storage/config.js';
 
 const LIVE_CONFIG_FILES = [
   'live.config.ts',
@@ -60,6 +68,7 @@ async function syncTables(
 }
 
 export interface SednaOptions {
+  storage?: StorageAdapter;
   admin?: {
     /** Admin favicon URL. Defaults to the site's public/favicon.svg, .ico, or .png. */
     favicon?: string;
@@ -79,7 +88,21 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
         const liveConfig = LIVE_CONFIG_FILES.map((name) => srcDir + name).find((path) =>
           existsSync(path),
         );
+        const env = loadEnv(
+          process.env.NODE_ENV === 'production' ? 'production' : 'development',
+          root,
+          ['SEDNA_', 'UPLOADTHING_'],
+        );
+        const patterns: { protocol: 'https'; hostname: string }[] = [];
+        if (options.storage?.provider === 'uploadthing')
+          patterns.push({ protocol: 'https', hostname: '*.ufs.sh' });
+        if (options.storage?.provider === 's3') {
+          const publicUrl = process.env.SEDNA_S3_PUBLIC_URL ?? env.SEDNA_S3_PUBLIC_URL;
+          if (publicUrl)
+            patterns.push({ protocol: 'https', hostname: new URL(publicUrl).hostname });
+        }
         updateConfig({
+          image: { remotePatterns: [...config.image.remotePatterns, ...patterns] },
           vite: {
             plugins: [
               {
@@ -87,10 +110,13 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
                 resolveId(id) {
                   if (id === 'virtual:sedna/collections') return '\0virtual:sedna/collections';
                   if (id === 'virtual:sedna/admin') return '\0virtual:sedna/admin';
+                  if (id === 'virtual:sedna/storage') return '\0virtual:sedna/storage';
                 },
                 load(id) {
+                  if (id === '\0virtual:sedna/storage')
+                    return `export const storage = ${JSON.stringify(options.storage ?? null)};`;
                   if (id === '\0virtual:sedna/admin') {
-                    return `export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.admin?.favicon))};`;
+                    return `export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.admin?.favicon))}; export const uploadsEnabled = ${Boolean(options.storage)};`;
                   }
                   if (id === '\0virtual:sedna/collections')
                     return liveConfig
@@ -115,7 +141,7 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
       },
       'astro:server:setup': async ({ server, logger }) => {
         // The loader reads the connection string from process.env, which Vite does not fill from .env files.
-        const env = loadEnv('development', root, 'SEDNA_');
+        const env = loadEnv('development', root, ['SEDNA_', 'UPLOADTHING_']);
         for (const [key, value] of Object.entries(env)) process.env[key] ??= value;
         const databaseUrl = process.env.SEDNA_DATABASE_URL;
         if (databaseUrl) process.env.SEDNA_DATABASE_URL = databaseUrl;

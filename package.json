@@ -30,6 +30,7 @@
     "dev": "npm run build && tsc --watch",
     "test:auth": "npm run build && node --test tests/auth.test.mjs",
     "test:admin": "npm run build && node --test tests/admin.test.mjs",
+    "test:uploads": "npm run build && node --test tests/uploads.test.mjs",
     "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs"
   },
   "peerDependencies": {
@@ -46,6 +47,12 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1161.0",
+    "@aws-sdk/s3-request-presigner": "^3.1161.0",
+    "@jsquash/avif": "2.1.1",
+    "@jsquash/jpeg": "1.6.0",
+    "@jsquash/resize": "2.1.1",
+    "@jsquash/webp": "1.5.0",
     "@tiptap/core": "^3.32.2",
     "@tiptap/extensions": "^3.32.2",
     "@tiptap/pm": "^3.32.2",
@@ -56,6 +63,10 @@
     "pg": "^8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "sonner": "^2.0.8"
+    "sonner": "^2.0.8",
+    "uploadthing": "^7.7.4"
+  },
+  "overrides": {
+    "effect": "3.22.4"
   }
 }

@@ -3,4 +3,12 @@ declare module 'virtual:sedna/collections' {
 }
 declare module 'virtual:sedna/admin' {
   export const favicon: string;
+  export const uploadsEnabled: boolean;
+}
+declare module 'virtual:sedna/storage' {
+  export const storage: import('./storage/config.js').StorageAdapter | null;
+}
+declare module '*.wasm?url' {
+  const url: string;
+  export default url;
 }

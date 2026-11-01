@@ -1,12 +1,15 @@
 import { collections } from 'virtual:sedna/collections';
+import { storage } from 'virtual:sedna/storage';
 import type { APIRoute } from 'astro';
 import { AuthConfigurationError, getAuthServer } from '../auth/server.js';
 import { createPool } from '../db/client.js';
 import { isSednaLoader } from '../loader.js';
 import { createContentApi } from './content.js';
+import { createUploadApi } from './uploads.js';
 
 export const prerender = false;
 let content: ReturnType<typeof createContentApi> | undefined;
+let uploads: ReturnType<typeof createUploadApi> | undefined;
 export const ALL: APIRoute = async ({ request, clientAddress }) => {
   try {
     const authServer = getAuthServer();
@@ -17,6 +20,22 @@ export const ALL: APIRoute = async ({ request, clientAddress }) => {
       headers.set('x-sedna-client-ip', clientAddress);
       return await authServer.handle(new Request(request, { headers }));
     }
+    const getSession = async (headers: Headers) => {
+      await authServer.ensureReady();
+      const { headers: responseHeaders, response: session } = await authServer.auth.api.getSession({
+        headers,
+        returnHeaders: true,
+      });
+      return { session, headers: responseHeaders };
+    };
+    if (path === '/api/cms/uploads') {
+      uploads ??= createUploadApi({
+        storage: storage ?? undefined,
+        origin: new URL(process.env.SEDNA_URL!).origin,
+        getSession,
+      });
+      return await uploads(request);
+    }
     content ??= createContentApi({
       collections: Object.values(collections)
         .map((value) => value.loader)
@@ -24,12 +43,7 @@ export const ALL: APIRoute = async ({ request, clientAddress }) => {
         .map((loader) => loader.sedna),
       db: createPool(process.env.SEDNA_DATABASE_URL!),
       origin: new URL(process.env.SEDNA_URL!).origin,
-      getSession: async (headers) => {
-        await authServer.ensureReady();
-        const { headers: responseHeaders, response: session } =
-          await authServer.auth.api.getSession({ headers, returnHeaders: true });
-        return { session, headers: responseHeaders };
-      },
+      getSession,
     });
     return await content(request);
   } catch (error) {

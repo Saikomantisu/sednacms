@@ -101,6 +101,7 @@ test('production Astro API creates and publishes live content', {
     assert.ok(script, 'admin client script is bundled');
     assert.equal((await fetch(origin + script[1])).status, 200);
     await expect('/api/cms/schema', 'GET', undefined, 401);
+    await expect('/api/cms/uploads', 'GET', undefined, 401);
     await expect('/api/cms/collections/packages', 'POST', { data: { title: 'Unauthorized' } }, 401);
     await expect(
       '/api/cms/setup',
@@ -121,6 +122,11 @@ test('production Astro API creates and publishes live content', {
     const config = await expect('/api/cms/schema', 'GET');
     assert.equal(config.collections[0].collection, 'packages');
     assert.equal(config.collections[0].fields.title.required, true);
+    const uploadConfig = await expect('/api/cms/uploads', 'GET');
+    assert.equal(uploadConfig.provider, 'uploadthing');
+    await expect('/api/cms/uploads?slug=image&actionType=upload', 'POST', {}, 403, {
+      origin: 'https://evil.example',
+    });
     const base = '/api/cms/collections/packages';
     const { entry: blank } = await expect(base, 'POST', { data: {} }, 201);
     await expect(`${base}/${blank.id}`, 'PATCH', { status: 'published' }, 400);
@@ -163,6 +169,8 @@ test('production Astro API creates and publishes live content', {
     });
     assert.equal(edited.published_at, published.published_at, 'editing preserves publication date');
     const detail = await (await fetch(origin + '/packages/api-test-package')).text();
+    assert.match(detail, /alt="Photo"/);
+    assert.match(detail, /width="800"/);
     assert.ok(detail.includes('Updated Package'));
     const { entry: second } = await expect(
       base,

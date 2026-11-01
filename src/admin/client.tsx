@@ -402,6 +402,7 @@ function App() {
                     schema={screen.schema}
                     entry={screen.entry}
                     busy={busy}
+                    run={(action) => void run(action)}
                     onDirty={() => {
                       dirty.current = true;
                     }}

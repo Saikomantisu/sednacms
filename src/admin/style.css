@@ -745,6 +745,33 @@ button.text-link {
   padding: 10px 12px;
   resize: vertical;
 }
+.field input[type="file"] {
+  height: auto;
+  min-height: 44px;
+  padding: 5px;
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 32px;
+  cursor: pointer;
+}
+.field input[type="file"]::file-selector-button {
+  margin: 0 12px 0 0;
+  padding: 0 12px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--card);
+  box-shadow: var(--button-depth);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 550;
+  cursor: inherit;
+  transition: background-color 120ms;
+}
+.field input[type="file"]:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 .field :is(input, textarea, select):focus,
 .rich:focus-within {
   outline: none;
@@ -908,6 +935,34 @@ button.text-link {
 .link-error {
   color: var(--danger-text);
 }
+.image-control {
+  display: grid;
+  gap: 12px;
+}
+.image-control .field {
+  margin-bottom: 0;
+}
+.upload-progress {
+  display: grid;
+  gap: 6px;
+}
+.upload-progress-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.upload-progress progress {
+  display: block;
+  width: 100%;
+  height: 8px;
+  accent-color: var(--accent);
+}
+.image-control > :where(button, .image-preview) {
+  justify-self: start;
+}
 .image-preview:not([hidden]) {
   display: block;
 }
@@ -919,6 +974,9 @@ button.text-link {
   outline: 1px solid rgb(255 255 255 / 0.08);
   outline-offset: -1px;
   margin-top: 4px;
+}
+.image-control > :where(.hint, .image-preview) {
+  margin: 0;
 }
 .editor-note {
   padding-bottom: 20px;
@@ -1165,6 +1223,15 @@ button.text-link {
   .field select {
     height: 44px;
   }
+  .field input[type="file"] {
+    height: auto;
+    min-height: 54px;
+    font-size: 16px;
+    line-height: 42px;
+  }
+  .field input[type="file"]::file-selector-button {
+    height: 42px;
+  }
   .sidebar :where(nav) button,
   .side-link {
     height: 40px;
@@ -1210,6 +1277,9 @@ button.text-link {
     text-decoration: underline;
   }
   button:hover:not(:disabled) {
+    background: var(--card-hover);
+  }
+  .field input[type="file"]:hover:not(:disabled)::file-selector-button {
     background: var(--card-hover);
   }
   button.primary:hover:not(:disabled) {

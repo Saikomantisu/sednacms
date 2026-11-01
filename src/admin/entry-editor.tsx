@@ -12,8 +12,18 @@ type Props = {
   onBack: () => void;
   onSave: (status: EntryStatus, read: () => Record<string, unknown>) => void;
   onDelete: () => void;
+  run: (action: () => Promise<void>) => void;
 };
-export function EntryEditor({ schema, entry, busy, onDirty, onBack, onSave, onDelete }: Props) {
+export function EntryEditor({
+  schema,
+  entry,
+  busy,
+  onDirty,
+  onBack,
+  onSave,
+  onDelete,
+  run,
+}: Props) {
   const [values, setValues] = useState(() => initialValues(schema.fields, entry?.data));
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
@@ -61,6 +71,7 @@ export function EntryEditor({ schema, entry, busy, onDirty, onBack, onSave, onDe
             field={field}
             value={values[name]}
             disabled={busy}
+            run={run}
             onChange={(value, changed = true) => {
               setValues((previous) => ({ ...previous, [name]: value }));
               if (changed) onDirty();

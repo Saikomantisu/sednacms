@@ -1,7 +1,9 @@
+import { uploadsEnabled } from 'virtual:sedna/admin';
 import { type InputHTMLAttributes, useState } from 'react';
 import type { Field, ImageValue } from '../fields.js';
 import { RichText } from './rich-text.js';
 import { titleCase } from './ui.js';
+import { type UploadProgress, uploadImage } from './uploads.js';
 
 type ImageDraft = { src: string; width: string; height: string; alt: string };
 export type FieldValue = string | boolean | number | ImageDraft | null;
@@ -69,12 +71,14 @@ export function FieldControl({
   value,
   disabled,
   onChange,
+  run,
 }: {
   name: string;
   field: Field;
   value: FieldValue;
   disabled: boolean;
   onChange: (value: FieldValue, changed?: boolean) => void;
+  run: (action: () => Promise<void>) => void;
 }) {
   const id = 'field-' + name;
   const label = titleCase(name);
@@ -92,7 +96,13 @@ export function FieldControl({
       {field.type === 'richText' ? (
         <RichText id={id} label={label} value={value} disabled={disabled} onChange={onChange} />
       ) : field.type === 'image' ? (
-        <ImageControl id={id} value={value as ImageDraft} disabled={disabled} onChange={onChange} />
+        <ImageControl
+          id={id}
+          value={value as ImageDraft}
+          disabled={disabled}
+          onChange={onChange}
+          run={run}
+        />
       ) : field.type === 'boolean' ? (
         <select
           id={id}
@@ -137,13 +147,23 @@ function ImageControl({
   value,
   disabled,
   onChange,
+  run,
 }: {
   id: string;
   value: ImageDraft;
   disabled: boolean;
   onChange: (value: ImageDraft) => void;
+  run: (action: () => Promise<void>) => void;
 }) {
   const [failed, setFailed] = useState('');
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
+  const progressLabel =
+    progress?.stage === 'preparing'
+      ? 'Preparing image…'
+      : progress?.stage === 'finalizing'
+        ? 'Finishing upload…'
+        : 'Uploading image…';
+  const percent = progress?.stage === 'uploading' ? progress.percent : undefined;
   const input = (key: keyof ImageDraft, label: string, type: string) => (
     <LabelledInput
       id={id + '-' + key}
@@ -157,7 +177,49 @@ function ImageControl({
     />
   );
   return (
-    <>
+    <div className="image-control">
+      {uploadsEnabled && (
+        <div className="field">
+          <label htmlFor={id + '-upload'}>Upload image</label>
+          <input
+            id={id + '-upload'}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            aria-describedby={`${id}-upload-hint`}
+            disabled={disabled}
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = '';
+              if (!file) return;
+              run(async () => {
+                try {
+                  const image = await uploadImage(file, setProgress);
+                  onChange({
+                    src: image.src,
+                    width: String(image.width),
+                    height: String(image.height),
+                    alt: value.alt,
+                  });
+                } finally {
+                  setProgress(null);
+                }
+              });
+            }}
+          />
+          <p className="hint" id={`${id}-upload-hint`}>
+            JPEG, PNG, WebP, GIF, or AVIF, up to 32 MB.
+          </p>
+          {progress && (
+            <div className="upload-progress">
+              <div className="upload-progress-label">
+                <p role="status">{progressLabel}</p>
+                {percent !== undefined && <span aria-hidden="true">{Math.floor(percent)}%</span>}
+              </div>
+              <progress max={100} value={percent} aria-label={progressLabel} />
+            </div>
+          )}
+        </div>
+      )}
       {input('src', 'Image URL', 'url')}
       <div className="field-grid">
         {input('width', 'Width', 'number')}
@@ -165,9 +227,19 @@ function ImageControl({
       </div>
       {input('alt', 'Image description', 'text')}
       <p className="hint">
-        Paste the address of an image that is already online. Uploading from your computer is coming
-        soon.
+        {uploadsEnabled
+          ? 'You can also paste an existing image URL and enter its dimensions.'
+          : 'Paste an existing image URL and enter its dimensions. Ask your website developer to configure storage to enable uploads.'}
       </p>
+      {value.src && (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange({ src: '', width: '', height: '', alt: '' })}
+        >
+          Remove image
+        </button>
+      )}
       {/^https?:\/\//.test(value.src) && failed !== value.src && (
         <img
           className="image-preview"
@@ -177,6 +249,6 @@ function ImageControl({
           onError={() => setFailed(value.src)}
         />
       )}
-    </>
+    </div>
   );
 }

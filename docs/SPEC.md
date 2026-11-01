@@ -98,6 +98,13 @@ text, richText, number, image, boolean, date, slug (auto-generated from another 
 - Invite additional editors.
 - Per collection: list, add, edit, delete, drag to reorder, draft vs published.
 - Image picker with upload.
+- Before direct upload, resize images to fit 2560 × 2560 without upscaling and
+  encode WebP at 80% quality by default. Both storage adapters accept dimension,
+  quality, and format overrides, with WebP, JPG, or AVIF output, or `image: false`
+  to keep original files. jSquash handles resizing and encoding in a browser
+  worker; only processed files upload directly to storage. Saved dimensions
+  describe the processed image. JPG flattens transparency onto white. Animations become
+  still images when processing is enabled.
 
 ### API (`/api/cms/*`)
 
@@ -133,7 +140,7 @@ text, richText, number, image, boolean, date, slug (auto-generated from another 
 
 ## Out of scope for v1
 
-Inline single fields in `.astro` files, version history / rollback, image resizing, multi-tenancy, hosted cloud version, `npx sednacms init` setup wizard, Cloudflare Workers runtime support.
+Inline single fields in `.astro` files, version history / rollback, multi-tenancy, hosted cloud version, `npx sednacms init` setup wizard, Cloudflare Workers runtime support.
 
 ## Repo layout
 
