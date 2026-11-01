@@ -21,7 +21,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test:auth": "npm run build && node --test tests/auth.test.mjs"
+    "test:auth": "npm run build && node --test tests/auth.test.mjs",
+    "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs"
   },
   "peerDependencies": {
     "astro": ">=6.0.0"

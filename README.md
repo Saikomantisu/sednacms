@@ -92,3 +92,36 @@ Run the auth integration test with `SEDNA_TEST_DATABASE_URL` set to a test Postg
 connection and `npm run test:auth`. It creates and removes a temporary schema;
 Neon tests use the direct endpoint because the pooler rejects `search_path` startup
 options. Without a test connection, the test is skipped.
+
+## Content API
+
+All content endpoints require a logged-in session. Write requests also require
+an `Origin` matching `SEDNA_URL`. Collections come from `src/live.config.ts`;
+the API can only access configured collections.
+
+- `GET /api/cms/schema`: collection names, fields, and page configuration.
+- `GET /api/cms/collections/:collection`: entries including drafts, ordered by
+  `sort_order`, then creation time and ID. Supports `limit` (1–100, default 100)
+  and `offset` (default 0).
+- `POST /api/cms/collections/:collection`: create an entry with
+  `{ "data": { "title": "Summer trip" }, "status": "draft" }`.
+- `GET /api/cms/collections/:collection/:id`: read an entry by its database UUID.
+- `PATCH /api/cms/collections/:collection/:id`: update selected fields and/or
+  change `status` to `published` or `draft`.
+- `DELETE /api/cms/collections/:collection/:id`: delete an entry.
+- `POST /api/cms/collections/:collection/reorder`: send `{ "ids": ["uuid", "uuid"] }`
+  in the desired order. Assigns positions starting at zero to those entries.
+
+Single-entry responses contain `{ entry }`; lists contain `{ entries }`. An entry
+has its database UUID, status, sort order, timestamps, and a `data` object.
+The public live loader still addresses entries by slug when one is configured.
+Shared request/response types are exported from `sednacms` for the future admin UI.
+
+Drafts may be incomplete. Publishing requires required fields and nonempty slugs.
+All supplied values are type-checked even for drafts. Missing slugs are generated
+from their configured source; changing a title preserves an existing slug.
+Unknown fields and system-column writes are rejected. Duplicate slugs return 409.
+
+Run `npm run test:api` with `SEDNA_TEST_DATABASE_URL` set to verify the production
+Astro server against a temporary database schema, including publishing content
+and seeing it on the playground without rebuilding.

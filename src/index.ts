@@ -10,6 +10,7 @@ export { fields } from './fields.js';
 export type { Field, FieldType, FieldsData, ImageValue } from './fields.js';
 export { sednaLoader } from './loader.js';
 export type { CollectionConfig } from './loader.js';
+export type { CmsEntry, EntryStatus, EntryWrite, EntryResponse, EntriesResponse, ApiErrorResponse, ReorderRequest, SchemaResponse, ReorderResponse } from './api/types.js';
 
 const LIVE_CONFIG_FILES = ['live.config.ts', 'live.config.mts', 'live.config.js', 'live.config.mjs'];
 
@@ -42,9 +43,19 @@ export default function sedna(): AstroIntegration {
   return {
     name: 'sednacms',
     hooks: {
-      'astro:config:setup': ({ config, logger, injectRoute }) => {
+      'astro:config:setup': ({ config, logger, injectRoute, updateConfig }) => {
         root = fileURLToPath(config.root);
         srcDir = fileURLToPath(config.srcDir);
+        const liveConfig = LIVE_CONFIG_FILES.map(name => srcDir + name).find(path => existsSync(path));
+        updateConfig({ vite: { plugins: [{
+          name: 'sedna-collections',
+          resolveId(id) { if (id === 'virtual:sedna/collections') return '\0virtual:sedna/collections'; },
+          load(id) {
+            if (id === '\0virtual:sedna/collections') return liveConfig
+              ? `export { collections } from ${JSON.stringify(liveConfig)};`
+              : 'export const collections = {};';
+          },
+        }] } });
         injectRoute({ pattern: '/api/cms/[...path]', entrypoint: fileURLToPath(new URL('./api/route.js', import.meta.url)), prerender: false });
         logger.info('Sedna CMS loaded');
       },
