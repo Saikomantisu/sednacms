@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import type { AstroIntegration, AstroIntegrationLogger } from 'astro';
 import { loadEnv } from 'vite';
 import { resolveAdminFavicon } from './admin/favicon.js';
+import { type CacheOptions, validateCache } from './cache.js';
 import { createPool } from './db/client.js';
 import { ensureTables } from './db/tables.js';
 import { type CollectionConfig, isSednaLoader } from './loader.js';
@@ -19,6 +20,7 @@ export type {
   ReorderResponse,
   SchemaResponse,
 } from './api/types.js';
+export type { CacheOptions } from './cache.js';
 export type { Field, FieldsData, FieldType, ImageValue } from './fields.js';
 export { fields } from './fields.js';
 export type { CollectionConfig } from './loader.js';
@@ -68,6 +70,8 @@ async function syncTables(
 }
 
 export interface SednaOptions {
+  /** Disabled by default. Opt in to shared-cache headers with a TTL in seconds. */
+  cache?: false | CacheOptions;
   storage?: StorageAdapter;
   admin?: {
     /** Admin favicon URL. Defaults to the site's public/favicon.svg, .ico, or .png. */
@@ -76,13 +80,14 @@ export interface SednaOptions {
 }
 
 export default function sedna(options: SednaOptions = {}): AstroIntegration {
+  validateCache(options.cache);
   let root = '';
   let srcDir = '';
 
   return {
     name: 'sednacms',
     hooks: {
-      'astro:config:setup': ({ config, logger, injectRoute, updateConfig }) => {
+      'astro:config:setup': ({ config, logger, injectRoute, updateConfig, addMiddleware }) => {
         root = fileURLToPath(config.root);
         srcDir = fileURLToPath(config.srcDir);
         const liveConfig = LIVE_CONFIG_FILES.map((name) => srcDir + name).find((path) =>
@@ -111,8 +116,11 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
                   if (id === 'virtual:sedna/collections') return '\0virtual:sedna/collections';
                   if (id === 'virtual:sedna/admin') return '\0virtual:sedna/admin';
                   if (id === 'virtual:sedna/storage') return '\0virtual:sedna/storage';
+                  if (id === 'virtual:sedna/cache') return '\0virtual:sedna/cache';
                 },
                 load(id) {
+                  if (id === '\0virtual:sedna/cache')
+                    return `export const cache = ${JSON.stringify(options.cache ?? false)};`;
                   if (id === '\0virtual:sedna/storage')
                     return `export const storage = ${JSON.stringify(options.storage ?? null)};`;
                   if (id === '\0virtual:sedna/admin') {
@@ -126,6 +134,10 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
               },
             ],
           },
+        });
+        addMiddleware({
+          entrypoint: fileURLToPath(new URL('./middleware.js', import.meta.url)),
+          order: 'pre',
         });
         injectRoute({
           pattern: '/admin/[...path]',

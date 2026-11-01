@@ -1,4 +1,5 @@
 import type { LiveLoader } from 'astro/loaders';
+import { markContentRequest } from './cache.js';
 import { createPool, ident, type Pool } from './db/client.js';
 import { ensureTables, type Logger, tableName } from './db/tables.js';
 import type { Field, FieldsData } from './fields.js';
@@ -8,7 +9,7 @@ type Fields = Record<string, Field>;
 export interface CollectionConfig<F extends Fields = Fields> {
   collection: string;
   fields: F;
-  /** Pages that list this collection, used for cache purge. */
+  /** Reserved for future purge adapters. Has no effect on the current cache policy. */
   pages?: string[];
 }
 
@@ -104,6 +105,7 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
     name: 'sednacms',
     sedna: config,
     loadCollection: async () => {
+      markContentRequest();
       try {
         const pool = getPool();
         await ensureReady(pool, config);
@@ -112,10 +114,12 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
         );
         return { entries: rows.map(toEntry) };
       } catch (error) {
+        markContentRequest(true);
         return { error: error as Error };
       }
     },
     loadEntry: async ({ filter }) => {
+      markContentRequest();
       try {
         const pool = getPool();
         await ensureReady(pool, config);
@@ -127,6 +131,7 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
         );
         return row ? toEntry(row) : undefined;
       } catch (error) {
+        markContentRequest(true);
         return { error: error as Error };
       }
     },

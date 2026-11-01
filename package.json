@@ -30,6 +30,7 @@
     "dev": "npm run build && tsc --watch",
     "test:auth": "npm run build && node --test tests/auth.test.mjs",
     "test:admin": "npm run build && node --test tests/admin.test.mjs",
+    "test:cache": "npm run build && node --test tests/cache.test.mjs",
     "test:uploads": "npm run build && node --test tests/uploads.test.mjs",
     "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs"
   },

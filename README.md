@@ -42,6 +42,46 @@ export const collections = { packages };
 
 Set `SEDNA_DATABASE_URL` in `.env`. Tables are created when the dev server starts.
 
+## Freshness and optional caching
+
+By default, responses that read Sedna content send `Cache-Control: no-store`.
+The live loader queries Postgres on every request, so publishing, editing,
+reordering, unpublishing, or deleting content takes effect on the next request
+that reaches your server. No rebuild, host-specific configuration, or purge API
+is required. Pages must render on demand, with `export const prerender = false`.
+Load CMS content in page frontmatter before the response starts streaming.
+
+To allow shared HTTP caches to reuse public content for a limited time:
+
+```js
+integrations: [sedna({ cache: { ttl: 60 } })],
+```
+
+`ttl` is a positive integer in seconds. This sends
+`Cache-Control: public, max-age=0, s-maxage=60, must-revalidate` on successful,
+anonymous GET/HEAD responses that use Sedna content. Browsers must revalidate,
+and shared caches may reuse the response for 60 seconds. Publishing does not
+purge those copies, so changes can remain invisible until they expire. Sedna
+does not add a stale-while-revalidate window or keep an in-memory response cache.
+Hosts that ignore `s-maxage` simply render each request as usual.
+
+Requests with cookies or authorization, responses setting cookies, redirects,
+errors, and loader failures use `no-store`. Opt-in responses include
+`Vary: Cookie, Authorization`, preserving other Vary values. Only enable caching
+for content that is identical for all anonymous visitors. With caching enabled,
+explicit page cache policies are preserved; `cache: false` forces `no-store`
+for CMS responses. Admin/API responses stay uncached, and unrelated routes keep
+their existing headers.
+
+Keep custom proxy rules and separate Astro route caches consistent with this
+policy. A cache serving a response before it reaches Sedna can delay updates.
+Prerendered pages remain fixed until rebuilt. Provider-specific purge adapters
+are deferred; the collection `pages` option currently has no effect.
+
+Run `npm run test:cache` to check cache policies and concurrent-request isolation.
+`npm run test:api` with `SEDNA_TEST_DATABASE_URL` also checks the headers and
+immediate content changes through the production playground server.
+
 ## Development
 
 ```bash

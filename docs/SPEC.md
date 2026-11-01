@@ -2,7 +2,7 @@
 
 ## What it is
 
-An open-source CMS for Astro, shipped as an integration. Clients edit content in an admin panel and changes go live within seconds. Content lives in Postgres, images in object storage. Pages that show CMS content render on demand and are cached at the CDN, so visitors get static-like speed.
+An open-source CMS for Astro, shipped as an integration. Clients edit content in an admin panel and published changes appear on the next request by default. Content lives in Postgres, images in object storage. Pages that show CMS content render on demand. Shared response caching is optional and does not require a particular host.
 
 - npm package: `sednacms`
 - Open source. One site per install (no multi-tenancy in v1).
@@ -16,15 +16,15 @@ Trade-off we accept: the site needs a server adapter.
 
 ## Tech decisions
 
-| Area        | Decision                                                                                                                                             |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework   | Astro 6+, `astro` as a **peerDependency**                                                                                                            |
-| Content API | Astro **live content collections** (`defineLiveCollection`, `getLiveCollection`, `getLiveEntry`). Stable since Astro 6, no experimental flag needed. |
-| Database    | Any Postgres via connection string (dev target: **Neon**). Require a pooled / serverless-friendly connection.                                        |
-| Storage     | Adapter interface. Ship `s3Storage()` (any S3-compatible bucket) and `uploadthingStorage()`. Dev target: **UploadThing**.                            |
-| Uploads     | Browser uploads directly to storage via presigned URL / UploadThing flow. Never stream files through our API.                                        |
-| Admin UI    | Lives inside the same package (`src/admin/`), mounted with `injectRoute`. Builds forms from the schema endpoint.                                     |
-| Hosting     | Requires an SSR adapter. Test on **Netlify** and **Node** from the start.                                                                            |
+| Area        | Decision                                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework   | Astro 6+, `astro` as a **peerDependency**                                                                                                               |
+| Content API | Astro **live content collections** (`defineLiveCollection`, `getLiveCollection`, `getLiveEntry`). Stable since Astro 6, no experimental flag needed.    |
+| Database    | Any Postgres via connection string (dev target: **Neon**). Require a pooled / serverless-friendly connection.                                           |
+| Storage     | Adapter interface. Ship `s3Storage()` (any S3-compatible bucket) and `uploadthingStorage()`. Dev target: **UploadThing**.                               |
+| Uploads     | Browser uploads directly to storage via presigned URL / UploadThing flow. Never stream files through our API.                                           |
+| Admin UI    | Lives inside the same package (`src/admin/`), mounted with `injectRoute`. Builds forms from the schema endpoint.                                        |
+| Hosting     | Requires an SSR adapter compatible with Sedna's Node dependencies. No hosting provider is required. Verify the portable behavior with the Node adapter. |
 
 ## Developer experience
 
@@ -64,7 +64,6 @@ const packages = defineLiveCollection({
       cover: fields.image(),
       body: fields.richText(),
     },
-    pages: ['/', '/packages'], // pages that list this collection (for cache purge)
   }),
 });
 
@@ -126,10 +125,14 @@ text, richText, number, image, boolean, date, slug (auto-generated from another 
 
 ### Caching
 
-- Default on every CMS-rendered page: `Cache-Control: public, s-maxage=60, stale-while-revalidate=86400`. Works on any host, no purge code needed.
-- Optional purge adapters, called after every successful write:
-  - `netlifyPurge()`: pages send `Netlify-Cache-Tag: <collection names>`; on save call `purgeCache({ tags: [collection] })`.
-  - `cloudflarePurge({ zoneId, token })`: purge by URL using the collection's `pages` list plus the entry's own URL.
+- Default: `Cache-Control: no-store` on responses that use the Sedna live loader, including empty collections and missing entries. The loader reads Postgres on every request. Publish, edit, reorder, unpublish, and delete take effect on the next request reaching the server, without a rebuild or purge call.
+- Opt in with `sedna({ cache: { ttl: 60 } })`. TTL is a positive integer in seconds. `cache: false` explicitly selects the default.
+- For anonymous successful GET/HEAD responses, opt-in caching sets `Cache-Control: public, max-age=0, s-maxage=<ttl>, must-revalidate` unless the page has an explicit cache policy. No stale-while-revalidate window is added.
+- These are standard HTTP cache headers. Sedna does not implement a response cache. Hosts that honor `s-maxage` may cache content for the TTL; hosts that do not honor it continue rendering on every request. A content write does not invalidate an already cached response.
+- Requests with cookies or authorization, responses setting cookies, unsuccessful responses, non-GET/HEAD requests, and loader failures use `no-store` even with caching enabled. Opt-in responses vary by Cookie and Authorization as well as any existing Vary headers. Cache only content that is the same for every anonymous visitor.
+- Admin and CMS API responses remain uncached. Unrelated routes keep their existing cache policies. CMS queries must run before the response starts streaming, normally in page frontmatter. Prerendered pages remain build-time snapshots and are outside this runtime policy.
+- Custom proxies, host-level caching rules, and separate Astro route caches must respect this policy or be disabled for CMS pages. Sedna cannot refresh a response served without reaching its middleware.
+- Provider-specific purge adapters are deferred until needed. The existing collection `pages` option is reserved for those adapters and currently has no effect.
 
 ### Integration hooks and guardrails
 
@@ -154,7 +157,8 @@ sednacms/
 │   ├── admin/            # injected admin UI
 │   ├── db/
 │   ├── storage/          # s3, uploadthing adapters
-│   └── purge/            # netlify, cloudflare adapters
+│   ├── cache.ts          # request-scoped response cache policy
+│   └── middleware.ts    # injected Astro middleware
 ├── package.json          # name: sednacms
 └── playground/           # normal Astro site, depends on "sednacms": "file:.."
 ```
@@ -169,5 +173,5 @@ Each step ends with a check that must pass before moving on.
 4. **API + auth**: setup screen, login, CRUD endpoints. Check: create an entry via API, see it on the page.
 5. **Admin UI**: list, form from schema, reorder, draft/publish. Check: a non-developer can add a travel package end to end.
 6. **Uploads**: UploadThing adapter, then S3 adapter. Check: upload a large phone photo, it renders via `<Image>`.
-7. **Caching + purge**: headers, Netlify adapter, Cloudflare adapter. Check: deployed on Netlify, new entry appears on the list page within seconds.
+7. **Portable caching**: fresh responses by default, optional shared-cache TTL, no provider-specific purge adapters. Check: on the Node playground, publish and edit content and see changes on the next request without rebuilding; verify default and opt-in headers while admin, API, and private responses remain uncached.
 8. **Guardrails**: adapter check, prerender warning, missing-DB fallback. Check: each case shows its message.

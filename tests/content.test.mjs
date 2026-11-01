@@ -24,6 +24,15 @@ test('production Astro API creates and publishes live content', {
   let server;
   let logs = '';
   let cookie = '';
+  const publicPage = async (path) => {
+    const response = await fetch(origin + path);
+    const ttl = process.env.SEDNA_EXPECT_CACHE_TTL;
+    assert.equal(
+      response.headers.get('cache-control'),
+      ttl ? `public, max-age=0, s-maxage=${ttl}, must-revalidate` : 'no-store',
+    );
+    return response;
+  };
   const call = async (path, method = 'GET', body, headers = {}) => {
     const response = await fetch(origin + path, {
       method,
@@ -124,6 +133,8 @@ test('production Astro API creates and publishes live content', {
     assert.equal(config.collections[0].fields.title.required, true);
     const uploadConfig = await expect('/api/cms/uploads', 'GET');
     assert.equal(uploadConfig.provider, 'uploadthing');
+    const authenticatedPage = await fetch(origin + '/', { headers: { cookie } });
+    assert.equal(authenticatedPage.headers.get('cache-control'), 'no-store');
     await expect('/api/cms/uploads?slug=image&actionType=upload', 'POST', {}, 403, {
       origin: 'https://evil.example',
     });
@@ -149,7 +160,7 @@ test('production Astro API creates and publishes live content', {
     assert.equal(entry.status, 'draft');
     assert.equal(entry.published_at, null);
     assert.equal(entry.data.cover.width, 800);
-    assert.ok(!(await (await fetch(origin + '/')).text()).includes('API Test Package'));
+    assert.ok(!(await (await publicPage('/')).text()).includes('API Test Package'));
     await expect(base, 'POST', { data: { title: 'API Test Package' } }, 409);
     const { entry: published } = await expect(
       `${base}/${entry.id}`,
@@ -158,17 +169,15 @@ test('production Astro API creates and publishes live content', {
       200,
     );
     assert.ok(Number.isFinite(Date.parse(published.published_at)));
-    assert.ok((await (await fetch(origin + '/')).text()).includes('API Test Package'));
+    assert.ok((await (await publicPage('/')).text()).includes('API Test Package'));
     assert.ok(
-      (await (await fetch(origin + '/packages/api-test-package')).text()).includes(
-        'API Test Package',
-      ),
+      (await (await publicPage('/packages/api-test-package')).text()).includes('API Test Package'),
     );
     const { entry: edited } = await expect(`${base}/${entry.id}`, 'PATCH', {
       data: { title: 'Updated Package' },
     });
     assert.equal(edited.published_at, published.published_at, 'editing preserves publication date');
-    const detail = await (await fetch(origin + '/packages/api-test-package')).text();
+    const detail = await (await publicPage('/packages/api-test-package')).text();
     assert.match(detail, /alt="Photo"/);
     assert.match(detail, /width="800"/);
     assert.ok(detail.includes('Updated Package'));
@@ -237,7 +246,7 @@ test('production Astro API creates and publishes live content', {
     await expect(`${base}/${randomUUID()}`, 'GET', undefined, 404);
     await expect(`${base}/${entry.id}`, 'DELETE', undefined, 204);
     await expect(`${base}/${second.id}`, 'DELETE', undefined, 204);
-    assert.ok(!(await (await fetch(origin + '/')).text()).includes('Updated Package'));
+    assert.ok(!(await (await publicPage('/')).text()).includes('Updated Package'));
     // Exercise the remaining field types against the same isolated database.
     const db = createPool(url.href);
     try {
