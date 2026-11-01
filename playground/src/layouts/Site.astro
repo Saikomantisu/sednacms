@@ -18,7 +18,41 @@ const { title = 'Playground', description = 'CMS playground.' } = Astro.props;
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <nav aria-label="Main navigation"><a href="/">Playground</a> · <a href="/admin">Admin</a></nav>
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="/" aria-current={Astro.url.pathname === '/' ? 'page' : undefined}>Playground</a>
+        <a href="/admin">Admin</a>
+      </nav>
+    </header>
     <main id="main"><slot /></main>
   </body>
 </html>
+
+<style>
+.site-header {
+  margin-bottom: 2rem;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.site-nav a {
+  color: #52525b;
+  font-size: 0.875rem;
+  text-underline-offset: 0.2em;
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  color: #18181b;
+}
+
+.site-nav a:focus-visible {
+  outline: 2px solid #3f3f46;
+  outline-offset: 4px;
+}
+</style>
