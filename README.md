@@ -29,9 +29,9 @@
   rebuild.
 </p>
 
-Requires Astro 6+, a compatible server adapter, and Postgres.
-
 ## Get started
+
+Requires Astro 6+, a compatible server adapter, and Postgres.
 
 Inside your Astro project:
 

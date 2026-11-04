@@ -10,6 +10,7 @@
     "seed:packages": "node --env-file-if-exists=.env scripts/seed.mjs packages"
   },
   "dependencies": {
+    "@astrojs/netlify": "^8.2.11",
     "@astrojs/node": "^11.1.9",
     "astro": "^7.4.2",
     "sednacms": "file:.."
