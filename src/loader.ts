@@ -116,7 +116,7 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
     name: 'sednacms',
     sedna: config,
     loadCollection: async ({ filter }) => {
-      markContentRequest();
+      markContentRequest(false, config.collection);
       try {
         const { limit, offset = 0 } = filter ?? {};
         if (
@@ -141,7 +141,7 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
       }
     },
     loadEntry: async ({ filter }) => {
-      markContentRequest();
+      markContentRequest(false, config.collection);
       try {
         const isUuid = uuid.test(filter.id);
         if (!slugField && !isUuid) return undefined;

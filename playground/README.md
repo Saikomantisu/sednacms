@@ -9,9 +9,8 @@ Three collections:
 - `packages`: title, summary, a required list of highlights, and a required itinerary.
   Each itinerary item groups a title, description, and its own list of activities.
 
-The homepage displays package highlights and numbered itinerary days in their saved
-order. When there are no published packages, it shows labelled example packages
-from `src/examples/package.ts`. These previews are not stored in the database.
+The homepage reads published content from the CMS, including package highlights and
+numbered itinerary days in their saved order. Empty collections show an empty state.
 
 ## Run
 
@@ -30,18 +29,19 @@ is added automatically.
 To try the list editor, open **Packages** in `/admin`, add an entry, and fill in its
 title, highlights and itinerary. Each day needs a title; activities are optional.
 Move a highlight, day, or activity up or down, then publish and reload `/` to see the
-saved order. A draft stays out of the frontend and does not replace the preview.
+saved order. A draft stays out of the frontend.
 
-## Example packages
+## Dummy content
 
-After building the root package, add three published examples to the configured database:
+After building the root package, add published dummy content to the configured database:
 
 ```sh
-npm run seed:packages --prefix playground
+npm run seed --prefix playground
 ```
 
-This adds Edinburgh, Lake District and York packages with highlights and daily activities.
-They appear on the homepage and can be edited in Admin. Rerunning the command skips
-examples already seeded, preserving your edits and other entries. The command reads
-`playground/.env` and creates the packages table if needed. Seeding runs only when
-explicitly requested, never on server startup.
+This adds three travel packages, two posts and three testimonials. They appear on the
+homepage and can be edited in Admin. Sample data lives in `scripts/seed-data.ts` and is
+never imported by the site. Rerunning the command skips content already seeded,
+preserving your edits and other entries. The command reads `playground/.env` and creates
+missing content tables if needed. Seeding runs only when explicitly requested, never
+on server startup. Use `npm run seed:packages --prefix playground` to seed only packages.

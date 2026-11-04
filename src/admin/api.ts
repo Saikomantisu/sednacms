@@ -1,4 +1,5 @@
 import { getAdminAdapter } from './adapter.js';
+import { toast } from './toasts.js';
 export class RequestError extends Error {
   constructor(
     message: string,
@@ -30,6 +31,14 @@ export async function api<T>(
       data?.error ?? data?.message ?? 'Something went wrong. Please try again.',
       response.status,
       path,
+    );
+  if (response.headers.get('X-Sedna-Cache') === 'purge-failed')
+    toast.warning(
+      'Changes saved, but the website cache could not be refreshed. Pages may remain outdated until the cache expires.',
+      {
+        id: 'cache-refresh',
+        duration: Infinity,
+      },
     );
   return data as T;
 }

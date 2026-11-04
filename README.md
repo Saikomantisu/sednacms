@@ -42,6 +42,25 @@ export const collections = { posts };
 
 Set `SEDNA_DATABASE_URL` in `.env`. Tables are created when the dev server starts.
 
+### Hosting platform
+
+Sedna identifies Netlify, Vercel, or Cloudflare from the final Astro adapter configuration.
+To override identification, set `platform` in `astro.config.mjs`:
+
+```js
+integrations: [sedna({ platform: 'netlify' })],
+```
+
+Accepted values are `'netlify'`, `'vercel'`, `'cloudflare'`, and `'none'`.
+Omit the option for automatic identification. No adapter, the Node adapter, and
+unrecognized adapters resolve to `'none'`. An explicit value takes precedence,
+including `'none'` to opt out of platform-specific integration.
+
+This option selects the platform used when caching is enabled. It does not install
+or replace Astro's adapter or make an unsupported runtime compatible. Sedna still
+requires a server adapter for deployment; Cloudflare Workers support remains
+outside the current scope.
+
 ## Lists and grouped fields
 
 Use `fields.list(item)` for ordered, repeatable values and `fields.object(fields)`
@@ -146,43 +165,121 @@ that reaches your server. No rebuild, host-specific configuration, or purge API
 is required. Pages must render on demand, with `export const prerender = false`.
 Load CMS content in page frontmatter before the response starts streaming.
 
-To allow shared HTTP caches to reuse public content for a limited time:
+Enable CDN caching for public CMS pages in `astro.config.mjs`:
 
 ```js
-integrations: [sedna({ cache: { ttl: 60 } })],
+integrations: [
+  sedna({ platform: 'netlify', cache: { ttl: 3600 } }),
+],
 ```
 
-`ttl` is a positive integer in seconds. This sends
-`Cache-Control: public, max-age=0, s-maxage=60, must-revalidate` on successful,
-anonymous GET/HEAD responses that use Sedna content. Browsers must revalidate,
-and shared caches may reuse the response for 60 seconds. Publishing does not
-purge those copies, so changes can remain invisible until they expire. Sedna
-does not add a stale-while-revalidate window or keep an in-memory response cache.
-Hosts that ignore `s-maxage` simply render each request as usual.
+Omit `platform` to identify it from Astro's adapter. `ttl` is a positive integer in
+seconds. No experimental Astro APIs or separate cache service are required.
 
-A shared cache is a hosting/CDN service that keeps the rendered HTML and serves it
-without calling Astro or Postgres again until its TTL expires. The standalone Node
-server does not provide one. Leaving Sedna caching disabled is a valid choice when
-immediate freshness matters. When deploying with caching enabled, verify the host's
-cache-hit indicator, expiry, query-string handling for paginated URLs, and cookie
-bypasses. Sending the header alone does not establish that responses are being cached.
+On a cache miss, Astro reads Postgres, renders the page, and tags it with every
+Sedna collection it read, including empty collections and missing entries.
+Netlify or Vercel then serves cached HTML without invoking Astro or Postgres.
+Netlify also uses its durable cache. Cloudflare requires additional cache rules.
 
-Requests with cookies or authorization, responses setting cookies, redirects,
-errors, and loader failures use `no-store`. Opt-in responses include
-`Vary: Cookie, Authorization`, preserving other Vary values. Only enable caching
-for content that is identical for all anonymous visitors. With caching enabled,
-explicit page cache policies are preserved; `cache: false` forces `no-store`
-for CMS responses. Admin/API responses stay uncached, and unrelated routes keep
-their existing headers.
+After a successful publish, edit of published content, unpublish, published-entry
+delete, or reorder involving published entries, Sedna awaits a purge for the
+collection's tag. This refreshes all affected pages, including lists, detail pages,
+and pagination variants. Draft-only changes do not purge. The next cache miss
+renders updated HTML. Purges happen after database commits, never after failed or
+rolled-back writes. Direct SQL changes do not trigger purges.
 
-Keep custom proxy rules and separate Astro route caches consistent with this
-policy. A cache serving a response before it reaches Sedna can delay updates.
-Prerendered pages remain fixed until rebuilt. Provider-specific purge adapters
-are deferred; the collection `pages` option currently has no effect.
+### Provider setup
 
-Run `npm run test:cache` to check cache policies and concurrent-request isolation.
-`npm run test:api` with `SEDNA_TEST_DATABASE_URL` also checks the headers and
-immediate content changes through the production playground server.
+Set these variables in the deployment's server environment, never in client code
+or in the `sedna()` options. They are read only when caching is enabled with a
+recognized platform. Missing credentials fail configuration rather than enabling
+a cache that cannot be purged.
+
+**Netlify**
+
+```env
+SEDNA_NETLIFY_TOKEN=your-netlify-personal-access-token
+# Optional if Netlify provides SITE_ID in the function environment:
+SEDNA_NETLIFY_SITE_ID=your-site-id
+```
+
+The token must have access to the site. Sedna uses Netlify's stable
+[cache-tag purge API](https://docs.netlify.com/build/caching/caching-overview/#on-demand-invalidation).
+The request targets all deploys of that site so previews sharing its database are
+also refreshed.
+
+**Vercel**
+
+```env
+SEDNA_VERCEL_TOKEN=your-vercel-access-token
+# Can be omitted if the corresponding VERCEL_PROJECT_ID / VERCEL_ORG_ID is available:
+SEDNA_VERCEL_PROJECT_ID=your-project-id
+SEDNA_VERCEL_TEAM_ID=your-team-id
+```
+
+The team ID is optional for personal projects. Sedna uses the stable
+[tag deletion API](https://vercel.com/docs/rest-api/edge-cache/dangerously-delete-by-tag)
+with a zero revalidation deadline to request a fresh render rather than knowingly
+serve stale content after an unpublish or delete. Purges cover production and
+preview caches in the project.
+
+Vercel [does not cache responses with `Vary: Cookie`](https://vercel.com/changelog/vary-cookie-responses-no-longer-cached).
+Sedna therefore does not add Cookie variation on Vercel, but preserves any explicit
+`Vary` headers from the page. Enable caching there only for pages whose public
+output is identical regardless of cookies. Cookie-bearing visitors may receive an
+already cached public page. Put personalized content and previews on separate,
+uncached routes. An explicit `Vary: Cookie` keeps the page uncached on Vercel.
+
+**Cloudflare**
+
+```env
+SEDNA_CLOUDFLARE_TOKEN=your-api-token-with-zone-cache-purge-permission
+SEDNA_CLOUDFLARE_ZONE_ID=your-zone-id
+```
+
+This supports Cloudflare's CDN in front of a compatible Node deployment. It does
+not add Cloudflare Workers runtime support to Sedna. Proxy the domain through
+Cloudflare and configure a Cache Rule making public HTML eligible for caching,
+respecting origin cache-control headers and query strings. Bypass `/admin`,
+`/api/cms`, and requests containing Cookie or Authorization headers. Do not force
+an edge TTL that overrides `no-store`. Cloudflare does not cache HTML by default;
+headers alone will not activate it. Sedna uses the stable global
+[tag purge API](https://developers.cloudflare.com/cache/how-to/purge-cache/purge-by-tags/),
+not the region-local Cache API's `delete()`.
+
+### Cache policies and limits
+
+Requests reaching Astro with cookies or authorization, responses setting cookies,
+redirects, errors, and loader failures use `no-store`, including platform-targeted
+cache-control headers. Admin and CMS API responses stay uncached. On Netlify and
+Cloudflare, Sedna adds `Vary: Cookie, Authorization`; Vercel gets Authorization
+variation only. Other existing `Vary` values are preserved.
+
+Cache only public, visitor-independent pages. Sedna cannot change a CDN response
+that never reaches its middleware. Explicit page `Cache-Control` policies are
+preserved and opt out of Sedna-managed CDN caching. Unrelated routes keep their
+existing headers. Load CMS content before streaming begins. Prerendered pages
+remain fixed until rebuilt. The collection `pages` option is still reserved.
+
+With `platform: 'none'`, caching retains the generic HTTP header behavior, with no
+provider purge. Standalone Node does not supply a response cache. Local development
+does not simulate the hosting platform's CDN, so local refreshes still query Postgres.
+
+Purges are not atomic with database commits and may take time to propagate.
+An in-flight render can race with a purge. Cache eviction, expiration, and deploys
+also cause new reads. Keep a finite TTL as a fallback. If a purge fails or times out,
+the content remains saved, the API sends `X-Sedna-Cache: purge-failed`, and the
+dashboard shows a persistent warning. Cached pages may remain outdated until their
+TTL expires or a later successful purge. There is no background retry job.
+
+Run `npm run test:cache` for policy, provider request, transaction, and CDN-boundary
+simulation tests. The simulation verifies that cached refreshes skip loader queries
+and published edits invalidate affected pages; it does not certify a deployed CDN.
+The suite also builds and runs the playground with caching enabled, substituting
+the database boundary to check real Astro response tags and private-route headers.
+On the real host, verify cache hits, a miss after publishing, query-string handling,
+and private-route bypasses. `npm run test:api` with `SEDNA_TEST_DATABASE_URL` checks
+content changes through an isolated schema in the production playground server.
 
 ## Development
 

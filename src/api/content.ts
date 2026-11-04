@@ -138,6 +138,7 @@ export function createContentApi(options: {
   db: Pool;
   origin: string;
   getSession: (headers: Headers) => Promise<{ session: unknown; headers: Headers }>;
+  invalidate?: (collection: string) => Promise<void>;
 }) {
   const { collections, db, origin, getSession } = options;
   const configs = new Map(collections.map((config) => [config.collection, config]));
@@ -161,6 +162,18 @@ export function createContentApi(options: {
   return async function handle(request: Request): Promise<Response> {
     const headers = new Headers({ 'Cache-Control': 'no-store' });
     const json = (value: unknown, status = 200) => Response.json(value, { status, headers });
+    const invalidate = async (collection: string) => {
+      try {
+        await options.invalidate?.(collection);
+      } catch {
+        // The database change has committed. Do not turn it into a failed save or
+        // encourage a retry that could create duplicate content.
+        headers.set('X-Sedna-Cache', 'purge-failed');
+        console.warn(
+          '[sednacms] Content saved, but CDN cache invalidation failed. Cached pages may remain outdated until expiry.',
+        );
+      }
+    };
     try {
       const auth = await getSession(request.headers);
       // Persist refreshed session cookies so subsequent requests can use the cache.
@@ -239,8 +252,11 @@ export function createContentApi(options: {
       }
       if (request.method === 'DELETE') {
         if (!id || id === 'reorder') fail(405, 'Method not allowed');
-        const { rowCount } = await db.query(`delete from ${table} where id = $1`, [id]);
-        if (!rowCount) fail(404, 'Entry not found');
+        const {
+          rows: [deleted],
+        } = await db.query(`delete from ${table} where id = $1 returning status`, [id]);
+        if (!deleted) fail(404, 'Entry not found');
+        if (deleted.status === 'published') await invalidate(config.collection);
         return new Response(null, { status: 204, headers });
       }
       if (!request.headers.get('content-type')?.startsWith('application/json'))
@@ -263,21 +279,24 @@ export function createContentApi(options: {
           new Set(ids).size !== ids.length
         )
           fail(400, 'Provide up to 1000 unique entry IDs');
-        if (ids.length)
-          await transaction(db, async (client) => {
-            // Lock rows in a stable order to avoid overlapping reorders deadlocking.
-            const { rowCount } = await client.query(
-              `select id from ${table} where id = any($1::uuid[]) order by id for update`,
-              [ids],
-            );
-            if (rowCount !== ids.length) fail(404, 'Entry not found');
-            // One statement for the whole list: positions count from zero in the order given.
-            await client.query(
-              `update ${table} set sort_order = position - 1, updated_at = now()
+        const published = ids.length
+          ? await transaction(db, async (client) => {
+              // Lock rows in a stable order to avoid overlapping reorders deadlocking.
+              const { rows, rowCount } = await client.query(
+                `select id, status from ${table} where id = any($1::uuid[]) order by id for update`,
+                [ids],
+              );
+              if (rowCount !== ids.length) fail(404, 'Entry not found');
+              // One statement for the whole list: positions count from zero in the order given.
+              await client.query(
+                `update ${table} set sort_order = position - 1, updated_at = now()
              from unnest($1::uuid[]) with ordinality as next(id, position) where ${table}.id = next.id`,
-              [ids],
-            );
-          });
+                [ids],
+              );
+              return rows.some((row) => row.status === 'published');
+            })
+          : false;
+        if (published) await invalidate(config.collection);
         return json({ success: true });
       }
       if ((id && request.method !== 'PATCH') || (!id && request.method !== 'POST'))
@@ -286,7 +305,7 @@ export function createContentApi(options: {
         fail(400, 'Unknown request property');
       if (body.status !== undefined && body.status !== 'draft' && body.status !== 'published')
         fail(400, 'Invalid status');
-      const entry = await transaction(db, async (client) => {
+      const { entry, published } = await transaction(db, async (client) => {
         const previous = id
           ? (await client.query(`select * from ${table} where id = $1 for update`, [id])).rows[0]
           : undefined;
@@ -318,8 +337,12 @@ export function createContentApi(options: {
               `insert into ${table} (${columns.join(', ')}) values (${columns.map((_, i) => `$${i + 1}`).join(', ')}) returning *`,
               params,
             );
-        return toEntry(config, row);
+        return {
+          entry: toEntry(config, row),
+          published: previous?.status === 'published' || status === 'published',
+        };
       });
+      if (published) await invalidate(config.collection);
       return json({ entry }, id ? 200 : 201);
     } catch (error) {
       if (error instanceof HttpError) return json({ error: error.message }, error.status);

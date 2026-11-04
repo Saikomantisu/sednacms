@@ -3,7 +3,6 @@ export const prerender = false;
 
 import { getLiveCollection } from 'astro:content';
 import PackageCard from '../components/PackageCard.astro';
-import { examplePackages } from '../examples/package';
 import Site from '../layouts/Site.astro';
 
 const requestedPage = Number(Astro.url.searchParams.get('page') ?? 1);
@@ -33,17 +32,9 @@ const hasNext = (posts.entries?.length ?? 0) > pageSize;
         ))}
       </div>
     ) : (
-      <div class="package-preview">
-        <p class="preview-note">
-          Example previews. Publish a package in <a href="/admin">Admin</a> to replace these
-          examples with your content.
-        </p>
-        <div class="package-list">
-          {examplePackages.map((data) => (
-            <PackageCard data={data} />
-          ))}
-        </div>
-      </div>
+      <p>
+        No travel packages. Add one in <a href="/admin">Admin</a>.
+      </p>
     )}
   </section>
 
@@ -128,11 +119,6 @@ const hasNext = (posts.entries?.length ?? 0) > pageSize;
 .package-list {
   display: grid;
   gap: 1.5rem;
-}
-
-.preview-note {
-  color: #52525b;
-  font-size: 0.875rem;
 }
 
 .testimonials {

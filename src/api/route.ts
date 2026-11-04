@@ -1,7 +1,10 @@
+import { cache } from 'virtual:sedna/cache';
 import { collections } from 'virtual:sedna/collections';
+import { platform } from 'virtual:sedna/platform';
 import { storage } from 'virtual:sedna/storage';
 import type { APIRoute } from 'astro';
 import { AuthConfigurationError, getAuthServer } from '../auth/server.js';
+import { createCdnCache } from '../cdn.js';
 import { createPool } from '../db/client.js';
 import { isSednaLoader } from '../loader.js';
 import { createContentApi } from './content.js';
@@ -44,6 +47,7 @@ export const ALL: APIRoute = async ({ request, clientAddress }) => {
       db: createPool(process.env.SEDNA_DATABASE_URL!),
       origin: new URL(process.env.SEDNA_URL!).origin,
       getSession,
+      invalidate: cache ? createCdnCache(platform)?.purge : undefined,
     });
     return await content(request);
   } catch (error) {

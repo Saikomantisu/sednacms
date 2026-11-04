@@ -69,8 +69,18 @@ async function syncTables(
   }
 }
 
+export type SednaPlatform = 'none' | 'cloudflare' | 'vercel' | 'netlify';
+
+const adapterPlatforms: Record<string, SednaPlatform> = {
+  '@astrojs/cloudflare': 'cloudflare',
+  '@astrojs/vercel': 'vercel',
+  '@astrojs/netlify': 'netlify',
+};
+
 export interface SednaOptions {
-  /** Disabled by default. Opt in to shared-cache headers with a TTL in seconds. */
+  /** Override platform identification from Astro's adapter. `none` opts out. */
+  platform?: SednaPlatform;
+  /** Disabled by default. Opt in to CDN caching with a TTL and platform purge support. */
   cache?: false | CacheOptions;
   storage?: StorageAdapter;
   admin?: {
@@ -81,6 +91,12 @@ export interface SednaOptions {
 
 export default function sedna(options: SednaOptions = {}): AstroIntegration {
   validateCache(options.cache);
+  if (
+    options.platform !== undefined &&
+    !['none', 'cloudflare', 'vercel', 'netlify'].includes(options.platform)
+  )
+    throw new Error('sednacms: platform must be none, cloudflare, vercel, or netlify.');
+  let platform: SednaPlatform = options.platform ?? 'none';
   let root = '';
   let srcDir = '';
 
@@ -127,9 +143,12 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
                   if (id === 'virtual:sedna/admin') return '\0virtual:sedna/admin';
                   if (id === 'virtual:sedna/storage') return '\0virtual:sedna/storage';
                   if (id === 'virtual:sedna/cache') return '\0virtual:sedna/cache';
+                  if (id === 'virtual:sedna/platform') return '\0virtual:sedna/platform';
                 },
                 load(id) {
                   if (id === '\0virtual:sedna/adapter') return 'export const adapter = null;';
+                  if (id === '\0virtual:sedna/platform')
+                    return `export const platform = ${JSON.stringify(platform)};`;
                   if (id === '\0virtual:sedna/cache')
                     return `export const cache = ${JSON.stringify(options.cache ?? false)};`;
                   if (id === '\0virtual:sedna/storage')
@@ -161,6 +180,18 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
           prerender: false,
         });
         logger.info('Sedna CMS loaded');
+      },
+      'astro:config:done': ({ config, logger }) => {
+        // Read the final adapter after its integration has called setAdapter().
+        const adapter = config.adapter?.name;
+        platform =
+          options.platform ??
+          (adapter && Object.hasOwn(adapterPlatforms, adapter)
+            ? adapterPlatforms[adapter]
+            : 'none');
+        logger.info(
+          `Platform: ${platform}${options.platform === undefined ? ' (automatic)' : ' (explicit)'}`,
+        );
       },
       'astro:server:setup': async ({ server, logger }) => {
         // The loader reads the connection string from process.env, which Vite does not fill from .env files.

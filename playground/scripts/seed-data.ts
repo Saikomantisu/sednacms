@@ -1,8 +1,8 @@
 import type { FieldsData } from 'sednacms';
-import type { packageFields } from '../schema';
+import type { packageFields, postFields, testimonialFields } from '../src/schema.ts';
 
-// Shared by the frontend previews and the explicit package seed command.
-export const examplePackage: FieldsData<typeof packageFields> = {
+// Dummy content is inserted into the CMS only by the seed command.
+export const dummyPackage: FieldsData<typeof packageFields> = {
   title: 'A weekend in Edinburgh',
   summary: 'Two days exploring the Old Town, walking the hills, and eating well.',
   highlights: [
@@ -32,8 +32,8 @@ export const examplePackage: FieldsData<typeof packageFields> = {
   ],
 };
 
-export const examplePackages: FieldsData<typeof packageFields>[] = [
-  examplePackage,
+export const dummyPackages: FieldsData<typeof packageFields>[] = [
+  dummyPackage,
   {
     title: 'Three days in the Lake District',
     summary: 'Lakeside walks, a village base, and a full day on the fells.',
@@ -101,5 +101,60 @@ export const examplePackages: FieldsData<typeof packageFields>[] = [
         ],
       },
     ],
+  },
+];
+
+export const dummyPosts: FieldsData<typeof postFields>[] = [
+  {
+    title: 'Packing for a weekend away',
+    slug: 'packing-for-a-weekend-away',
+    body: '<p>A small bag is enough for two nights. Pack a waterproof jacket, comfortable shoes, and a spare layer.</p><h2>Leave room for the journey home</h2><p>Keep a little space for anything you pick up along the way.</p>',
+    date: '2026-11-01',
+    reading_time: 3,
+    image: null,
+    tags: ['Travel tips', 'Weekends'],
+    gallery: [],
+    faqs: [
+      {
+        question: 'Do I need walking boots?',
+        answer:
+          '<p>Trainers are fine for city walks. Bring walking boots for routes on the fells.</p>',
+      },
+    ],
+  },
+  {
+    title: 'Planning your first walking holiday',
+    slug: 'planning-your-first-walking-holiday',
+    body: '<p>Choose a route that leaves time for breaks. Start with shorter walks and check the forecast before setting out.</p><p>A local guide can help you choose a route that suits your group.</p>',
+    date: '2026-11-03',
+    reading_time: 4,
+    image: null,
+    tags: ['Walking', 'Planning'],
+    gallery: [],
+    faqs: [],
+  },
+];
+
+export const dummyTestimonials: FieldsData<typeof testimonialFields>[] = [
+  {
+    name: 'Alex Morgan',
+    quote:
+      'The Edinburgh walk was a great way to start the weekend. We still had plenty of time to explore on our own.',
+    role: 'Weekend traveller',
+    company: null,
+  },
+  {
+    name: 'Sam Patel',
+    quote:
+      'Our guide picked a Lake District route that suited the whole group. The packed lunch was a welcome bonus.',
+    role: 'Walking holiday guest',
+    company: null,
+  },
+  {
+    name: 'Jamie Taylor',
+    quote:
+      'Everything in York was within walking distance of the hotel. Arriving by train made the trip easy.',
+    role: 'City break guest',
+    company: null,
   },
 ];
