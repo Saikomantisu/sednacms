@@ -47,8 +47,6 @@ test('built Astro server emits collection tags, preserves query variants, and ex
       root: fileURLToPath(new URL('../', import.meta.url)),
       outDir: fileURLToPath(new URL('./dist/', import.meta.url)),
       adapter: node({ mode: 'standalone' }),
-      // Keep pg external so the test can replace only the database boundary below.
-      vite: { ssr: { external: ['pg'] } },
       integrations: [sedna({ platform: 'netlify', cache: { ttl: 300 } })],
     });
   `,
