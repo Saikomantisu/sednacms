@@ -80,7 +80,7 @@ export function EntryEditor({
         ))}
         {Object.values(schema.fields).some((field) => field.required) && (
           <p className="editor-note">
-            Fields marked * must be filled in before you publish. Drafts can be saved with gaps.
+            Fill in fields marked * before publishing. You can save a draft with empty fields.
           </p>
         )}
         <div className="editor-bar">
