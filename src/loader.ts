@@ -43,18 +43,24 @@ function validate(config: CollectionConfig) {
       `sednacms: invalid collection name "${config.collection}". Use lowercase letters, digits and underscores, starting with a letter.`,
     );
   }
-  for (const [name, field] of Object.entries(config.fields)) {
+  validateFields(config.fields, config.collection, true);
+}
+
+function validateFields(fields: Fields, path: string, topLevel = false) {
+  for (const [name, field] of Object.entries(fields)) {
     if (!FIELD_NAME.test(name)) {
       throw new Error(
-        `sednacms: invalid field name "${name}" in "${config.collection}". Use letters, digits and underscores, starting with a letter.`,
+        `sednacms: invalid field name "${name}" in "${path}". Use letters, digits and underscores, starting with a letter.`,
       );
     }
-    if (SYSTEM_COLUMNS.includes(name)) {
-      throw new Error(`sednacms: field name "${name}" in "${config.collection}" is reserved.`);
+    if (topLevel && SYSTEM_COLUMNS.includes(name)) {
+      throw new Error(`sednacms: field name "${name}" in "${path}" is reserved.`);
     }
-    if (field.type === 'slug' && field.from && !(field.from in config.fields)) {
+    if (field.type === 'object') validateFields(field.fields, `${path}.${name}`);
+    if (field.type === 'list') validateFields({ item: field.item }, `${path}.${name}`);
+    if (field.type === 'slug' && field.from && !Object.hasOwn(fields, field.from)) {
       throw new Error(
-        `sednacms: slug field "${name}" in "${config.collection}" points to unknown field "${field.from}".`,
+        `sednacms: slug field "${name}" in "${path}" points to unknown field "${field.from}".`,
       );
     }
   }

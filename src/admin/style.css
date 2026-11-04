@@ -1399,3 +1399,303 @@ button.text-link {
 .toolbar-group {
   display: contents;
 }
+
+/*
+  Lists and objects. Depth is shown by one hairline rail per level, not by nesting boxes.
+  Simple values sit on one row each; larger items (objects, images, rich text) collapse to a
+  one-line summary so a long itinerary reads as an outline.
+*/
+.list-control {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.list-control > .list-head:has(.list-expand) {
+  margin: -6px 0 -2px;
+}
+button.list-expand {
+  margin-right: -6px;
+  padding: 0 6px;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.list-items {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.list-items > li {
+  min-width: 0;
+}
+.list-empty {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.item-index {
+  flex: none;
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.list-actions {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+}
+.list-actions .icon-button {
+  width: 32px;
+  height: 32px;
+  color: var(--ink-3);
+}
+.list-actions .icon-button:disabled {
+  opacity: 0.35;
+}
+:is(.list-row, .item-head):is(:hover, :focus-within) > .list-actions .icon-button {
+  color: var(--ink-2);
+}
+
+/* Simple values: number, input, actions on one line, at every width. */
+.list-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.list-row > .item-index {
+  width: 16px;
+  line-height: 40px;
+  text-align: right;
+}
+.list-row-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.list-row > .list-actions {
+  padding-top: 4px;
+}
+
+/* Larger items: one bordered group, rows divided by hairlines. */
+.blocks > .list-items {
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.blocks > .list-items > li + li {
+  border-top: 1px solid var(--line-soft);
+}
+.item-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  padding: 4px 8px 4px 0;
+}
+/* Hover fills follow the group's rounded corners. */
+.blocks .list-block:first-child > .item-head {
+  border-radius: 9px 9px 0 0;
+}
+.blocks .list-block:last-child > .item-head:has(> [aria-expanded="false"]) {
+  border-radius: 0 0 9px 9px;
+}
+.blocks .list-block:only-child > .item-head:has(> [aria-expanded="false"]) {
+  border-radius: 9px;
+}
+button.item-toggle {
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+  gap: 10px;
+  height: auto;
+  min-height: 40px;
+  padding: 0 4px 0 12px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-weight: 500;
+  text-align: left;
+}
+button.item-toggle:active:not(:disabled) {
+  transform: none;
+}
+button.item-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+.item-chevron {
+  display: grid;
+  flex: none;
+  color: var(--ink-3);
+  transition: transform 160ms var(--ease-out);
+}
+.item-toggle[aria-expanded="true"] .item-chevron {
+  transform: rotate(90deg);
+}
+.item-thumb {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--field);
+}
+.item-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+}
+.item-title.untitled {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.item-meta,
+.item-missing {
+  flex: none;
+  margin-left: auto;
+  font-size: 13px;
+}
+.item-missing {
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-meta {
+  color: var(--ink-3);
+}
+.item-missing {
+  color: var(--danger-text);
+}
+/* The rail drops from the chevron, tying the fields to the item they belong to. */
+fieldset.item-body {
+  min-width: 0;
+  margin: 0 16px 0 19px;
+  padding: 4px 0 20px 20px;
+  border-left: 1px solid var(--line);
+}
+fieldset.item-body > .field:last-child,
+fieldset.item-body > .image-control > .field:last-child {
+  margin-bottom: 0;
+}
+
+/* A removed item leaves this row behind until the next list change or save. */
+.list-undo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.list-control:not(.blocks) .list-undo {
+  padding-left: 24px;
+}
+.list-undo-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.list-undo q {
+  color: var(--ink-2);
+}
+.list-undo button {
+  margin-left: auto;
+  color: var(--accent-text);
+}
+.blocks > .list-items > .list-undo {
+  padding: 4px 8px 4px 16px;
+}
+
+/* Add is quieter than Save and Publish, but still reads as a button for first-time editors. */
+button.add-item {
+  justify-self: start;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 10px;
+  border: 1px dashed var(--line);
+  background: none;
+  box-shadow: none;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* A standalone object: its fields hang off a rail instead of sitting in a box. */
+fieldset.object-control {
+  display: grid;
+  min-width: 0;
+  padding: 4px 0 0 20px;
+  border-left: 1px solid var(--line);
+}
+button.clear-object {
+  justify-self: start;
+  margin-left: -10px;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.item-toggle:hover:not(:disabled) {
+    background: none;
+  }
+  .item-head:hover {
+    background: var(--hover);
+  }
+  .list-actions .icon-button[data-action="remove"]:hover:not(:disabled) {
+    color: var(--danger-text);
+    background: var(--danger-wash);
+  }
+  button.add-item:hover:not(:disabled) {
+    border-style: solid;
+    background: var(--hover);
+    color: var(--ink);
+  }
+  button.list-expand:hover:not(:disabled),
+  button.clear-object:hover:not(:disabled) {
+    color: var(--ink);
+  }
+}
+@media (pointer: coarse) {
+  .list-actions .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+  .list-row > .item-index {
+    line-height: 44px;
+  }
+  .list-row > .list-actions {
+    padding-top: 0;
+  }
+  button.add-item {
+    height: 44px;
+  }
+}
+@media (max-width: 640px) {
+  fieldset.item-body {
+    margin-right: 12px;
+    padding-left: 12px;
+  }
+  .item-meta {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .item-chevron {
+    transition: none;
+  }
+}

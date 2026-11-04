@@ -88,7 +88,13 @@ if (!entry) return Astro.redirect('/404');
 
 ### Field types
 
-text, richText, number, image, boolean, date, slug (auto-generated from another field, editable).
+text, richText, number, image, boolean, date, slug (auto-generated from another field, editable), list, object.
+
+- `fields.list(item, options?)` stores ordered values of another field type. The admin supports add, remove, and move up/down.
+- `fields.object(fields, options?)` groups named child fields. Lists and objects can nest, including lists of objects and images.
+- Both accept `required`. Publishing requires a nonempty required list and a non-null required object. Child requirements apply within present objects and list items. Drafts may be incomplete but provided values must have valid types. Every value can be null, including optional list items.
+- Nested slugs generate from siblings within their object. Only top-level slugs have unique indexes or determine live entry IDs.
+- API updates replace supplied lists and objects in full; omitted top-level fields remain unchanged.
 
 ### Admin (`/admin`)
 
@@ -117,7 +123,7 @@ text, richText, number, image, boolean, date, slug (auto-generated from another 
 
 - On startup, create missing tables from the collection config. Never drop or overwrite existing data.
 - One table per collection, `sedna_<collection>`, one column per field, plus `id` (uuid), `status` (`draft` | `published`), `sort_order`, `created_at`, `updated_at`. Sedna's system tables are `sedna__<name>`; collection names can't start with `_`, so they never collide.
-- Column types: text, slug and richText → `text` (richText format is HTML, produced by the admin editor); number → `double precision`; image → `jsonb` (`{src, width, height, alt}` for `<Image>`); boolean → `boolean`; date → `date`, returned as a `"YYYY-MM-DD"` string (a calendar day has no timezone, so a JS `Date` would show the wrong day somewhere).
+- Column types: text, slug and richText → `text` (richText format is HTML, produced by the admin editor); number → `double precision`; list and object → `jsonb`; image → `jsonb` (`{src, width, height, alt}` for `<Image>`); boolean → `boolean`; date → `date`, returned as a `"YYYY-MM-DD"` string (a calendar day has no timezone, so a JS `Date` would show the wrong day somewhere).
 - `required` is not a DB constraint (drafts may be incomplete); the API checks it when publishing; drafts may be incomplete.
 - Tables are created when the dev server starts. Production has no such hook, so the loader runs the same check once, on its first query. Changing `live.config.ts` needs a dev server restart.
 - Versioned migrations for Sedna's own system tables; assume an existing DB on every upgrade.

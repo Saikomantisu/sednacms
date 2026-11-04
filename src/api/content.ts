@@ -1,5 +1,6 @@
 import { ident, type Pool, transaction } from '../db/client.js';
 import { ensureTables, tableName } from '../db/tables.js';
+import type { Field } from '../fields.js';
 import type { CollectionConfig } from '../loader.js';
 import type { CmsEntry, EntryStatus } from './types.js';
 
@@ -40,59 +41,82 @@ function validateData(
   );
   Object.assign(data, input);
   for (const [name, field] of Object.entries(config.fields)) {
-    if (
-      field.type === 'slug' &&
-      !data[name] &&
-      field.from &&
-      typeof data[field.from] === 'string'
-    ) {
-      data[name] = slugify(data[field.from] as string) || null;
-    }
-    const value = data[name];
-    if (value === null || value === '') {
-      if (status === 'published' && (field.required || field.type === 'slug'))
-        fail(400, `${name} is required to publish`);
-      if (value === '') data[name] = null;
-      continue;
-    }
-    let valid = false;
-    switch (field.type) {
-      case 'text':
-      case 'richText':
-        valid = typeof value === 'string';
-        break;
-      case 'slug':
-        valid = typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
-        break;
-      case 'number':
-        valid = typeof value === 'number' && Number.isFinite(value);
-        break;
-      case 'boolean':
-        valid = typeof value === 'boolean';
-        break;
-      case 'date':
-        valid =
-          typeof value === 'string' &&
-          /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-          Number.isFinite(Date.parse(value)) &&
-          new Date(value).toISOString().slice(0, 10) === value;
-        break;
-      case 'image':
-        valid =
-          object(value) &&
-          typeof value.src === 'string' &&
-          /^https?:\/\//.test(value.src) &&
-          typeof value.alt === 'string' &&
-          Number.isInteger(value.width) &&
-          Number(value.width) > 0 &&
-          Number.isInteger(value.height) &&
-          Number(value.height) > 0 &&
-          Object.keys(value).every((key) => ['src', 'alt', 'width', 'height'].includes(key));
-        break;
-    }
-    if (!valid) fail(400, `Invalid ${field.type} value for ${name}`);
+    data[name] = validateValue(field, data[name], name, data, status);
   }
   return data;
+}
+
+function validateValue(
+  field: Field,
+  input: unknown,
+  name: string,
+  siblings: Record<string, unknown>,
+  status: EntryStatus,
+): unknown {
+  let value = input;
+  if (field.type === 'slug' && !value && field.from && typeof siblings[field.from] === 'string')
+    value = slugify(siblings[field.from] as string) || null;
+  if (value === null || value === undefined || value === '') {
+    if (status === 'published' && (field.required || field.type === 'slug'))
+      fail(400, `${name} is required to publish`);
+    return null;
+  }
+  if (field.type === 'list') {
+    if (!Array.isArray(value)) fail(400, `Invalid list value for ${name}`);
+    if (status === 'published' && field.required && value.length === 0)
+      fail(400, `${name} is required to publish`);
+    return value.map((item, index) =>
+      validateValue(field.item, item, `${name}[${index}]`, {}, status),
+    );
+  }
+  if (field.type === 'object') {
+    if (!object(value)) fail(400, `Invalid object value for ${name}`);
+    for (const key of Object.keys(value))
+      if (!Object.hasOwn(field.fields, key)) fail(400, `Unknown field: ${name}.${key}`);
+    return Object.fromEntries(
+      Object.entries(field.fields).map(([key, child]) => [
+        key,
+        validateValue(child, value[key], `${name}.${key}`, value, status),
+      ]),
+    );
+  }
+  let valid = false;
+  switch (field.type) {
+    case 'text':
+    case 'richText':
+      valid = typeof value === 'string';
+      break;
+    case 'slug':
+      valid = typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+      break;
+    case 'number':
+      valid = typeof value === 'number' && Number.isFinite(value);
+      break;
+    case 'boolean':
+      valid = typeof value === 'boolean';
+      break;
+    case 'date':
+      valid =
+        typeof value === 'string' &&
+        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+        Number.isFinite(Date.parse(value)) &&
+        new Date(value).toISOString().slice(0, 10) === value;
+      break;
+    case 'image':
+      valid =
+        object(value) &&
+        typeof value.src === 'string' &&
+        /^https?:\/\//.test(value.src) &&
+        typeof value.alt === 'string' &&
+        Number.isInteger(value.width) &&
+        Number(value.width) > 0 &&
+        Number.isInteger(value.height) &&
+        Number(value.height) > 0 &&
+        Object.keys(value).every((key) => ['src', 'alt', 'width', 'height'].includes(key));
+      break;
+  }
+  if (!valid) fail(400, `Invalid ${field.type} value for ${name}`);
+  return value;
 }
 
 function toEntry(config: CollectionConfig, row: Record<string, unknown>): CmsEntry {
@@ -277,9 +301,9 @@ export function createContentApi(options: {
         const values: Record<string, unknown> = { ...data, status };
         if (status === 'published' && previous?.status !== 'published')
           values.published_at = new Date();
-        // Send image objects as JSON text for their jsonb columns.
+        // pg encodes arrays as Postgres arrays unless explicitly sent as JSON text.
         for (const [key, field] of Object.entries(config.fields))
-          if (field.type === 'image' && values[key] !== null)
+          if (['image', 'list', 'object'].includes(field.type) && values[key] !== null)
             values[key] = JSON.stringify(values[key]);
         const columns = Object.keys(values).map(ident);
         const params = Object.values(values);

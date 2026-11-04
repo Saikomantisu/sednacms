@@ -8,6 +8,8 @@ const COLUMN_TYPES: Record<FieldType, string> = {
   richText: 'text',
   number: 'double precision',
   image: 'jsonb',
+  list: 'jsonb',
+  object: 'jsonb',
   boolean: 'boolean',
   date: 'date',
   slug: 'text',

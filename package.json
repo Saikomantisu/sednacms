@@ -37,6 +37,7 @@
     "build": "tsc && node scripts/copy-admin.mjs",
     "dev": "npm run build && tsc --watch",
     "test:auth": "npm run build && node --test tests/auth.test.mjs",
+    "test:fields": "npm run build && tsc -p tests/tsconfig.json && node --test tests/fields.test.mjs",
     "test:admin": "npm run build && node --test tests/admin.test.mjs",
     "test:cache": "npm run build && node --test tests/cache.test.mjs",
     "test:uploads": "npm run build && node --test tests/uploads.test.mjs",

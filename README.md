@@ -42,6 +42,40 @@ export const collections = { posts };
 
 Set `SEDNA_DATABASE_URL` in `.env`. Tables are created when the dev server starts.
 
+## Lists and grouped fields
+
+Use `fields.list(item)` for ordered, repeatable values and `fields.object(fields)`
+for groups of named fields. They compose with all existing field types and can nest:
+
+```ts
+fields: {
+  tags: fields.list(fields.text({ required: true })),
+  gallery: fields.list(fields.image({ required: true })),
+  faqs: fields.list(fields.object({
+    question: fields.text({ required: true }),
+    answer: fields.richText({ required: true }),
+  })),
+  contact: fields.object({
+    name: fields.text(),
+    phone: fields.text(),
+  }),
+}
+```
+
+The admin lets editors add, remove, and move list items up or down. Grouped fields
+can be added or cleared. Values retain their order and inferred TypeScript types
+in live collections. Lists and objects use Postgres `jsonb` columns.
+
+Both helpers accept `{ required: true }` as a second argument. A required list must
+contain at least one item when publishing. An item's `required` option controls
+whether that item may be empty. Required children of an object are checked when
+the object is present; mark the object itself required to require the group.
+Drafts may be incomplete, but supplied values must still match their field types.
+Missing fields and empty scalar inputs become `null`; an empty list remains `[]`.
+API updates replace a supplied list or object in full. Omitted top-level fields
+keep their previous values. Nested slugs generate from sibling fields within their
+object; only top-level slugs have a unique index and address live entries.
+
 ## Add Sedna with an agent
 
 Use the [add-sednacms skill](skills/add-sednacms/SKILL.md) to have a coding agent

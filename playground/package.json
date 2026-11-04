@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "seed:packages": "node --env-file-if-exists=.env scripts/seed-packages.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",

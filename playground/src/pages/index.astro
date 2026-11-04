@@ -2,6 +2,8 @@
 export const prerender = false;
 
 import { getLiveCollection } from 'astro:content';
+import PackageCard from '../components/PackageCard.astro';
+import { examplePackages } from '../examples/package';
 import Site from '../layouts/Site.astro';
 
 const requestedPage = Number(Astro.url.searchParams.get('page') ?? 1);
@@ -10,15 +12,41 @@ const page =
     ? requestedPage
     : 1;
 const pageSize = 10;
-const [posts, testimonials] = await Promise.all([
+const [posts, testimonials, packages] = await Promise.all([
   getLiveCollection('posts', { limit: pageSize + 1, offset: (page - 1) * pageSize }),
   getLiveCollection('testimonials'),
+  getLiveCollection('packages'),
 ]);
 const hasNext = (posts.entries?.length ?? 0) > pageSize;
 ---
 
 <Site>
   <h1>Playground</h1>
+  <section class="packages" aria-labelledby="packages-heading">
+    <h2 id="packages-heading">Travel packages</h2>
+    <p>Highlights and daily activities, kept in the order set by the editor.</p>
+    {packages.error && <p role="status">Could not load travel packages.</p>}
+    {packages.entries?.length ? (
+      <div class="package-list">
+        {packages.entries.map(({ data }) => (
+          <PackageCard data={data} />
+        ))}
+      </div>
+    ) : (
+      <div class="package-preview">
+        <p class="preview-note">
+          Example previews. Publish a package in <a href="/admin">Admin</a> to replace these
+          examples with your content.
+        </p>
+        <div class="package-list">
+          {examplePackages.map((data) => (
+            <PackageCard data={data} />
+          ))}
+        </div>
+      </div>
+    )}
+  </section>
+
   <h2>Posts</h2>
   {posts.error ? (
     <p role="status">Could not load posts.</p>
@@ -93,6 +121,20 @@ const hasNext = (posts.entries?.length ?? 0) > pageSize;
 </Site>
 
 <style>
+.packages {
+  margin-bottom: 3rem;
+}
+
+.package-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.preview-note {
+  color: #52525b;
+  font-size: 0.875rem;
+}
+
 .testimonials {
   margin-top: 3rem;
 }

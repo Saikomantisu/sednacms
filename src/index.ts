@@ -21,7 +21,7 @@ export type {
   SchemaResponse,
 } from './api/types.js';
 export type { CacheOptions } from './cache.js';
-export type { Field, FieldsData, FieldType, ImageValue } from './fields.js';
+export type { Field, FieldData, FieldsData, FieldType, ImageValue } from './fields.js';
 export { fields } from './fields.js';
 export type { CollectionConfig, CollectionFilter } from './loader.js';
 export { sednaLoader } from './loader.js';

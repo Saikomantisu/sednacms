@@ -179,6 +179,9 @@ export function RichText({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const initialValue = useRef(value);
+  // The label can change (a list item's number moves with it); that must not rebuild the editor.
+  const labelRef = useRef(label);
+  labelRef.current = label;
   const [, refresh] = useState(0);
   const [link, setLink] = useState<{ current: string } | null>(null);
   useEffect(() => {
@@ -209,7 +212,7 @@ export function RichText({
           class: 'rich-editor',
           role: 'textbox',
           'aria-multiline': 'true',
-          'aria-label': label,
+          'aria-label': labelRef.current,
         },
       },
       onTransaction: () => refresh((version) => version + 1),
@@ -223,7 +226,10 @@ export function RichText({
       editorRef.current = null;
       editor.destroy();
     };
-  }, [id, label]);
+  }, [id]);
+  useEffect(() => {
+    editorRef.current?.view.dom.setAttribute('aria-label', label);
+  }, [label]);
   useEffect(() => {
     editorRef.current?.setEditable(!disabled, false);
   }, [disabled]);

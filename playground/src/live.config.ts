@@ -1,6 +1,6 @@
 import { defineLiveCollection } from 'astro:content';
 import { sednaLoader } from 'sednacms';
-import { postFields, testimonialFields } from './schema';
+import { packageFields, postFields, testimonialFields } from './schema';
 
 const posts = defineLiveCollection({
   loader: sednaLoader({ collection: 'posts', fields: postFields }),
@@ -10,4 +10,8 @@ const testimonials = defineLiveCollection({
   loader: sednaLoader({ collection: 'testimonials', fields: testimonialFields }),
 });
 
-export const collections = { posts, testimonials };
+const packages = defineLiveCollection({
+  loader: sednaLoader({ collection: 'packages', fields: packageFields }),
+});
+
+export const collections = { posts, testimonials, packages };

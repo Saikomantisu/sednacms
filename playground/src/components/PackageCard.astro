@@ -1,0 +1,134 @@
+---
+import type { FieldsData } from 'sednacms';
+import type { packageFields } from '../schema';
+
+interface Props {
+  data: FieldsData<typeof packageFields>;
+}
+const { data } = Astro.props;
+const highlights = (data.highlights ?? []).filter((item) => item !== null && item !== '');
+const itinerary = (data.itinerary ?? []).filter((day) => day !== null);
+---
+
+<article class="package-card">
+  <header>
+    <h3>{data.title}</h3>
+    {data.summary && <p class="summary">{data.summary}</p>}
+  </header>
+  {highlights.length > 0 && (
+    <section aria-label="Package highlights">
+      <h4>Highlights</h4>
+      <ul class="highlights">
+        {highlights.map((highlight) => (
+          <li>{highlight}</li>
+        ))}
+      </ul>
+    </section>
+  )}
+  {itinerary.length > 0 && (
+    <section aria-label="Daily itinerary">
+      <h4>Itinerary</h4>
+      <ol class="itinerary">
+        {itinerary.map((day, index) => (
+          <li class="day">
+            <span class="day-number">Day {index + 1}</span>
+            <div>
+              <h5>{day.title}</h5>
+              {day.description && <p>{day.description}</p>}
+              {day.activities?.some(Boolean) && (
+                <ul class="activities">
+                  {day.activities
+                    .filter((activity) => activity !== null && activity !== '')
+                    .map((activity) => (
+                      <li>{activity}</li>
+                    ))}
+                </ul>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+</article>
+
+<style>
+.package-card {
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid #e4e4e7;
+  border-radius: 1rem;
+  background: #fafafa;
+  overflow-wrap: anywhere;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.summary {
+  max-width: 42rem;
+  color: #52525b;
+}
+
+h4 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1rem;
+}
+
+.highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.highlights li {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.5rem;
+  background: #fff;
+  font-size: 0.875rem;
+}
+
+.itinerary {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid #e4e4e7;
+}
+
+.day-number {
+  padding-top: 0.125rem;
+  color: #71717a;
+  font-size: 0.875rem;
+}
+
+h5 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.day p {
+  margin: 0.5rem 0;
+  color: #52525b;
+}
+
+.activities {
+  padding-left: 1.25rem;
+  font-size: 0.9375rem;
+}
+
+.activities li + li {
+  margin-top: 0.375rem;
+}
+</style>
