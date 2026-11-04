@@ -66,3 +66,20 @@ jobs:
 
       - name: Test
         run: node --test tests/*.test.mjs
+
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      - name: Install documentation dependencies
+        run: npm ci --prefix docs
+      - name: Check documentation
+        run: npm run docs:check
+      - name: Build documentation
+        run: npm run docs:build

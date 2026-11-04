@@ -1,0 +1,30 @@
+:root {
+  --sl-color-accent-low: #3c211c;
+  --sl-color-accent: #dd8a72;
+  --sl-color-accent-high: #f6d5c8;
+  --sl-font: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #f9e8df;
+  --sl-color-accent: #a44331;
+  --sl-color-accent-high: #57271e;
+}
+
+.site-title {
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.hero h1 {
+  max-width: 12ch;
+  letter-spacing: -0.045em;
+}
+
+.hero .tagline {
+  max-width: 38rem;
+}
+
+.card {
+  border-radius: 0.5rem;
+}

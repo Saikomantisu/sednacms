@@ -1,0 +1,48 @@
+---
+title: Give your clients an editor for your Astro site.
+description: Documentation for Sedna CMS, the open-source CMS for Astro.
+template: splash
+hero:
+  title: Give your clients an editor for your Astro site.
+  tagline: Sedna is an open-source CMS for Astro. Define your content fields in TypeScript, and Sedna builds the forms your clients use to edit and publish. Their changes appear on your site without a rebuild.
+  actions:
+    - text: Get started
+      link: /getting-started/installation/
+      icon: right-arrow
+    - text: Explore the fields
+      link: /reference/fields/
+      variant: secondary
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Forms from your fields" icon="pencil">
+    Define fields in TypeScript. Sedna builds the forms at `/admin`, where editors
+    can write posts, upload images, and publish content.
+  </Card>
+  <Card title="Publish without a rebuild" icon="rocket">
+    Content lives in Postgres. Astro live collections read published entries on
+    demand, so the next request can show an edit without a deployment.
+  </Card>
+  <Card title="Inside your Astro site" icon="astro">
+    Install an integration and a server adapter. The admin, API, and public pages
+    run in the same application.
+  </Card>
+  <Card title="Your database and storage" icon="database">
+    Store content in Postgres and images in UploadThing or S3-compatible storage.
+    With CDN caching enabled, published changes purge pages that read the collection.
+  </Card>
+</CardGrid>
+
+## Start building
+
+<CardGrid>
+  <LinkCard title="Install Sedna" description="Connect your Astro site to Postgres and create your admin account." href="/getting-started/installation/" />
+  <LinkCard title="Define your first collection" description="Add posts, generate an editor, and render published content." href="/getting-started/first-collection/" />
+</CardGrid>
+
+:::note[Work in progress]
+These docs cover the current version of Sedna. Editor invitations and password
+reset email delivery are not available yet.
+:::

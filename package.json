@@ -1,6 +1,6 @@
 {
   "name": "sednacms",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "An open-source CMS for Astro. Clients edit content in an admin panel and changes go live within seconds.",
   "license": "MIT",
   "type": "module",
@@ -44,7 +44,11 @@
     "test:uploads": "npm run build && node --test tests/uploads.test.mjs",
     "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs",
     "test:loader": "npm run build && node --test tests/loader.test.mjs tests/log.test.mjs",
-    "test:demo": "npm run build && node --test tests/demo.test.mjs"
+    "test:demo": "npm run build && node --test tests/demo.test.mjs",
+    "docs:dev": "npm run dev --prefix docs",
+    "docs:build": "npm run build --prefix docs",
+    "docs:preview": "npm run preview --prefix docs",
+    "docs:check": "npm run check --prefix docs"
   },
   "peerDependencies": {
     "astro": ">=6.0.0"
