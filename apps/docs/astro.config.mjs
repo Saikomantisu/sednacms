@@ -11,7 +11,7 @@ export default defineConfig({
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/Saikomantisu/sednacms' },
       ],
-      editLink: { baseUrl: 'https://github.com/Saikomantisu/sednacms/edit/main/docs/' },
+      editLink: { baseUrl: 'https://github.com/Saikomantisu/sednacms/edit/main/apps/docs/' },
       customCss: ['./src/styles/custom.css'],
       sidebar: [
         {

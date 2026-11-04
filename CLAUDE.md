@@ -1,6 +1,6 @@
 # Agent instructions
 
-Read `docs/SPEC.md` before doing anything. It is the source of truth for scope and decisions.
+Read `apps/docs/SPEC_v1.md` before doing anything. It is the source of truth for scope and decisions.
 
 ## How to work
 
@@ -8,5 +8,6 @@ Read `docs/SPEC.md` before doing anything. It is the source of truth for scope a
 - Do not add features listed under "Out of scope for v1".
 - If the spec is unclear or something in it turns out not to work (for example an Astro API behaves differently), stop and explain the problem with options. Do not silently change a decision.
 - Prefer small, readable code over abstractions. No new dependencies without saying why.
-- Test changes in `playground/`, not by publishing to npm. Restart the dev server after changing integration hooks.
+- This is an npm workspace: the package is `packages/sednacms/`, the playground `apps/playground/`, and the docs site `apps/docs/`. Run npm commands from the repository root.
+- Test changes in `apps/playground/`, not by publishing to npm. Run `npm run build` after changing the package. Restart the dev server after changing integration hooks.
 - Never commit secrets. Env vars go in `.env`, which is gitignored.

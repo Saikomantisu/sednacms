@@ -1,30 +1,10 @@
 {
-  "name": "sednacms",
-  "version": "0.1.0",
-  "description": "An open-source CMS for Astro. Clients edit content in an admin panel and changes go live within seconds.",
-  "license": "MIT",
+  "name": "sednacms-monorepo",
+  "private": true,
   "type": "module",
-  "keywords": [
-    "astro-integration",
-    "withastro",
-    "cms"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./demo": {
-      "types": "./dist/demo/index.d.ts",
-      "default": "./dist/demo/index.js"
-    },
-    "./fields": {
-      "types": "./dist/fields.d.ts",
-      "default": "./dist/fields.js"
-    }
-  },
-  "files": [
-    "dist"
+  "workspaces": [
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "prepare": "husky",
@@ -34,54 +14,19 @@
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "build": "tsc && node scripts/copy-admin.mjs",
-    "dev": "npm run build && tsc --watch",
-    "test:auth": "npm run build && node --test tests/auth.test.mjs",
-    "test:fields": "npm run build && tsc -p tests/tsconfig.json && node --test tests/fields.test.mjs",
-    "test:admin": "npm run build && node --test tests/admin.test.mjs",
-    "test:cache": "npm run build && node --test tests/cache.test.mjs tests/cdn.test.mjs tests/cdn-runtime.test.mjs",
-    "test:platform": "npm run build && node --test tests/platform.test.mjs",
-    "test:uploads": "npm run build && node --test tests/uploads.test.mjs",
-    "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs",
-    "test:loader": "npm run build && node --test tests/loader.test.mjs tests/log.test.mjs",
-    "test:demo": "npm run build && node --test tests/demo.test.mjs",
-    "docs:dev": "npm run dev --prefix docs",
-    "docs:build": "npm run build --prefix docs",
-    "docs:preview": "npm run preview --prefix docs",
-    "docs:check": "npm run check --prefix docs"
-  },
-  "peerDependencies": {
-    "astro": ">=6.0.0"
+    "build": "npm run build -w sednacms",
+    "build:playground": "npm run build -w sednacms && npm run build -w sednacms-playground",
+    "test": "npm run build:playground && npm run test:types -w sednacms && npm test -w sednacms",
+    "playground:dev": "npm run dev -w sednacms-playground",
+    "playground:seed": "npm run seed -w sednacms-playground",
+    "docs:dev": "npm run dev -w sednacms-docs",
+    "docs:build": "npm run build -w sednacms-docs",
+    "docs:preview": "npm run preview -w sednacms-docs",
+    "docs:check": "npm run check -w sednacms-docs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
-    "@types/node": "^24.19.2",
-    "@types/pg": "^8.23.1",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "astro": "^7.4.2",
-    "husky": "^9.1.7",
-    "typescript": "^7.0.2"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.1161.0",
-    "@aws-sdk/s3-request-presigner": "^3.1161.0",
-    "@jsquash/avif": "2.1.1",
-    "@jsquash/jpeg": "1.6.0",
-    "@jsquash/resize": "2.1.1",
-    "@jsquash/webp": "1.5.0",
-    "@tiptap/core": "^3.32.2",
-    "@tiptap/extensions": "^3.32.2",
-    "@tiptap/pm": "^3.32.2",
-    "@tiptap/starter-kit": "^3.32.2",
-    "better-auth": "1.7.14",
-    "dompurify": "^3.4.17",
-    "lucide-astro": "^0.556.0",
-    "pg": "^8.23.1",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "sonner": "^2.0.8",
-    "uploadthing": "^7.7.4"
+    "husky": "^9.1.7"
   },
   "overrides": {
     "effect": "3.22.4"

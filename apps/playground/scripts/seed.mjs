@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { createPool, ident, transaction } from '../../dist/db/client.js';
-import { ensureTables } from '../../dist/db/tables.js';
+import { createPool, ident, transaction } from '../../../packages/sednacms/dist/db/client.js';
+import { ensureTables } from '../../../packages/sednacms/dist/db/tables.js';
 import { packageFields, postFields, testimonialFields } from '../src/schema.ts';
 import { dummyPackages, dummyPosts, dummyTestimonials } from './seed-data.ts';
 
@@ -11,7 +11,8 @@ const collections = [
 ].filter(({ collection }) => !process.argv[2] || collection === process.argv[2]);
 if (!collections.length) throw new Error('Unknown collection to seed.');
 
-if (!process.env.SEDNA_DATABASE_URL) throw new Error('Set SEDNA_DATABASE_URL in playground/.env.');
+if (!process.env.SEDNA_DATABASE_URL)
+  throw new Error('Set SEDNA_DATABASE_URL in apps/playground/.env.');
 const pool = createPool(process.env.SEDNA_DATABASE_URL, 1);
 try {
   const added = await transaction(pool, async (client) => {

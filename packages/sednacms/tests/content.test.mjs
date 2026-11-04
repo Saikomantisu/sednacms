@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import { createContentApi } from '../dist/api/content.js';
 import { createPool } from '../dist/db/client.js';
@@ -72,18 +73,22 @@ test('production Astro API creates and publishes live content', {
   };
   try {
     await admin.query(`CREATE SCHEMA ${schema}`);
-    server = spawn(process.execPath, ['playground/dist/server/entry.mjs'], {
-      env: {
-        ...process.env,
-        HOST: '127.0.0.1',
-        PORT: '14329',
-        SEDNA_DATABASE_URL: url.href,
-        SEDNA_URL: origin,
-        SEDNA_SECRET: randomUUID(),
-        SEDNA_SETUP_TOKEN: token,
+    server = spawn(
+      process.execPath,
+      [fileURLToPath(new URL('../../../apps/playground/dist/server/entry.mjs', import.meta.url))],
+      {
+        env: {
+          ...process.env,
+          HOST: '127.0.0.1',
+          PORT: '14329',
+          SEDNA_DATABASE_URL: url.href,
+          SEDNA_URL: origin,
+          SEDNA_SECRET: randomUUID(),
+          SEDNA_SETUP_TOKEN: token,
+        },
+        stdio: ['ignore', 'pipe', 'pipe'],
       },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    );
     server.stdout.on('data', (chunk) => {
       logs += chunk;
     });

@@ -42,14 +42,9 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            playground/package-lock.json
 
       - name: Install
-        run: |
-          npm ci
-          npm ci --prefix playground
+        run: npm ci
 
       - name: Lint and format
         run: npm run check
@@ -58,14 +53,38 @@ jobs:
         run: npm run build
 
       - name: Type-check field types
-        run: npx tsc -p tests/tsconfig.json
+        run: npm run test:types -w sednacms
 
       # The content API test starts the built playground server.
       - name: Build playground
-        run: npm run build --prefix playground
+        run: npm run build -w sednacms-playground
 
       - name: Test
-        run: node --test tests/*.test.mjs
+        run: npm test -w sednacms
+
+  # Workspace links can hide files or dependencies missing from the published
+  # package, so build the playground against the packed tarball as well.
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Pack
+        run: npm pack -w sednacms --pack-destination "$RUNNER_TEMP"
+      - name: Build playground from the tarball
+        run: |
+          site="$RUNNER_TEMP/site"
+          cp -R apps/playground "$site"
+          cd "$site"
+          npm pkg set dependencies.sednacms="file:$(ls "$RUNNER_TEMP"/sednacms-*.tgz)"
+          npm install --no-audit --no-fund
+          npm run build
 
   docs:
     runs-on: ubuntu-latest
@@ -76,9 +95,8 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
-          cache-dependency-path: docs/package-lock.json
-      - name: Install documentation dependencies
-        run: npm ci --prefix docs
+      - name: Install
+        run: npm ci
       - name: Check documentation
         run: npm run docs:check
       - name: Build documentation

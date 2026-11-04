@@ -6,14 +6,14 @@ not need a database, CMS credentials, or a server adapter to run it.
 From the repository root:
 
 ```sh
-npm ci --prefix docs
+npm ci
 npm run docs:dev      # development server
 npm run docs:check    # Astro and TypeScript diagnostics
-npm run docs:build    # static output in docs/dist/
+npm run docs:build    # static output in apps/docs/dist/
 npm run docs:preview  # serve the production build locally
 ```
 
-Or run the matching `npm run dev`, `check`, `build`, and `preview` commands inside `docs/`.
+Or run the matching `npm run dev`, `check`, `build`, and `preview` commands inside `apps/docs/`.
 
 ## Editing
 
@@ -28,10 +28,10 @@ planned features.
 
 ## Hosting
 
-Set the hosting project's base directory to `docs`, install with `npm ci`, build
-with `npm run build`, and publish `dist`. Alternatively, from the repository root,
-install with `npm ci --prefix docs`, build with `npm run docs:build`, and publish
-`docs/dist`.
+Set the hosting project's base directory to `apps/docs`, build with `npm run build`,
+and publish `dist`. Most hosts detect the workspace and install from the repository
+root. Otherwise, from the repository root, install with `npm ci`, build with
+`npm run docs:build`, and publish `apps/docs/dist`.
 
 When a production domain is chosen, add its URL as Astro's `site` option in
 `astro.config.mjs`. The current routes assume hosting at the domain root.

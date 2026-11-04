@@ -4,7 +4,7 @@ import sedna from '../dist/index.js';
 
 async function configure(adapterName, options = {}) {
   const integration = sedna(options);
-  const root = new URL('../playground/', import.meta.url);
+  const root = new URL('../../../apps/playground/', import.meta.url);
   let update;
   const routes = [];
   const messages = [];

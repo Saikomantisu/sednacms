@@ -530,7 +530,9 @@ test('real jSquash codecs resize and encode valid WebP, JPG, and AVIF files', as
         resolveImageProcessing({ format, quality, maxWidth: 32 }),
         async (codec) => {
           loaded.push(codec);
-          const bytes = await readFile(new URL(`../node_modules/${paths[codec]}`, import.meta.url));
+          const bytes = await readFile(
+            new URL(`../../../node_modules/${paths[codec]}`, import.meta.url),
+          );
           return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
         },
       );

@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
+import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 
 if (!process.env.SEDNA_TEST_DATABASE_URL) throw new Error('Set SEDNA_TEST_DATABASE_URL');
@@ -10,18 +11,22 @@ const url = new URL(process.env.SEDNA_TEST_DATABASE_URL);
 url.hostname = url.hostname.replace('-pooler.', '.');
 url.searchParams.set('options', `-c search_path=${schema}`);
 await pool.query(`CREATE SCHEMA ${schema}`);
-const child = spawn(process.execPath, ['playground/dist/server/entry.mjs'], {
-  env: {
-    ...process.env,
-    HOST: '127.0.0.1',
-    PORT: '14330',
-    SEDNA_DATABASE_URL: url.href,
-    SEDNA_URL: 'http://127.0.0.1:14330',
-    SEDNA_SECRET: randomUUID(),
-    SEDNA_SETUP_TOKEN: 'sedna-temporary-ui-setup-token-2026',
+const child = spawn(
+  process.execPath,
+  [fileURLToPath(new URL('../../../../apps/playground/dist/server/entry.mjs', import.meta.url))],
+  {
+    env: {
+      ...process.env,
+      HOST: '127.0.0.1',
+      PORT: '14330',
+      SEDNA_DATABASE_URL: url.href,
+      SEDNA_URL: 'http://127.0.0.1:14330',
+      SEDNA_SECRET: randomUUID(),
+      SEDNA_SETUP_TOKEN: 'sedna-temporary-ui-setup-token-2026',
+    },
+    stdio: ['ignore', 'inherit', 'inherit'],
   },
-  stdio: ['ignore', 'inherit', 'inherit'],
-});
+);
 let closing = false;
 async function close() {
   if (closing) return;

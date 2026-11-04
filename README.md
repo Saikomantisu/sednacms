@@ -54,29 +54,37 @@ export default defineConfig({
 });
 ```
 
-Follow the [installation guide](docs/src/content/docs/getting-started/installation.md) to connect Postgres and set up your admin account. Then [define your first collection](docs/src/content/docs/getting-started/first-collection.md) and render it on demand.
+Follow the [installation guide](apps/docs/src/content/docs/getting-started/installation.md) to connect Postgres and set up your admin account. Then [define your first collection](apps/docs/src/content/docs/getting-started/first-collection.md) and render it on demand.
 
 ## Documentation
 
-- [Fields](docs/src/content/docs/reference/fields.md)
-- [Image uploads](docs/src/content/docs/guides/uploads.md)
-- [Caching](docs/src/content/docs/guides/caching.md)
-- [Deployment](docs/src/content/docs/guides/deployment.md)
+- [Fields](apps/docs/src/content/docs/reference/fields.md)
+- [Image uploads](apps/docs/src/content/docs/guides/uploads.md)
+- [Caching](apps/docs/src/content/docs/guides/caching.md)
+- [Deployment](apps/docs/src/content/docs/guides/deployment.md)
 - [Add Sedna with a coding agent](skills/add-sednacms/SKILL.md)
 
 ## Development
 
-```sh
-npm install
-npm run build
-npm install --prefix playground
-cp playground/.env.example playground/.env
-npm run dev --prefix playground
+This repository is an npm workspace:
+
+```text
+packages/sednacms/   the published package, with its tests
+apps/playground/     Astro site for trying changes against a real database
+apps/docs/           documentation site
+skills/              agent skill for adding Sedna to a site
 ```
 
-Fill in `playground/.env` before starting the playground. Rebuild the package after changing its source. Run `npm run check` for formatting and lint checks.
+```sh
+npm install
+cp apps/playground/.env.example apps/playground/.env
+npm run build
+npm run playground:dev
+```
 
-See [docs/README.md](docs/README.md) to run the documentation site locally.
+Fill in `apps/playground/.env` before starting the playground. The playground links to the local package, so rebuild with `npm run build` after changing its source; no reinstall is needed. Run `npm run check` for formatting and lint checks, and `npm test` to build everything and run the tests.
+
+See [apps/docs/README.md](apps/docs/README.md) to run the documentation site locally.
 
 ## License
 

@@ -17,17 +17,19 @@ numbered itinerary days in their saved order. Empty collections show an empty st
 Configure `.env` from `.env.example`, then run from the repository root:
 
 ```sh
+npm install
 npm run build
-npm ci --prefix playground
-npm run dev --prefix playground
+npm run playground:dev
 ```
 
 Open `http://localhost:4321` or `/admin`. Edits and uploads persist.
 The playground uses Vercel; API integration tests use standalone Node.
 
-The local package is packed into `node_modules` through the playground's `.npmrc`.
-After changing Sedna, rebuild it and repeat `npm ci --prefix playground` to refresh
-the installed copy before testing.
+The playground depends on the `sednacms` workspace package, which npm links into
+`node_modules`. After changing Sedna, run `npm run build` again. No reinstall is needed.
+
+To deploy to Vercel, set the project's root directory to `apps/playground`. Vercel
+installs the workspace from the repository root and bundles the linked package.
 
 CDN caching is disabled during development and uses a one-hour TTL in production.
 Configure [Vercel purge credentials](../docs/src/content/docs/guides/caching.md#vercel)
@@ -44,15 +46,15 @@ saved order. A draft stays out of the frontend.
 
 ## Dummy content
 
-After building the root package, add published dummy content to the configured database:
+After building the package, add published dummy content to the configured database:
 
 ```sh
-npm run seed --prefix playground
+npm run playground:seed
 ```
 
 This adds three travel packages, two posts and three testimonials. They appear on the
 homepage and can be edited in Admin. Sample data lives in `scripts/seed-data.ts` and is
 never imported by the site. Rerunning the command skips content already seeded,
-preserving your edits and other entries. The command reads `playground/.env` and creates
+preserving your edits and other entries. The command reads `apps/playground/.env` and creates
 missing content tables if needed. Seeding runs only when explicitly requested, never
-on server startup. Use `npm run seed:packages --prefix playground` to seed only packages.
+on server startup. Use `npm run seed:packages -w sednacms-playground` to seed only packages.

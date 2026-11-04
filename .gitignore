@@ -9,3 +9,7 @@ dist/
 
 .playwright-cli/
 output/playwright/
+
+# Copied from the repository root by prepack
+packages/sednacms/README.md
+packages/sednacms/LICENSE

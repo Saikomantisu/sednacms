@@ -26,7 +26,7 @@ function start(command, args, env) {
 test('built Astro server emits collection tags, preserves query variants, and excludes private routes', {
   timeout: 30000,
 }, async (t) => {
-  const playground = fileURLToPath(new URL('../playground/', import.meta.url));
+  const playground = fileURLToPath(new URL('../../../apps/playground/', import.meta.url));
   const temporary = await mkdtemp(join(playground, '.sedna-cache-test-'));
   const running = [];
   t.after(async () => {
@@ -71,7 +71,7 @@ test('built Astro server emits collection tags, preserves query variants, and ex
   const build = start(
     process.execPath,
     [
-      fileURLToPath(new URL('../node_modules/astro/bin/astro.mjs', import.meta.url)),
+      fileURLToPath(new URL('../../../node_modules/astro/bin/astro.mjs', import.meta.url)),
       'build',
       '--root',
       playground,
