@@ -1,5 +1,26 @@
 # Sedna CMS
 
+<p align="center">
+  <a href="https://github.com/Saikomantisu/sednacms/actions/workflows/ci.yml"
+    ><img
+      src="https://shieldcn.dev/github/ci/Saikomantisu/sednacms.svg?workflow=ci.yml&amp;branch=main&amp;variant=secondary"
+      alt="CI status"
+    ></a
+  >
+  <a href="LICENSE"
+    ><img
+      src="https://shieldcn.dev/github/license/Saikomantisu/sednacms.svg?variant=secondary"
+      alt="MIT license"
+    ></a
+  >
+  <a href="https://github.com/Saikomantisu/sednacms/stargazers"
+    ><img
+      src="https://shieldcn.dev/github/stars/Saikomantisu/sednacms.svg?variant=secondary"
+      alt="GitHub stars"
+    ></a
+  >
+</p>
+
 **Give your clients an editor for your Astro site.**
 
 Sedna is an open-source CMS for Astro. Define your content fields in TypeScript, and Sedna builds the forms your clients use to edit and publish. Their changes appear on your site without a rebuild.
