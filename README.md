@@ -1,4 +1,4 @@
-# Sedna CMS
+<h1 align="center">Sedna CMS</h1>
 
 <p align="center">
   <a href="https://github.com/Saikomantisu/sednacms/actions/workflows/ci.yml"
@@ -21,9 +21,13 @@
   >
 </p>
 
-**Give your clients an editor for your Astro site.**
+<p align="center"><strong>Give your clients an editor for your Astro site.</strong></p>
 
-Sedna is an open-source CMS for Astro. Define your content fields in TypeScript, and Sedna builds the forms your clients use to edit and publish. Their changes appear on your site without a rebuild.
+<p align="center">
+  Sedna is an open-source CMS for Astro. Define your content fields in TypeScript, and Sedna builds
+  the forms your clients use to edit and publish. Their changes appear on your site without a
+  rebuild.
+</p>
 
 Requires Astro 6+, a compatible server adapter, and Postgres.
 
