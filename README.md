@@ -41,6 +41,7 @@ export const collections = { posts };
 ```
 
 Set `SEDNA_DATABASE_URL` in `.env`. Tables are created when the dev server starts.
+Without it, the dev server logs a warning and collections are empty.
 
 ### Hosting platform
 
@@ -52,14 +53,14 @@ integrations: [sedna({ platform: 'netlify' })],
 ```
 
 Accepted values are `'netlify'`, `'vercel'`, `'cloudflare'`, and `'none'`.
-Omit the option for automatic identification. No adapter, the Node adapter, and
-unrecognized adapters resolve to `'none'`. An explicit value takes precedence,
+Omit the option for automatic identification. The Node adapter and unrecognized
+adapters resolve to `'none'`. An explicit value takes precedence,
 including `'none'` to opt out of platform-specific integration.
 
 This option selects the platform used when caching is enabled. It does not install
 or replace Astro's adapter or make an unsupported runtime compatible. Sedna still
-requires a server adapter for deployment; Cloudflare Workers support remains
-outside the current scope.
+requires a server adapter and stops with an error without one; Cloudflare Workers
+support remains outside the current scope.
 
 ## Lists and grouped fields
 
@@ -163,6 +164,8 @@ The live loader queries Postgres on every request, so publishing, editing,
 reordering, unpublishing, or deleting content takes effect on the next request
 that reaches your server. No rebuild, host-specific configuration, or purge API
 is required. Pages must render on demand, with `export const prerender = false`.
+A prerendered page that reads a Sedna collection logs a warning, because its
+content is frozen when the page is built.
 Load CMS content in page frontmatter before the response starts streaming.
 
 Enable CDN caching for public CMS pages in `astro.config.mjs`:

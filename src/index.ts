@@ -6,7 +6,7 @@ import { resolveAdminFavicon } from './admin/favicon.js';
 import { type CacheOptions, validateCache } from './cache.js';
 import { createPool } from './db/client.js';
 import { ensureTables } from './db/tables.js';
-import { type CollectionConfig, isSednaLoader } from './loader.js';
+import { allowMissingDatabase, type CollectionConfig, isSednaLoader } from './loader.js';
 import type { StorageAdapter } from './storage/config.js';
 
 export type {
@@ -184,6 +184,10 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
       'astro:config:done': ({ config, logger }) => {
         // Read the final adapter after its integration has called setAdapter().
         const adapter = config.adapter?.name;
+        if (!adapter)
+          throw new Error(
+            'sednacms needs a server adapter. Run: npx astro add netlify (or vercel, cloudflare, node)',
+          );
         platform =
           options.platform ??
           (adapter && Object.hasOwn(adapterPlatforms, adapter)
@@ -199,6 +203,7 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
         for (const [key, value] of Object.entries(env)) process.env[key] ??= value;
         const databaseUrl = process.env.SEDNA_DATABASE_URL;
         if (databaseUrl) process.env.SEDNA_DATABASE_URL = databaseUrl;
+        else allowMissingDatabase();
 
         const runner = (server.environments.ssr as { runner?: { import: Import } }).runner;
         if (!runner) {
@@ -213,7 +218,9 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
           return;
         }
         if (!databaseUrl) {
-          logger.warn('SEDNA_DATABASE_URL is not set. Skipping table setup.');
+          logger.warn(
+            'SEDNA_DATABASE_URL is not set. Collections will be empty until you add it to .env and restart the dev server.',
+          );
           return;
         }
         try {

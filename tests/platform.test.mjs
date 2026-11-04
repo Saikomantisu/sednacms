@@ -42,7 +42,6 @@ test('identifies the final Astro adapter without an explicit platform', async ()
     ['@astrojs/node', 'none'],
     ['custom-adapter', 'none'],
     ['toString', 'none'],
-    [undefined, 'none'],
   ]) {
     const { platform, messages } = await configure(adapter);
     assert.equal(platform, expected);
@@ -50,13 +49,24 @@ test('identifies the final Astro adapter without an explicit platform', async ()
   }
 });
 
-test('explicit platform overrides detection, including opting out and absent adapters', async () => {
+test('explicit platform overrides detection, including opting out', async () => {
   for (const explicit of ['none', 'netlify', 'vercel', 'cloudflare']) {
-    for (const adapter of [undefined, '@astrojs/node', '@astrojs/netlify']) {
+    for (const adapter of ['@astrojs/node', '@astrojs/netlify']) {
       const { platform, messages } = await configure(adapter, { platform: explicit });
       assert.equal(platform, explicit);
       assert.ok(messages.includes(`Platform: ${explicit} (explicit)`));
     }
+  }
+});
+
+test('requires a server adapter, even with an explicit platform', async () => {
+  for (const options of [{}, { platform: 'none' }, { platform: 'netlify' }]) {
+    await assert.rejects(
+      configure(undefined, options),
+      new Error(
+        'sednacms needs a server adapter. Run: npx astro add netlify (or vercel, cloudflare, node)',
+      ),
+    );
   }
 });
 

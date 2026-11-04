@@ -74,9 +74,21 @@ const logger: Logger = {
 // One pool per server process, shared by all collections.
 let pool: Pool | undefined;
 
+// The dev server may load this module separately from the integration, so the flag lives on globalThis.
+const MISSING_DATABASE_OK = Symbol.for('sednacms.allowMissingDatabase');
+
+/** Called by the dev server: a missing database URL then yields empty collections instead of errors. */
+export function allowMissingDatabase() {
+  (globalThis as Record<symbol, unknown>)[MISSING_DATABASE_OK] = true;
+}
+
+/** Returns undefined in dev when no database is configured. */
 function getPool() {
   const url = process.env.SEDNA_DATABASE_URL;
-  if (!url) throw new Error('sednacms: SEDNA_DATABASE_URL is not set.');
+  if (!url) {
+    if ((globalThis as Record<symbol, unknown>)[MISSING_DATABASE_OK]) return undefined;
+    throw new Error('sednacms: SEDNA_DATABASE_URL is not set.');
+  }
   pool ??= createPool(url);
   return pool;
 }
@@ -129,6 +141,7 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
             'sednacms: pagination requires limit 1–100 and a nonnegative integer offset.',
           );
         const pool = getPool();
+        if (!pool) return { entries: [] };
         await ensureReady(pool, config);
         const { rows } = await pool.query(
           `select ${columns} from ${ident(table)} where status = 'published' order by sort_order, created_at, id${limit === undefined ? '' : ' limit $1 offset $2'}`,
@@ -151,6 +164,7 @@ export function sednaLoader<F extends Fields>(config: CollectionConfig<F>): Sedn
             : `${ident(slugField)} = $1`
           : 'id = $1::uuid';
         const pool = getPool();
+        if (!pool) return undefined;
         await ensureReady(pool, config);
         const {
           rows: [row],

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { Pool } from 'pg';
 import { createPool } from '../dist/db/client.js';
 import { fields } from '../dist/fields.js';
-import { sednaLoader } from '../dist/loader.js';
+import { allowMissingDatabase, sednaLoader } from '../dist/loader.js';
 
 test('loader bounds SQL pages and uses indexed slug/UUID predicates', async (t) => {
   const prior = process.env.SEDNA_DATABASE_URL;
@@ -68,4 +68,19 @@ test('pool configuration has bounded acquisition and validates overrides', async
         /positive integer/,
       );
   }
+});
+
+test('missing database URL errors unless the dev server allowed it', async (t) => {
+  const prior = process.env.SEDNA_DATABASE_URL;
+  delete process.env.SEDNA_DATABASE_URL;
+  t.after(() => {
+    delete globalThis[Symbol.for('sednacms.allowMissingDatabase')];
+    if (prior !== undefined) process.env.SEDNA_DATABASE_URL = prior;
+  });
+  const loader = sednaLoader({ collection: 'packages', fields: { slug: fields.slug() } });
+  assert.match((await loader.loadCollection({})).error.message, /SEDNA_DATABASE_URL is not set/);
+  assert.match((await loader.loadEntry({ filter: { id: 'a' } })).error.message, /not set/);
+  allowMissingDatabase();
+  assert.deepEqual(await loader.loadCollection({}), { entries: [] });
+  assert.equal(await loader.loadEntry({ filter: { id: 'a' } }), undefined);
 });

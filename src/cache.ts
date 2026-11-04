@@ -45,13 +45,30 @@ export function markContentRequest(failed = false, collection?: string) {
   }
 }
 
+// Prerendered routes already warned about, so each route warns once per process.
+const warnedRoutes = new Set<string>();
+
 export function createCacheMiddleware(
   cache?: false | CacheOptions,
   cdn?: CdnCache,
 ): MiddlewareHandler {
   validateCache(cache);
   return async (context, next) => {
-    if (context.isPrerendered) return next();
+    if (context.isPrerendered) {
+      // Prerendered pages are never cached here, but a CMS read means the content is frozen at build.
+      const state = { used: false, failed: false, collections: new Set<string>() };
+      return requests.run(state, async () => {
+        const response = await next();
+        const route = context.routePattern ?? new URL(context.request.url).pathname;
+        if (state.collections.size && !warnedRoutes.has(route)) {
+          warnedRoutes.add(route);
+          console.warn(
+            `[sednacms] ${route} is prerendered but reads Sedna collection ${[...state.collections].map((c) => `"${c}"`).join(', ')}. Its content is frozen at build time. Add \`export const prerender = false\` to the page.`,
+          );
+        }
+        return response;
+      });
+    }
     const state = { used: false, failed: false, collections: new Set<string>() };
     return requests.run(state, async () => {
       const response = await next();

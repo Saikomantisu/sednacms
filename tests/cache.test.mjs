@@ -94,6 +94,28 @@ test('concurrent CMS and unrelated requests do not share cache policy', async ()
   assert.equal(later.headers.has('Cache-Control'), false);
 });
 
+test('prerendered pages reading collections warn once per route and stay uncached', async (t) => {
+  const warnings = [];
+  t.mock.method(console, 'warn', (message) => warnings.push(message));
+  const handle = createCacheMiddleware({ ttl: 60 });
+  const prerendered = (path) => ({
+    request: new Request(`https://site.example${path}`),
+    isPrerendered: true,
+    routePattern: '/posts/[slug]',
+  });
+  for (const path of ['/posts/a', '/posts/b']) {
+    const result = await handle(prerendered(path), async () => {
+      markContentRequest(false, 'posts');
+      return response();
+    });
+    assert.equal(result.headers.get('Cache-Control'), null);
+  }
+  await handle({ ...prerendered('/about'), routePattern: '/about' }, async () => response());
+  assert.deepEqual(warnings, [
+    '[sednacms] /posts/[slug] is prerendered but reads Sedna collection "posts". Its content is frozen at build time. Add `export const prerender = false` to the page.',
+  ]);
+});
+
 test('invalid cache configuration fails during integration setup', () => {
   for (const ttl of [0, -1, 1.5, NaN, Infinity, '60', Number.MAX_SAFE_INTEGER + 1])
     assert.throws(() => sedna({ cache: { ttl } }), /cache.ttl must be a positive integer/);
