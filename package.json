@@ -41,6 +41,7 @@
     "test:admin": "npm run build && node --test tests/admin.test.mjs",
     "test:cache": "npm run build && node --test tests/cache.test.mjs tests/cdn.test.mjs tests/cdn-runtime.test.mjs",
     "test:platform": "npm run build && node --test tests/platform.test.mjs",
+    "test:netlify": "npm run build && node --test tests/netlify-isolation.mjs",
     "test:uploads": "npm run build && node --test tests/uploads.test.mjs",
     "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs",
     "test:loader": "npm run build && node --test tests/loader.test.mjs tests/log.test.mjs",

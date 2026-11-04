@@ -557,7 +557,7 @@ test('linked installs serve the image worker and WASM outside the app root', asy
   const root = new URL('../playground/', import.meta.url);
   for (const allow of [undefined, [fileURLToPath(root)]]) {
     let integrationConfig;
-    sedna().hooks['astro:config:setup']({
+    await sedna().hooks['astro:config:setup']({
       config: {
         root,
         srcDir: new URL('src/', root),

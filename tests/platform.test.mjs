@@ -31,8 +31,23 @@ async function configure(adapterName, options = {}) {
   const plugin = update.vite.plugins[0];
   const source = plugin.load(plugin.resolveId('virtual:sedna/platform'));
   const { platform } = await import(`data:text/javascript,${encodeURIComponent(source)}`);
-  return { platform, messages };
+  return { platform, messages, vite: update.vite };
 }
+
+test('bundles Sedna runtime dependencies consistently across adapters', async () => {
+  for (const adapter of [
+    '@astrojs/node',
+    '@astrojs/netlify',
+    '@astrojs/vercel',
+    'custom-adapter',
+  ]) {
+    const { vite } = await configure(adapter);
+    for (const dependency of ['sednacms', 'pg', 'pg-pool', 'better-auth', 'uploadthing'])
+      assert.ok(vite.ssr.noExternal.includes(dependency), `${adapter}: ${dependency}`);
+    assert.equal(vite.ssr.noExternal.includes('vite'), false);
+    assert.equal(vite.ssr.noExternal.includes(adapter), false);
+  }
+});
 
 test('identifies the final Astro adapter without an explicit platform', async () => {
   for (const [adapter, expected] of [

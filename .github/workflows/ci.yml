@@ -67,6 +67,9 @@ jobs:
       - name: Test
         run: node --test tests/*.test.mjs
 
+      - name: Test isolated Netlify function
+        run: npm run test:netlify
+
   docs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
