@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add SednaCMS"
+  short_description: "Add SednaCMS to an existing Astro project"
+  default_prompt: "Use $add-sednacms to add SednaCMS to this Astro project while preserving its design and existing content."

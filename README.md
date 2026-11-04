@@ -42,6 +42,31 @@ export const collections = { posts };
 
 Set `SEDNA_DATABASE_URL` in `.env`. Tables are created when the dev server starts.
 
+## Add Sedna with an agent
+
+Use the [add-sednacms skill](skills/add-sednacms/SKILL.md) to have a coding agent
+add Sedna to your Astro site while keeping its design and URLs. The instructions
+cover live collections, server configuration, admin setup, optional uploads, and
+checking that published edits appear without a rebuild.
+
+Copy `skills/add-sednacms/` from this repository into your agent's skills directory.
+For Codex, install it from a local Sedna checkout:
+
+```sh
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R skills/add-sednacms "${CODEX_HOME:-$HOME/.codex}/skills/"
+```
+
+Then open the target Astro project and ask:
+
+```text
+Use $add-sednacms to make this site's blog posts editable in SednaCMS.
+Keep the existing design and post URLs.
+```
+
+The skill uses standard `SKILL.md` instructions and can also be installed in other
+agents that support that format. It does not provision a database or deploy the site.
+
 ## Paginating public collections
 
 `getLiveCollection` accepts optional SQL pagination filters:
