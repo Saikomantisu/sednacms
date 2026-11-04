@@ -5,20 +5,33 @@ import { getMigrations } from 'better-auth/db/migration';
 import { createPool } from '../db/client.js';
 
 // Messages in this error type contain configuration names only, never their values.
-export class AuthConfigurationError extends Error {}
+export class AuthConfigurationError extends Error {
+  constructor(
+    message: string,
+    /** How to fix it. Logged on the server only. */
+    readonly hint: string,
+  ) {
+    super(message);
+  }
+}
 
 // System tables are separate from collection tables, including in an existing site database.
 export function createAuthServer(env: Record<string, string | undefined> = process.env) {
   const { SEDNA_DATABASE_URL: connectionString, SEDNA_SECRET: secret, SEDNA_URL: baseURL } = env;
   if (!connectionString)
     throw new AuthConfigurationError(
-      'sednacms: SEDNA_DATABASE_URL is required for authentication.',
+      'SEDNA_DATABASE_URL is required for authentication.',
+      'Add SEDNA_DATABASE_URL to .env with a pooled Postgres connection string, then restart the server.',
     );
   if (!secret || secret.length < 32)
-    throw new AuthConfigurationError('sednacms: SEDNA_SECRET must contain at least 32 characters.');
+    throw new AuthConfigurationError(
+      'SEDNA_SECRET must contain at least 32 characters.',
+      'Generate one with `openssl rand -base64 32` and add it to .env as SEDNA_SECRET.',
+    );
   if (!baseURL)
     throw new AuthConfigurationError(
-      'sednacms: SEDNA_URL is required (the site origin, e.g. http://localhost:4321).',
+      'SEDNA_URL is required (the site origin, e.g. http://localhost:4321).',
+      'Add SEDNA_URL to .env, for example SEDNA_URL=http://localhost:4321.',
     );
   let origin: string;
   try {
@@ -27,7 +40,10 @@ export function createAuthServer(env: Record<string, string | undefined> = proce
       throw new Error();
     origin = url.origin;
   } catch {
-    throw new AuthConfigurationError('sednacms: SEDNA_URL must be an HTTP or HTTPS site origin.');
+    throw new AuthConfigurationError(
+      'SEDNA_URL must be an HTTP or HTTPS site origin.',
+      'Use the origin only, for example https://example.com, without a path or credentials.',
+    );
   }
   const pool = createPool(connectionString, undefined, env);
   const auth = betterAuth({

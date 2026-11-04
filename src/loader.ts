@@ -1,8 +1,9 @@
 import type { LiveLoader } from 'astro/loaders';
 import { markContentRequest } from './cache.js';
 import { createPool, ident, type Pool } from './db/client.js';
-import { ensureTables, type Logger, tableName } from './db/tables.js';
+import { ensureTables, tableName } from './db/tables.js';
 import type { Field, FieldsData } from './fields.js';
+import { log } from './log.js';
 
 type Fields = Record<string, Field>;
 
@@ -66,11 +67,6 @@ function validateFields(fields: Fields, path: string, topLevel = false) {
   }
 }
 
-const logger: Logger = {
-  info: (message) => console.log(`[sednacms] ${message}`),
-  warn: (message) => console.warn(`[sednacms] ${message}`),
-};
-
 // One pool per server process, shared by all collections.
 let pool: Pool | undefined;
 
@@ -99,7 +95,7 @@ const ready = new Map<string, Promise<void>>();
 function ensureReady(pool: Pool, config: CollectionConfig) {
   let promise = ready.get(config.collection);
   if (!promise) {
-    promise = ensureTables(pool, [config], logger);
+    promise = ensureTables(pool, [config], log);
     // Let the next query try again instead of caching the failure.
     promise.catch(() => ready.delete(config.collection));
     ready.set(config.collection, promise);

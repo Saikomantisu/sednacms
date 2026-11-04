@@ -111,9 +111,18 @@ test('prerendered pages reading collections warn once per route and stay uncache
     assert.equal(result.headers.get('Cache-Control'), null);
   }
   await handle({ ...prerendered('/about'), routePattern: '/about' }, async () => response());
-  assert.deepEqual(warnings, [
-    '[sednacms] /posts/[slug] is prerendered but reads Sedna collection "posts". Its content is frozen at build time. Add `export const prerender = false` to the page.',
-  ]);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /^\d\d:\d\d:\d\d \[WARN\] \[sednacms\] /);
+  assert.equal(
+    warnings[0].replace(/^.*?\[sednacms\] /, ''),
+    [
+      '`/posts/[slug]` is prerendered but reads Sedna collection "posts".',
+      '  Hint:',
+      '    Its content is frozen at build time, so CMS changes will not appear until the next build.',
+      '',
+      '    If this page should show live content, set `export const prerender = false;` in the page.',
+    ].join('\n'),
+  );
 });
 
 test('invalid cache configuration fails during integration setup', () => {

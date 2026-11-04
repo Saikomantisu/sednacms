@@ -7,6 +7,7 @@ import { type CacheOptions, validateCache } from './cache.js';
 import { createPool } from './db/client.js';
 import { ensureTables } from './db/tables.js';
 import { allowMissingDatabase, type CollectionConfig, isSednaLoader } from './loader.js';
+import { formatEntry } from './log.js';
 import type { StorageAdapter } from './storage/config.js';
 
 export type {
@@ -219,7 +220,10 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
         }
         if (!databaseUrl) {
           logger.warn(
-            'SEDNA_DATABASE_URL is not set. Collections will be empty until you add it to .env and restart the dev server.',
+            formatEntry({
+              message: 'SEDNA_DATABASE_URL is not set. Collections will be empty.',
+              hint: 'Add SEDNA_DATABASE_URL to .env with a pooled Postgres connection string, then restart the dev server.',
+            }),
           );
           return;
         }

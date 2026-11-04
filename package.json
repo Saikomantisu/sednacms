@@ -43,7 +43,7 @@
     "test:platform": "npm run build && node --test tests/platform.test.mjs",
     "test:uploads": "npm run build && node --test tests/uploads.test.mjs",
     "test:api": "npm run build && npm run build --prefix playground && node --test tests/content.test.mjs",
-    "test:loader": "npm run build && node --test tests/loader.test.mjs",
+    "test:loader": "npm run build && node --test tests/loader.test.mjs tests/log.test.mjs",
     "test:demo": "npm run build && node --test tests/demo.test.mjs"
   },
   "peerDependencies": {

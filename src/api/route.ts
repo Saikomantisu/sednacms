@@ -7,6 +7,7 @@ import { AuthConfigurationError, getAuthServer } from '../auth/server.js';
 import { createCdnCache } from '../cdn.js';
 import { createPool } from '../db/client.js';
 import { isSednaLoader } from '../loader.js';
+import { log, logOnce } from '../log.js';
 import { createContentApi } from './content.js';
 import { createUploadApi } from './uploads.js';
 
@@ -52,14 +53,18 @@ export const ALL: APIRoute = async ({ request, clientAddress }) => {
     return await content(request);
   } catch (error) {
     if (error instanceof AuthConfigurationError) {
-      console.error(error.message);
+      // The same configuration error repeats on every request until the server restarts.
+      logOnce('error', { message: error.message, hint: error.hint });
       return Response.json(
         { error: error.message },
         { status: 503, headers: { 'Cache-Control': 'no-store' } },
       );
     }
     // Never expose connection strings, SQL, or internal configuration to clients.
-    console.error('[sednacms] API request failed. Check database and CMS configuration.');
+    log.error({
+      message: 'API request failed.',
+      hint: 'Check SEDNA_DATABASE_URL, the database connection, and the CMS configuration in .env.',
+    });
     return Response.json(
       { error: 'CMS unavailable' },
       { status: 503, headers: { 'Cache-Control': 'no-store' } },

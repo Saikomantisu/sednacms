@@ -1,4 +1,5 @@
 import { Pool, type PoolClient, types } from 'pg';
+import { log } from '../log.js';
 
 export type { Pool, PoolClient };
 /** Anything that can run a query: the pool, or a client inside a transaction. */
@@ -62,9 +63,7 @@ export function createPool(
   });
   // The database can drop an idle connection (Neon suspends idle computes). The pool replaces it on
   // the next query; without this listener the dropped connection's error would crash the server.
-  pool.on('error', (error) =>
-    console.warn(`[sednacms] Database connection closed: ${error.message}`),
-  );
+  pool.on('error', (error) => log.warn(`Database connection closed: ${error.message}`));
   return pool;
 }
 

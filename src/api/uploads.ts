@@ -1,4 +1,5 @@
 import { UploadThingError } from 'uploadthing/server';
+import { log } from '../log.js';
 import {
   IMAGE_TYPES,
   MAX_IMAGE_BYTES,
@@ -80,7 +81,10 @@ export function createUploadApi(options: {
           { error: error.message },
           error.message === 'Authentication required' ? 401 : 403,
         );
-      console.error('[sednacms] Image storage unavailable. Check storage configuration.');
+      log.error({
+        message: 'Image storage unavailable.',
+        hint: 'Check the storage adapter in astro.config.mjs and its environment variables.',
+      });
       return json(
         {
           error:

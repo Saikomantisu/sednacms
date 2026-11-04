@@ -2,6 +2,7 @@ import { ident, type Pool, transaction } from '../db/client.js';
 import { ensureTables, tableName } from '../db/tables.js';
 import type { Field } from '../fields.js';
 import type { CollectionConfig } from '../loader.js';
+import { log } from '../log.js';
 import type { CmsEntry, EntryStatus } from './types.js';
 
 class HttpError extends Error {
@@ -150,7 +151,7 @@ export function createContentApi(options: {
         await client.query("select pg_advisory_xact_lock(hashtext('sedna:content:tables'))");
         await ensureTables(client, collections, {
           info: () => {},
-          warn: (message) => console.warn(`[sednacms] ${message}`),
+          warn: log.warn,
         });
       });
       ready.catch(() => {
@@ -169,9 +170,10 @@ export function createContentApi(options: {
         // The database change has committed. Do not turn it into a failed save or
         // encourage a retry that could create duplicate content.
         headers.set('X-Sedna-Cache', 'purge-failed');
-        console.warn(
-          '[sednacms] Content saved, but CDN cache invalidation failed. Cached pages may remain outdated until expiry.',
-        );
+        log.warn({
+          message: 'Content saved, but CDN cache invalidation failed.',
+          hint: 'Cached pages may stay outdated until their TTL expires. Check the CDN token and site, project or zone ID.',
+        });
       }
     };
     try {

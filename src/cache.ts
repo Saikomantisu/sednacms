@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { MiddlewareHandler } from 'astro';
 import { type CdnCache, collectionTag } from './cdn.js';
+import { log } from './log.js';
 
 export interface CacheOptions {
   /** Shared-cache lifetime in seconds. Browsers must revalidate every request. */
@@ -62,9 +63,14 @@ export function createCacheMiddleware(
         const route = context.routePattern ?? new URL(context.request.url).pathname;
         if (state.collections.size && !warnedRoutes.has(route)) {
           warnedRoutes.add(route);
-          console.warn(
-            `[sednacms] ${route} is prerendered but reads Sedna collection ${[...state.collections].map((c) => `"${c}"`).join(', ')}. Its content is frozen at build time. Add \`export const prerender = false\` to the page.`,
-          );
+          const names = [...state.collections].map((c) => `"${c}"`).join(', ');
+          log.warn({
+            message: `\`${route}\` is prerendered but reads Sedna ${state.collections.size === 1 ? 'collection' : 'collections'} ${names}.`,
+            hint: [
+              'Its content is frozen at build time, so CMS changes will not appear until the next build.',
+              'If this page should show live content, set `export const prerender = false;` in the page.',
+            ],
+          });
         }
         return response;
       });

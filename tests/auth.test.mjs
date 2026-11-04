@@ -242,11 +242,11 @@ test('auth setup, closed registration, sessions, and migrations', {
 test('missing auth configuration reports names without exposing secret values', () => {
   assert.throws(() => createAuthServer({}), AuthConfigurationError);
   assert.throws(() => createAuthServer({ SEDNA_DATABASE_URL: 'private-database-url' }), {
-    message: 'sednacms: SEDNA_SECRET must contain at least 32 characters.',
+    message: 'SEDNA_SECRET must contain at least 32 characters.',
   });
   const env = { SEDNA_DATABASE_URL: 'private-database-url', SEDNA_SECRET: 'x'.repeat(32) };
   assert.throws(() => createAuthServer(env), {
-    message: 'sednacms: SEDNA_URL is required (the site origin, e.g. http://localhost:4321).',
+    message: 'SEDNA_URL is required (the site origin, e.g. http://localhost:4321).',
   });
   for (const SEDNA_URL of [
     'private-invalid-url',
@@ -254,7 +254,7 @@ test('missing auth configuration reports names without exposing secret values', 
     'https://user:private@example.com',
   ]) {
     assert.throws(() => createAuthServer({ ...env, SEDNA_URL }), {
-      message: 'sednacms: SEDNA_URL must be an HTTP or HTTPS site origin.',
+      message: 'SEDNA_URL must be an HTTP or HTTPS site origin.',
     });
   }
 });
