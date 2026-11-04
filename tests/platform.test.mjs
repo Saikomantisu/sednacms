@@ -6,6 +6,7 @@ async function configure(adapterName, options = {}) {
   const integration = sedna(options);
   const root = new URL('../playground/', import.meta.url);
   let update;
+  const routes = [];
   const messages = [];
   const logger = { info: (message) => messages.push(message) };
   const config = {
@@ -22,7 +23,7 @@ async function configure(adapterName, options = {}) {
     updateConfig: (value) => {
       update = value;
     },
-    injectRoute() {},
+    injectRoute: (route) => routes.push(route),
     addMiddleware() {},
   });
   // Adapter integrations install the adapter after Sedna's setup hook can run.
@@ -31,8 +32,29 @@ async function configure(adapterName, options = {}) {
   const plugin = update.vite.plugins[0];
   const source = plugin.load(plugin.resolveId('virtual:sedna/platform'));
   const { platform } = await import(`data:text/javascript,${encodeURIComponent(source)}`);
-  return { platform, messages };
+  const cacheSource = plugin.load(plugin.resolveId('virtual:sedna/cache'));
+  const { cache } = await import(`data:text/javascript,${encodeURIComponent(cacheSource)}`);
+  return { platform, messages, cache, update, routes };
 }
+
+test('core CMS setup preserves the chosen adapter and disables provider caching by default', async () => {
+  for (const adapter of [
+    '@astrojs/node',
+    '@astrojs/netlify',
+    '@astrojs/vercel',
+    'custom-adapter',
+  ]) {
+    const result = await configure(adapter);
+    assert.equal(result.update.adapter, undefined);
+    assert.equal(result.update.vite.ssr, undefined);
+    assert.equal(result.cache, false);
+    assert.deepEqual(
+      result.routes.map((route) => route.pattern),
+      ['/admin/[...path]', '/api/cms/[...path]'],
+    );
+    assert.ok(result.routes.every((route) => route.prerender === false));
+  }
+});
 
 test('identifies the final Astro adapter without an explicit platform', async () => {
   for (const [adapter, expected] of [
@@ -64,7 +86,7 @@ test('requires a server adapter, even with an explicit platform', async () => {
     await assert.rejects(
       configure(undefined, options),
       new Error(
-        'sednacms needs a server adapter. Run: npx astro add netlify (or vercel, cloudflare, node)',
+        'sednacms needs a Node-compatible Astro server adapter. Configure one for your deployment host.',
       ),
     );
   }

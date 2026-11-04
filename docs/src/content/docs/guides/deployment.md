@@ -4,7 +4,9 @@ title: Deployment
 description: Deploy Sedna with a Node-compatible adapter, runtime variables, and Postgres.
 ---
 
-Sedna needs a server adapter compatible with its Node dependencies and a reachable Postgres database. This guide uses standalone Node; Netlify and Vercel deployments use their corresponding Astro adapters.
+Sedna uses your site's Astro server adapter and requires Node-compatible APIs and a reachable Postgres database. It does not select an adapter or change dependency bundling. Hosting-provider credentials are needed only for optional CDN caching.
+
+This guide uses standalone Node; managed hosts use their corresponding Astro adapters.
 
 ## Build and run
 
@@ -42,4 +44,12 @@ On a new production database, open `/admin` to create the first account with you
 
 Caching is disabled by default. If you enable [CDN caching](/guides/caching/), check it on the deployed host. Confirm that pages produce cache hits, publishing purges cached content, pagination respects query strings, and private routes bypass the cache. Local Node development does not simulate a CDN.
 
-You can put Cloudflare CDN in front of a compatible Node server with explicit cache rules. Sedna cannot run in Cloudflare Workers.
+You can put Cloudflare CDN in front of a compatible Node server with explicit cache rules.
+
+## Cloudflare Workers compatibility
+
+Cloudflare Workers with `nodejs_compat` is experimental. Local build and basic route
+checks pass, but database connection reuse, auth flows, publishing, uploads, and
+CDN purging still need verification. Keep caching disabled during compatibility
+testing. The [Cloudflare caching guide](/guides/caching/#cloudflare) covers a CDN
+in front of a Node origin.

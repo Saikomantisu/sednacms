@@ -21,7 +21,7 @@ By default, these responses use `Cache-Control: no-store`. Each request that rea
 - A Postgres database with a pooled connection string.
 - UploadThing or S3-compatible storage if editors need to upload images.
 
-Sedna's admin and API need a server. You cannot deploy them to a static-only host or Cloudflare Workers. You can use Cloudflare's CDN in front of a compatible Node server.
+Sedna's admin and API need a server. You cannot deploy them to a static-only host. Cloudflare Workers with Node compatibility is [experimental](/guides/deployment/#cloudflare-workers-compatibility). You can also use Cloudflare's CDN in front of a compatible Node server.
 
 ## Current scope
 

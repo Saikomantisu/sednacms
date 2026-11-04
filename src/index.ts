@@ -78,7 +78,7 @@ const adapterPlatforms: Record<string, SednaPlatform> = {
 };
 
 export interface SednaOptions {
-  /** Override platform identification from Astro's adapter. `none` opts out. */
+  /** Override CDN provider detection from Astro's adapter. `none` uses generic HTTP caching. */
   platform?: SednaPlatform;
   /** Disabled by default. Opt in to CDN caching with a TTL and platform purge support. */
   cache?: false | CacheOptions;
@@ -185,7 +185,7 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
         const adapter = config.adapter?.name;
         if (!adapter)
           throw new Error(
-            'sednacms needs a server adapter. Run: npx astro add netlify (or vercel, cloudflare, node)',
+            'sednacms needs a Node-compatible Astro server adapter. Configure one for your deployment host.',
           );
         platform =
           options.platform ??

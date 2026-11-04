@@ -18,10 +18,21 @@ Configure `.env` from `.env.example`, then run from the repository root:
 
 ```sh
 npm run build
+npm ci --prefix playground
 npm run dev --prefix playground
 ```
 
 Open `http://localhost:4321` or `/admin`. Edits and uploads persist.
+The playground uses Vercel; API integration tests use standalone Node.
+
+The local package is packed into `node_modules` through the playground's `.npmrc`.
+After changing Sedna, rebuild it and repeat `npm ci --prefix playground` to refresh
+the installed copy before testing.
+
+CDN caching is disabled during development and uses a one-hour TTL in production.
+Configure [Vercel purge credentials](../docs/src/content/docs/guides/caching.md#vercel)
+before deploying with caching enabled.
+
 Create and manage posts, testimonials and packages in `/admin`. Content tables are created
 from the collection schema when the development server starts. No sample content
 is added automatically.

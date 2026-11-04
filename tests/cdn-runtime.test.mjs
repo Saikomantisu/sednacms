@@ -42,7 +42,7 @@ test('built Astro server emits collection tags, preserves query variants, and ex
     import node from '@astrojs/node';
     import { defineConfig } from 'astro/config';
     import { fileURLToPath } from 'node:url';
-    import sedna from '../../dist/index.js';
+    import sedna from 'sednacms';
     export default defineConfig({
       root: fileURLToPath(new URL('../', import.meta.url)),
       outDir: fileURLToPath(new URL('./dist/', import.meta.url)),

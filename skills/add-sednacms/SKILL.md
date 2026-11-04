@@ -16,7 +16,7 @@ Read the project instructions, `package.json`, lockfile, Astro config, content c
 
 Choose collections and fields from the request and existing content. Ask if the editable content or hosting target is unclear. Missing credentials should not prevent you from finishing the code and configuration.
 
-Sedna requires Astro 6+ and a Node-compatible server adapter. Explain any required major Astro upgrade and check that it fits the requested scope. Keep a compatible adapter already in use. Otherwise, use Node standalone for local use or an adapter that matches the deployment host. Cloudflare Workers and other edge-only runtimes are unsupported because Sedna uses Node dependencies, including `pg`.
+Sedna requires Astro 6+ and a Node-compatible server adapter. Explain any required major Astro upgrade and check that it fits the requested scope. Keep a compatible adapter already in use. Otherwise, use Node standalone for local use or an adapter that matches the deployment host. Cloudflare Workers with `nodejs_compat` is experimental; verify database connections, auth, publishing, uploads, and CDN purging before recommending it for production. Runtimes without the required Node APIs are unsupported.
 
 ## Install and configure
 

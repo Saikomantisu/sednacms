@@ -16,7 +16,7 @@ Enable CDN caching for public CMS pages in `astro.config.mjs`:
 
 ```js
 integrations: [
-  sedna({ platform: 'netlify', cache: { ttl: 3600 } }),
+  sedna({ cache: { ttl: 3600 } }),
 ],
 ```
 
@@ -87,7 +87,7 @@ SEDNA_CLOUDFLARE_ZONE_ID=your-zone-id
 ```
 
 Use this with Cloudflare's CDN in front of a compatible Node deployment.
-Sedna cannot run in Cloudflare Workers. Proxy the domain through
+Caching Worker-generated responses has not been verified. For a Node origin, proxy the domain through
 Cloudflare and configure a Cache Rule making public HTML eligible for caching,
 respecting origin cache-control headers and query strings. Bypass `/admin`,
 `/api/cms`, and requests containing Cookie or Authorization headers. Do not force
