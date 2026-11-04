@@ -78,7 +78,8 @@ test('built Astro server emits collection tags, preserves query variants, and ex
       '--config',
       relative(playground, join(temporary, 'astro.config.mjs')),
     ],
-    env,
+    // Purge credentials belong to the function runtime, not static prerendering.
+    { ...env, SEDNA_NETLIFY_TOKEN: '', SEDNA_NETLIFY_SITE_ID: '', SITE_ID: '' },
   );
   running.push(build);
   await build.done;
