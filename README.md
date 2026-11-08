@@ -1,12 +1,6 @@
 <h1 align="center">Sedna CMS</h1>
 
 <p align="center">
-  <a href="https://github.com/Saikomantisu/sednacms/actions/workflows/ci.yml"
-    ><img
-      src="https://shieldcn.dev/github/ci/Saikomantisu/sednacms.svg?workflow=ci.yml&amp;branch=main&amp;variant=secondary"
-      alt="CI status"
-    ></a
-  >
   <a href="LICENSE"
     ><img
       src="https://shieldcn.dev/github/license/Saikomantisu/sednacms.svg?variant=secondary"
