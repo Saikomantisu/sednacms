@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { CmsEntry, EntryStatus } from '../api/types.js';
-import type { CollectionConfig } from '../loader.js';
-import { FieldControl, initialValues, readValues } from './fields.js';
-import { EntryDates, entryTitle, Status, titleCase } from './ui.js';
+import type { CmsEntry, EntryStatus } from '../../../api/types.js';
+import type { CollectionConfig } from '../../../loader.js';
+import { initialValues, readValues } from '../../utils/field-values.js';
+import { entryTitle, titleCase } from '../../utils/format.js';
+import { EntryDates, Status } from './entry-meta.js';
+import { FieldControl } from './fields.js';
 
 type Props = {
   schema: CollectionConfig;
@@ -80,7 +82,7 @@ export function EntryEditor({
         ))}
         {Object.values(schema.fields).some((field) => field.required) && (
           <p className="editor-note">
-            Fill in fields marked * before publishing. You can save a draft with empty fields.
+            Complete the fields marked * to publish. You can leave fields empty when saving a draft.
           </p>
         )}
         <div className="editor-bar">

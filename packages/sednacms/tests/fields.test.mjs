@@ -17,7 +17,8 @@ const hooks = registerHooks({
     return next(specifier, context);
   },
 });
-const { FieldControl, initialValues, readValues } = await import('../dist/admin/fields.js');
+const { FieldControl } = await import('../dist/admin/components/content/fields.js');
+const { initialValues, readValues } = await import('../dist/admin/utils/field-values.js');
 hooks.deregister();
 
 const schema = {

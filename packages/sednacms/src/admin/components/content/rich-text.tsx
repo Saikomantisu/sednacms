@@ -3,7 +3,7 @@ import { Placeholder } from '@tiptap/extensions';
 import StarterKit from '@tiptap/starter-kit';
 import DOMPurify from 'dompurify';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { Dialog } from './ui.js';
+import { Dialog } from '../ui/dialog.js';
 
 const sanitize = (html: string) => DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
 function normalizeUrl(value: string): string | null {

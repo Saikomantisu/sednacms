@@ -1,92 +1,21 @@
 import { disposableDemo, uploadsEnabled } from 'virtual:sedna/admin';
-import { type InputHTMLAttributes, type ReactNode, useEffect, useRef, useState } from 'react';
-import type { Field, ImageValue } from '../fields.js';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import type { Field } from '../../../fields.js';
+import { type UploadProgress, uploadImage } from '../../uploads.js';
+import {
+  type FieldValue,
+  type ImageDraft,
+  initialValue,
+  initialValues,
+  validImageSource,
+} from '../../utils/field-values.js';
+import { titleCase } from '../../utils/format.js';
+import { Media } from '../media/media-library.js';
+import { Dialog } from '../ui/dialog.js';
+import { LabelledInput } from '../ui/labelled-input.js';
+import { SelectControl } from '../ui/select.js';
 import { RichText } from './rich-text.js';
-import { titleCase } from './ui.js';
-import { type UploadProgress, uploadImage } from './uploads.js';
 
-// Only the isolated demo accepts browser-local images. Live CMS validation stays unchanged.
-const validImageSource = (src: string) =>
-  disposableDemo
-    ? src.startsWith('/images/') || src.startsWith(`blob:${location.origin}/`)
-    : /^https?:\/\//.test(src);
-
-type ImageDraft = { src: string; width: string; height: string; alt: string };
-export type FieldValue =
-  | string
-  | boolean
-  | number
-  | null
-  | FieldValue[]
-  | { [key: string]: FieldValue };
-
-function initialValue(field: Field, value: unknown): FieldValue {
-  if (field.type === 'image') {
-    const image = value as ImageValue | null;
-    return {
-      src: image?.src ?? '',
-      width: image ? String(image.width) : '',
-      height: image ? String(image.height) : '',
-      alt: image?.alt ?? '',
-    };
-  }
-  if (value == null) return null;
-  if (field.type === 'list')
-    return (value as unknown[]).map((item) => initialValue(field.item, item));
-  if (field.type === 'object') return initialValues(field.fields, value as Record<string, unknown>);
-  return value as string | boolean | number;
-}
-export function initialValues(
-  fields: Record<string, Field>,
-  data: Record<string, unknown> = {},
-): Record<string, FieldValue> {
-  return Object.fromEntries(
-    Object.entries(fields).map(([name, field]) => [name, initialValue(field, data[name])]),
-  );
-}
-function readValue(field: Field, value: FieldValue, name: string): unknown {
-  if (field.type === 'image') {
-    const image = value as ImageDraft;
-    if (!image.src && !image.width && !image.height && !image.alt) return null;
-    if (
-      !validImageSource(image.src) ||
-      !Number.isInteger(Number(image.width)) ||
-      Number(image.width) < 1 ||
-      !Number.isInteger(Number(image.height)) ||
-      Number(image.height) < 1
-    )
-      throw new Error(`Provide an image URL, width, and height for ${titleCase(name)}.`);
-    return { ...image, width: Number(image.width), height: Number(image.height) };
-  }
-  if (value == null || value === '') return null;
-  if (field.type === 'list')
-    return (value as FieldValue[]).map((item, index) =>
-      readValue(field.item, item, `${name}[${index}]`),
-    );
-  if (field.type === 'object') return readValues(field.fields, value as Record<string, FieldValue>);
-  return field.type === 'number' ? Number(value) : value;
-}
-export function readValues(
-  fields: Record<string, Field>,
-  values: Record<string, FieldValue>,
-): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(fields).map(([name, field]) => [name, readValue(field, values[name], name)]),
-  );
-}
-export function LabelledInput({
-  label,
-  hint,
-  ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
-  return (
-    <div className="field">
-      <label htmlFor={props.id}>{label}</label>
-      <input {...props} />
-      {hint && <p className="hint">{hint}</p>}
-    </div>
-  );
-}
 export function FieldControl({
   name,
   field,
@@ -188,18 +117,17 @@ function FieldInput({ id, name, label, field, value, disabled, onChange, run }: 
     );
   if (field.type === 'boolean')
     return (
-      <select
+      <SelectControl
         id={id}
         disabled={disabled}
         value={value === null ? '' : String(value)}
-        onChange={(event) =>
-          onChange(event.target.value === '' ? null : event.target.value === 'true')
-        }
-      >
-        <option value="">Not set</option>
-        <option value="true">Yes</option>
-        <option value="false">No</option>
-      </select>
+        options={[
+          { value: '', label: 'Not set' },
+          { value: 'true', label: 'Yes' },
+          { value: 'false', label: 'No' },
+        ]}
+        onValueChange={(next) => onChange(next === '' ? null : next === 'true')}
+      />
     );
   return (
     <>
@@ -699,6 +627,7 @@ function ImageControl({
   onChange: (value: ImageDraft) => void;
   run: (action: () => Promise<void>) => void;
 }) {
+  const [picker, setPicker] = useState(false);
   const [failed, setFailed] = useState('');
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const progressLabel =
@@ -722,13 +651,40 @@ function ImageControl({
   );
   return (
     <div className="image-control">
+      {!disposableDemo && (
+        <button type="button" disabled={disabled} onClick={() => setPicker(true)}>
+          Choose from media
+        </button>
+      )}
+      {picker && (
+        <Dialog title="Choose an image" className="media-picker" onCancel={() => setPicker(false)}>
+          <Media
+            disabled={disabled}
+            run={run}
+            onSelect={(media) => {
+              onChange({
+                src: media.src,
+                width: String(media.width),
+                height: String(media.height),
+                alt: value.alt,
+              });
+              setPicker(false);
+            }}
+          />
+          <div className="actions">
+            <button type="button" onClick={() => setPicker(false)}>
+              Cancel
+            </button>
+          </div>
+        </Dialog>
+      )}
       {uploadsEnabled && (
         <div className="field">
           <label htmlFor={id + '-upload'}>Upload image</label>
           <input
             id={id + '-upload'}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/svg+xml"
             aria-describedby={`${id}-upload-hint`}
             disabled={disabled}
             onChange={(event) => {
@@ -752,8 +708,8 @@ function ImageControl({
           />
           <p className="hint" id={`${id}-upload-hint`}>
             {disposableDemo
-              ? 'Local preview only. Up to 5 MB per image and 25 MB per session. Nothing is uploaded.'
-              : 'JPEG, PNG, WebP, GIF, or AVIF, up to 32 MB.'}
+              ? 'Images stay in your browser for this preview. The limits are 5 MB per image and 25 MB per session.'
+              : 'Images and GIFs up to 32 MB; SVGs up to 1 MB.'}
           </p>
           {progress && (
             <div className="upload-progress">
@@ -774,10 +730,10 @@ function ImageControl({
       {input('alt', 'Image description', 'text')}
       <p className="hint">
         {disposableDemo
-          ? 'Use bundled /images/ paths or choose a local image. External images are blocked in this demo.'
+          ? 'Use a bundled /images/ path or choose an image from your computer. This demo blocks external images.'
           : uploadsEnabled
             ? 'You can also paste an existing image URL and enter its dimensions.'
-            : 'Paste an existing image URL and enter its dimensions. Ask your website developer to configure storage to enable uploads.'}
+            : 'Paste an existing image URL and enter its dimensions. To upload files, ask your developer to set up storage.'}
       </p>
       {value.src && (
         <button

@@ -1,6 +1,6 @@
 ---
 import './style.css';
-import { favicon } from 'virtual:sedna/admin';
+import { favicon, siteName } from 'virtual:sedna/admin';
 import { Github, Menu, X } from 'lucide-astro';
 export const prerender = false;
 Astro.response.headers.set('Cache-Control', 'no-store');
@@ -23,7 +23,7 @@ Astro.response.headers.set('X-Frame-Options', 'DENY');
     <!-- Matches the top bar (--sidebar), so the status bar blends into it. -->
     <meta name="theme-color" content="#0c0a09">
     <link rel="icon" href={favicon}>
-    <title>Sedna | Content</title>
+    <title>{`Content | ${siteName || 'Sedna'}`}</title>
   </head>
   <body>
     <!-- Keep the Astro-rendered icons available to the React dashboard. -->

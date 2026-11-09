@@ -85,6 +85,8 @@ export interface SednaOptions {
   cache?: false | CacheOptions;
   storage?: StorageAdapter;
   admin?: {
+    /** Site name used in admin page titles. Defaults to the website's homepage title, then Sedna. */
+    siteName?: string;
     /** Admin favicon URL. Defaults to the site's public/favicon.svg, .ico, or .png. */
     favicon?: string;
   };
@@ -154,7 +156,7 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
                   if (id === '\0virtual:sedna/storage')
                     return `export const storage = ${JSON.stringify(options.storage ?? null)};`;
                   if (id === '\0virtual:sedna/admin') {
-                    return `export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.admin?.favicon))}; export const uploadsEnabled = ${Boolean(options.storage)}; export const disposableDemo = false;`;
+                    return `export const homePath = ${JSON.stringify(`${config.base.replace(/\/$/, '')}/`)}; export const siteName = ${JSON.stringify(options.admin?.siteName?.trim() || '')}; export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.admin?.favicon))}; export const uploadsEnabled = ${Boolean(options.storage)}; export const disposableDemo = false;`;
                   }
                   if (id === '\0virtual:sedna/collections')
                     return liveConfig

@@ -100,3 +100,19 @@ test('rejects invalid platform values before configuring Astro', () => {
     );
   }
 });
+
+test('admin virtual module supplies the homepage path and honors the configured site name', async () => {
+  for (const [options, expected] of [
+    [{}, ''],
+    [{ admin: { siteName: 'My Astro site' } }, 'My Astro site'],
+  ]) {
+    const { update } = await configure('@astrojs/node', options);
+    const plugin = update.vite.plugins[0];
+    const source = plugin.load(plugin.resolveId('virtual:sedna/admin'));
+    const { siteName, homePath } = await import(
+      `data:text/javascript,${encodeURIComponent(source)}`
+    );
+    assert.equal(siteName, expected);
+    assert.equal(homePath, '/');
+  }
+});

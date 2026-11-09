@@ -2,6 +2,8 @@ declare module 'virtual:sedna/collections' {
   export const collections: Record<string, { loader?: unknown }>;
 }
 declare module 'virtual:sedna/admin' {
+  export const siteName: string;
+  export const homePath: string;
   export const favicon: string;
   export const uploadsEnabled: boolean;
   export const disposableDemo: boolean;

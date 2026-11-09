@@ -8,6 +8,7 @@ export interface DemoOptions {
   /** Module URL exporting a default AdminAdapter. Runs only in the browser. */
   adapter: URL;
   favicon?: string;
+  siteName?: string;
 }
 
 /** Isolated editor integration. Installs no database, authentication or upload handlers. */
@@ -53,7 +54,7 @@ export default function sednaDemo(options: DemoOptions): AstroIntegration {
                   if (id === '\0virtual:sedna/adapter')
                     return `export { default as adapter } from ${JSON.stringify(adapter)};`;
                   if (id === '\0virtual:sedna/admin')
-                    return `export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.favicon))}; export const uploadsEnabled = true; export const disposableDemo = true;`;
+                    return `export const homePath = ${JSON.stringify(`${config.base.replace(/\/$/, '')}/`)}; export const siteName = ${JSON.stringify(options.siteName?.trim() || '')}; export const favicon = ${JSON.stringify(resolveAdminFavicon(config.publicDir, config.base, options.favicon))}; export const uploadsEnabled = true; export const disposableDemo = true;`;
                 },
               },
             ],

@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
-import type { CmsEntry } from '../api/types.js';
-import type { CollectionConfig } from '../loader.js';
-import { EntryDates, entryTitle, Status, titleCase } from './ui.js';
+import type { CmsEntry } from '../../../api/types.js';
+import type { CollectionConfig } from '../../../loader.js';
+import { entryTitle, titleCase } from '../../utils/format.js';
+import { SelectControl } from '../ui/select.js';
+import { EntryDates, Status } from './entry-meta.js';
 
 export const pageSize = 50;
 export type Filters = { page: number; status: string; date: string };
@@ -43,7 +45,7 @@ export function CollectionList({
   const empty = !entries.length && !page && !filtering;
   const collectionName = titleCase(schema.collection);
   const count =
-    page || hasMore
+    entries.length && (page || hasMore)
       ? `Showing ${page * pageSize + 1}–${page * pageSize + entries.length}`
       : `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}`;
   const clear = () => onFilter(emptyFilters);
@@ -63,16 +65,17 @@ export function CollectionList({
       <div className="list-filters">
         <label htmlFor="filter-status">
           Status
-          <select
+          <SelectControl
             id="filter-status"
             value={status}
             disabled={busy}
-            onChange={(event) => onFilter({ ...filters, page: 0, status: event.target.value })}
-          >
-            <option value="">All statuses</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
+            options={[
+              { value: '', label: 'All statuses' },
+              { value: 'draft', label: 'Draft' },
+              { value: 'published', label: 'Published' },
+            ]}
+            onValueChange={(status) => onFilter({ ...filters, page: 0, status })}
+          />
         </label>
         <label htmlFor="filter-date">
           Published on
@@ -100,15 +103,15 @@ export function CollectionList({
               {filtering
                 ? 'No matching entries'
                 : page
-                  ? 'Nothing on this page'
+                  ? 'No entries on this page'
                   : `No ${collectionName.toLowerCase()} yet`}
             </h2>
             <p>
               {filtering
-                ? 'Try another status or publication date. Older entries may not have a recorded publication date.'
+                ? 'Try a different status or publication date. Some older entries may have no publication date.'
                 : page
                   ? 'Go back to the previous page.'
-                  : 'New entries start as drafts. Nothing appears on your site until you publish it.'}
+                  : 'New entries stay in draft until you publish them. Only published entries appear on your site.'}
             </p>
             <button
               type="button"

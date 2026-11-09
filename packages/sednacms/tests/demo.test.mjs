@@ -11,6 +11,7 @@ function setup(integrations = []) {
   ]({
     config: {
       integrations,
+      root: new URL('../../../apps/playground/', import.meta.url),
       publicDir: new URL('../../../apps/playground/public/', import.meta.url),
       base: '/',
     },

@@ -110,7 +110,7 @@ test('production Astro API creates and publishes live content', {
     assert.equal(adminPage.headers.get('cache-control'), 'no-store');
     assert.equal(adminPage.headers.get('x-frame-options'), 'DENY');
     const html = await adminPage.text();
-    assert.match(html, /<title>Sedna/);
+    assert.match(html, /<title>Content \| Sedna<\/title>/);
     const script = html.match(/<script[^>]+src="([^"]+)"/);
     assert.ok(script, 'admin client script is bundled');
     assert.equal((await fetch(origin + script[1])).status, 200);

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { LabelledInput } from './fields.js';
-import { Brand } from './ui.js';
+import { Brand } from '../layout/brand.js';
+import { LabelledInput } from '../ui/labelled-input.js';
 
 export type Credentials = { name: string; email: string; password: string; token: string };
 export function AuthScreen({
@@ -111,7 +111,7 @@ export function AuthScreen({
                   minLength={32}
                   required
                   disabled={busy}
-                  hint="Your developer has this. It is the SEDNA_SETUP_TOKEN value."
+                  hint="Ask your developer for the SEDNA_SETUP_TOKEN value."
                 />
               )}
               <button type="submit" className="primary" disabled={busy}>
