@@ -333,7 +333,7 @@ test('video uploads bypass image processing, register in their folder, and do no
   registrationStatus = 503;
   await assert.rejects(
     uploadMedia(original, () => {}, folder_id),
-    /file is in storage.*media library/,
+    /file was uploaded.*media library/,
   );
   registrationStatus = 401;
   await assert.rejects(

@@ -47,14 +47,14 @@ export async function api<T>(
         (response.status === 401
           ? 'Your session has expired. Sign in again to continue.'
           : response.status === 403
-            ? 'You do not have permission to complete this request.'
+            ? 'You do not have permission to complete this request. Ask your site administrator for access.'
             : `The server could not complete the request (HTTP ${response.status}). Try again.`),
       response.status,
       path,
     );
   if (response.headers.get('X-Sedna-Cache') === 'purge-failed')
     toast.warning(
-      'Your changes are saved. We couldn’t refresh the website cache, so pages may show older content until the cache expires.',
+      'Changes saved. The website cache could not be refreshed, so pages may show older content until it expires. If you need the changes to appear now, ask your developer to check the cache settings.',
       {
         id: 'cache-refresh',
         duration: Infinity,

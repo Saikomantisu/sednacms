@@ -126,7 +126,7 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
     pending = action();
   };
   const button = (label) =>
-    [...container.querySelectorAll('button')].find(
+    [...container.querySelectorAll('button')].findLast(
       (button) =>
         button.textContent.trim() === label || button.getAttribute('aria-label') === label,
     );
@@ -161,11 +161,11 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
   assert.equal(container.querySelector('.media-folders'), null);
   assert.equal(container.querySelector('.media-folder-form'), null);
   assert.doesNotMatch(container.textContent, /Unfiled|Office documents|ZIP/);
-  await click('Add new folder');
+  await click('Create folder');
   assert.ok(container.querySelector('[role=dialog] .media-folder-form'));
   await click('Cancel');
   assert.equal(writes.length, 0);
-  await click('Add new folder');
+  await click('Create folder');
   await act(async () => {
     const input = container.querySelector('#media-folder-name');
     Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(
@@ -181,10 +181,10 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
   await click('Media');
   assert.ok(button('Open Campaign folder'));
   await click('Open Uncategorized folder');
-  assert.ok(button('Details for photo.png'));
+  assert.ok(button('View details for photo.png'));
   await click('Upload files');
   assert.ok(container.querySelector('[role=dialog].media-upload-dialog'));
-  assert.equal(button('Upload').disabled, true);
+  assert.equal(button('Upload selected files').disabled, true);
   assert.equal(button('Done'), undefined);
   await act(async () => {
     const input = container.querySelector('input[type=file]');
@@ -200,7 +200,7 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
   );
   assert.equal(notifications.length, 0);
   await click('Remove preview.png from upload');
-  assert.equal(button('Upload').disabled, true);
+  assert.equal(button('Upload selected files').disabled, true);
   assert.deepEqual(revokedPreviews, ['blob:preview-1']);
   await act(async () => {
     const input = container.querySelector('input[type="file"]');
@@ -214,13 +214,13 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
   assert.ok(container.querySelector('[role=dialog].media-upload-dialog'));
   assert.ok(container.querySelector('.media-upload-selection'));
   await act(async () => {
-    button('Upload').click();
+    button('Upload selected files').click();
     await new Promise(setImmediate);
   });
   assert.equal(container.querySelector('[role=dialog].media-upload-dialog'), null);
   assert.equal(container.querySelector('.media-uploads'), null);
   assert.equal(notifications.at(-1).type, 'loading');
-  assert.match(notifications.at(-1).description, /clip.mp4.*Saving to Media/);
+  assert.match(notifications.at(-1).description, /clip.mp4.*Saving to media library/);
   assert.equal(container.querySelector('.media-library > .upload-progress'), null);
   assert.equal(container.querySelector('.media-uploads progress'), null);
   await act(async () => {
@@ -230,7 +230,7 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
   assert.equal(notifications.at(-1).type, 'success');
   assert.equal(notifications.at(-1).title, 'File uploaded');
   assert.equal(notifications.at(-1).id, 'upload-toast');
-  assert.ok(button('Details for clip.mp4'));
+  assert.ok(button('View details for clip.mp4'));
   await click('Upload files');
   await act(async () => {
     const event = new dom.window.Event('drop', { bubbles: true, cancelable: true });
@@ -250,7 +250,7 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
   assert.ok(container.querySelector('[role=dialog].media-upload-dialog'));
   assert.ok(container.querySelector('.media-upload-selection'));
   await act(async () => {
-    button('Upload').click();
+    button('Upload selected files').click();
     await new Promise(setImmediate);
   });
   assert.equal(container.querySelector('[role=dialog].media-upload-dialog'), null);
@@ -280,7 +280,7 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
   assert.ok(container.querySelector('[role=dialog].media-upload-dialog'));
   assert.ok(container.querySelector('.media-upload-selection'));
   await act(async () => {
-    button('Upload').click();
+    button('Upload selected files').click();
     await new Promise(setImmediate);
   });
   assert.equal(container.querySelector('[role=dialog].media-upload-dialog'), null);
@@ -300,16 +300,33 @@ test('Media uses folder cards, modal folder creation, contextual navigation and 
   assert.deepEqual(revokedPreviews, ['blob:preview-1', 'blob:preview-2']);
   await click('Upload files');
   assert.equal(container.querySelector('.media-upload-selection'), null);
-  assert.equal(button('Upload').disabled, true);
+  assert.equal(button('Upload selected files').disabled, true);
   await click('Close upload dialog');
-  await click('Details for photo.png');
+  await click('View details for photo.png');
   assert.equal(container.querySelector('.media-detail-metadata time').dateTime, image.created_at);
   assert.match(container.querySelector('.media-detail-metadata time').textContent, /2026/);
-  await click('Delete');
-  assert.match(container.textContent, /Existing content using it may break/);
   await click('Delete file');
-  assert.ok(writes.some((write) => write.method === 'DELETE'));
-  assert.equal(button('Details for photo.png'), undefined);
+  let confirmation = container.querySelector('[role=alertdialog]');
+  assert.ok(confirmation);
+  assert.equal(confirmation.querySelector('h2').textContent, `Delete "${image.name}"?`);
+  assert.match(confirmation.textContent, /Images or videos using this file will stop loading/);
+  assert.match(confirmation.textContent, /This cannot be undone/);
+  assert.equal(writes.filter((write) => write.method === 'DELETE').length, 0);
+  await click('Cancel');
+  assert.equal(container.querySelector('[role=alertdialog]'), null);
+  assert.ok(container.querySelector('.media-details'));
+  assert.equal(writes.filter((write) => write.method === 'DELETE').length, 0);
+  await click('Delete file');
+  confirmation = container.querySelector('[role=alertdialog]');
+  await act(async () => {
+    [...confirmation.querySelectorAll('button')]
+      .find((button) => button.textContent === 'Delete file')
+      .click();
+    await new Promise(setImmediate);
+    await pending;
+  });
+  assert.equal(writes.filter((write) => write.method === 'DELETE').length, 1);
+  assert.equal(button('View details for photo.png'), undefined);
   assert.equal(image.src, 'https://images.example.com/photo.png');
   await click('Media');
   assert.ok(button('Open Uncategorized folder'));

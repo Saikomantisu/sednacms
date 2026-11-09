@@ -58,7 +58,7 @@ export function CollectionList({
         </div>
         {!empty && (
           <button type="button" className="primary" disabled={busy} onClick={() => onEdit()}>
-            New entry
+            Create entry
           </button>
         )}
       </header>
@@ -108,10 +108,10 @@ export function CollectionList({
             </h2>
             <p>
               {filtering
-                ? 'Try a different status or publication date. Some older entries may have no publication date.'
+                ? 'Change the status or publication date, or clear the filters to see all entries.'
                 : page
                   ? 'Go back to the previous page.'
-                  : 'New entries stay in draft until you publish them. Only published entries appear on your site.'}
+                  : 'Create an entry to add content to this collection. Save it as a draft or publish it to your site.'}
             </p>
             <button
               type="button"
@@ -121,7 +121,7 @@ export function CollectionList({
                 filtering ? clear() : page ? onFilter({ ...filters, page: page - 1 }) : onEdit()
               }
             >
-              {filtering ? 'Clear filters' : page ? 'Previous page' : 'New entry'}
+              {filtering ? 'Clear filters' : page ? 'Previous page' : 'Create entry'}
             </button>
           </div>
         ) : (

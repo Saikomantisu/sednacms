@@ -155,7 +155,9 @@ export function Media({
       try {
         await action();
       } catch (error) {
-        setError(error instanceof Error ? error.message : 'Could not complete this action.');
+        setError(
+          error instanceof Error ? error.message : 'Could not complete this action. Try again.',
+        );
         throw error;
       }
     });
@@ -198,7 +200,7 @@ export function Media({
                 const stage = {
                   preparing: 'Preparing',
                   uploading: 'Uploading',
-                  finalizing: 'Saving to Media',
+                  finalizing: 'Saving to media library',
                 }[progress.stage];
                 const percent =
                   progress.stage === 'uploading' && progress.percent !== undefined
@@ -213,7 +215,7 @@ export function Media({
             );
           } catch (error) {
             failures.push(
-              `${file.name}: ${error instanceof Error ? error.message : 'Upload failed.'}`,
+              `${file.name}: ${error instanceof Error ? error.message : 'Upload failed. Try uploading this file again.'}`,
             );
             if (error instanceof RequestError && error.status === 401) {
               toast.error('Upload interrupted', {
@@ -268,7 +270,7 @@ export function Media({
           <div className="actions">
             <button type="button" disabled={busy || !view} onClick={() => editFolder('new')}>
               <Icon name="folder" />
-              Add new folder
+              Create folder
             </button>
             {uploadsEnabled && (
               <button
@@ -316,7 +318,7 @@ export function Media({
               <input
                 id="media-search"
                 type="search"
-                placeholder={home ? 'Search media…' : 'Search this folder…'}
+                placeholder="team-photo.jpg"
                 maxLength={255}
                 value={search}
                 disabled={busy || !view}
@@ -370,7 +372,7 @@ export function Media({
             <button
               type="button"
               className="icon-button"
-              aria-label="Grid view"
+              aria-label="Show grid view"
               aria-pressed={layout === 'grid'}
               onClick={() => setLayout('grid')}
             >
@@ -379,7 +381,7 @@ export function Media({
             <button
               type="button"
               className="icon-button"
-              aria-label="List view"
+              aria-label="Show list view"
               aria-pressed={layout === 'list'}
               onClick={() => setLayout('list')}
             >
@@ -478,7 +480,7 @@ export function Media({
                     className="media-card"
                     disabled={busy}
                     onClick={() => (onSelect ? onSelect(file) : setSelected(file))}
-                    aria-label={`${onSelect ? 'Choose' : 'Details for'} ${file.name}`}
+                    aria-label={`${onSelect ? 'Choose' : 'View details for'} ${file.name}`}
                   >
                     <span
                       className={`media-thumbnail${file.type === 'image/svg+xml' ? ' media-svg' : ''}`}
@@ -504,11 +506,20 @@ export function Media({
             <div className="empty">
               <p>
                 {view.q || view.type
-                  ? 'No media matches your search.'
+                  ? view.q
+                    ? `No files or folders match "${view.q}" with these filters. Change your search or clear the filters.`
+                    : 'No files match this media type. Choose another type or clear the filters.'
                   : onSelect
-                    ? 'No images in this folder.'
-                    : 'This folder is empty. Upload a file to add it here.'}
+                    ? 'No images in this folder. Open another folder to choose an image.'
+                    : uploadsEnabled
+                      ? 'This folder is empty. Select Upload files to add images or videos.'
+                      : 'This folder is empty. Ask your developer to set up storage to upload files.'}
               </p>
+              {(view.q || view.type) && (
+                <button type="button" disabled={busy} onClick={() => browse(view.folder)}>
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
           {(!home || view.q || view.type) && (view.offset > 0 || view.hasMore) && (
@@ -533,8 +544,8 @@ export function Media({
       )}
       {uploadOpen && !onSelect && uploadsEnabled && (
         <Dialog
-          title="Upload to library"
-          description="Choose files, then click Upload to add them to your library."
+          title="Upload files"
+          description="Choose files, then select Upload selected files to add them to the media library."
           closeLabel="Close upload dialog"
           className="media-upload-dialog"
           onCancel={closeUpload}
@@ -634,7 +645,7 @@ export function Media({
               disabled={busy || uploading || !pendingFiles.length}
               onClick={startUpload}
             >
-              Upload
+              Upload selected files
             </button>
           </footer>
         </Dialog>
@@ -803,8 +814,8 @@ export function Media({
                     void (async () => {
                       if (
                         !(await confirm(
-                          'Delete this file?',
-                          'This permanently deletes the file from storage and the media library. Existing content using it may break.',
+                          `Delete "${selected.name}"?`,
+                          'This permanently deletes the file from storage and the media library. Images or videos using this file will stop loading. This cannot be undone.',
                           'Delete file',
                         ))
                       )
@@ -818,7 +829,7 @@ export function Media({
                   }}
                 >
                   <Icon name="trash" />
-                  Delete
+                  Delete file
                 </button>
               </div>
             </div>

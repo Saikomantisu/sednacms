@@ -112,7 +112,7 @@ export function AdminNavigation(props: Props) {
                 : undefined
             }
           >
-            {disposableDemo ? 'Preview my changes ↗' : 'View website ↗'}
+            {disposableDemo ? 'Preview changes ↗' : 'View website ↗'}
           </a>
           <div className="account">
             <span className="avatar" aria-hidden="true">

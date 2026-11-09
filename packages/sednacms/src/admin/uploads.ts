@@ -22,7 +22,8 @@ export async function uploadImage(
 ): Promise<ImageValue> {
   const adapter = getAdminAdapter();
   if (adapter) return adapter.uploadImage(file, progress);
-  if (!IMAGE_TYPES.includes(file.type)) throw new Error('Choose a supported image.');
+  if (!IMAGE_TYPES.includes(file.type))
+    throw new Error('Choose a JPEG, PNG, WebP, AVIF, GIF, or SVG image.');
   const media = await uploadMedia(file, progress, null, 'image');
   return { src: media.src, width: Number(media.width), height: Number(media.height), alt: '' };
 }
@@ -109,7 +110,7 @@ export async function uploadMedia(
   } catch (error) {
     if (error instanceof RequestError && error.status === 401) throw error;
     throw new Error(
-      'The file is in storage, but we couldn’t add it to the media library. Try again.',
+      'The file was uploaded, but could not be added to the media library. Try again. If this continues, ask your developer to check media storage.',
     );
   }
 }

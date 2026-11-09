@@ -138,16 +138,11 @@ function FieldInput({ id, name, label, field, value, disabled, onChange, run }: 
         type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
         step={field.type === 'number' ? 'any' : undefined}
         value={value === null ? '' : String(value)}
-        placeholder={
-          field.type === 'slug' && field.from
-            ? `Generated from ${titleCase(field.from).toLowerCase()}`
-            : undefined
-        }
         onChange={(event) => onChange(event.target.value)}
       />
       {field.type === 'slug' && field.from && (
         <p className="hint">
-          Leave empty to make one from the {titleCase(field.from).toLowerCase()}.
+          Leave empty to generate a slug from the {titleCase(field.from).toLowerCase()}.
         </p>
       )}
     </>

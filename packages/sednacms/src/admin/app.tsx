@@ -68,7 +68,8 @@ export function App() {
     try {
       await action();
     } catch (error) {
-      const text = error instanceof Error ? error.message : 'Could not complete this action.';
+      const text =
+        error instanceof Error ? error.message : 'Could not complete this action. Try again.';
       if (
         error instanceof RequestError &&
         error.status === 401 &&
@@ -90,8 +91,8 @@ export function App() {
       !dirty.current ||
       (await confirm(
         'Leave without saving?',
-        'You’ll lose your unsaved changes to this entry.',
-        'Discard edits',
+        'Unsaved changes to this entry will be lost.',
+        'Discard changes',
         'Keep editing',
       ))
     );
@@ -157,7 +158,10 @@ export function App() {
       } catch (error) {
         if (!(error instanceof RequestError) || error.status !== 404) throw error;
         await loadList(schema);
-        message('We couldn’t find this entry. It may have been deleted.', true);
+        message(
+          'Entry not found. It may have been deleted. Choose another entry from the collection.',
+          true,
+        );
       }
     } else if (known && listRequest) showList(schema, (await listRequest).entries);
     else await loadList(schema);
@@ -228,7 +232,9 @@ export function App() {
       const batch = await api<EntriesResponse>(`${base}?limit=100&offset=${offset}`);
       all.push(...batch.entries);
       if (all.length > 1000)
-        throw new Error('You can reorder collections with up to 1,000 entries.');
+        throw new Error(
+          'This collection has more than 1,000 entries and cannot be reordered here. Ask your developer to change the order.',
+        );
       if (batch.entries.length < 100) break;
     }
     const source = all.findIndex((item) => item.id === screen.entries[from].id);
@@ -353,7 +359,7 @@ export function App() {
                         openEditor(screen.schema, result.entry);
                         message(
                           status === 'published'
-                            ? 'Published.'
+                            ? 'Entry published.'
                             : screen.entry?.status === 'published'
                               ? 'Entry unpublished and saved as a draft.'
                               : 'Draft saved.',
@@ -367,9 +373,9 @@ export function App() {
                           !(await confirm(
                             `Delete "${entryTitle(screen.entry, screen.schema)}"?`,
                             screen.entry.status === 'published'
-                              ? 'This will remove the entry from your site. You can’t restore it after deleting it.'
-                              : 'This cannot be undone.',
-                            'Delete',
+                              ? 'This permanently deletes the entry and removes it from your site. This cannot be undone.'
+                              : 'This permanently deletes the draft entry. This cannot be undone.',
+                            'Delete entry',
                           ))
                         )
                           return;
@@ -379,7 +385,7 @@ export function App() {
                         );
                         dirty.current = false;
                         await loadList(screen.schema);
-                        message('Deleted.');
+                        message('Entry deleted.');
                       })
                     }
                   />

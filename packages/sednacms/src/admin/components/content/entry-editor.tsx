@@ -88,12 +88,12 @@ export function EntryEditor({
         <div className="editor-bar">
           {entry && (
             <button type="button" className="danger" disabled={busy} onClick={onDelete}>
-              Delete
+              Delete entry
             </button>
           )}
           <div className="actions">
             <button type="button" disabled={busy} onClick={() => onSave('draft', read)}>
-              {live ? 'Unpublish' : 'Save draft'}
+              {live ? 'Unpublish and save draft' : 'Save draft'}
             </button>
             <button type="submit" className="primary" disabled={busy}>
               {live ? 'Publish changes' : 'Publish'}

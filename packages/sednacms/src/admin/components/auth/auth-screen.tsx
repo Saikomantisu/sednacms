@@ -27,8 +27,9 @@ export function AuthScreen({
         <section className="card auth-card">
           <h1>{setup ? 'Set up Sedna' : 'Sign in'}</h1>
           <p className="muted">
-            {setup ? 'Create the admin account for ' : 'Edit the content on '}
-            {location.host}.
+            {setup
+              ? `Create the admin account for ${location.host}.`
+              : `Sign in to edit content on ${location.host}.`}
           </p>
           <div
             id="notice"
@@ -72,7 +73,7 @@ export function AuthScreen({
                 <LabelledInput
                   id="name"
                   name="name"
-                  label="Your name"
+                  label="Name"
                   type="text"
                   autoComplete="name"
                   maxLength={200}
@@ -99,7 +100,7 @@ export function AuthScreen({
                 maxLength={128}
                 required
                 disabled={busy}
-                hint={setup ? 'At least 12 characters.' : undefined}
+                hint={setup ? 'Use 12 to 128 characters.' : undefined}
               />
               {setup && (
                 <LabelledInput
