@@ -80,8 +80,17 @@ test('dialogs cancel safely, nest confirmations, restore focus and settle on unm
   assert.equal(document.activeElement.textContent, 'Remove file');
   assert.ok(parent.isConnected);
   await click('Remove file');
+  await act(async () => {
+    document.activeElement.dispatchEvent(
+      new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+  });
+  assert.deepEqual(results, [false, false]);
+  assert.equal(document.querySelector('[role=alertdialog]'), null);
+  assert.ok(parent.isConnected);
+  await click('Remove file');
   await click('Remove');
-  assert.deepEqual(results, [false, true]);
+  assert.deepEqual(results, [false, false, true]);
   assert.ok(parent.isConnected);
   let abandoned;
   await act(async () => {
