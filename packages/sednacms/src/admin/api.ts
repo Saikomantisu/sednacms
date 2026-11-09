@@ -22,19 +22,39 @@ export async function api<T>(
     : await fetch('/api/cms/' + path, {
         method,
         credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', ...headers },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        headers: {
+          'Content-Type': body instanceof Blob ? body.type : 'application/json',
+          ...headers,
+        },
+        ...(body === undefined ? {} : { body: body instanceof Blob ? body : JSON.stringify(body) }),
       });
-  const data = response.status === 204 ? null : await response.json();
+  const data =
+    response.status === 204
+      ? null
+      : await response.json().catch(() => {
+          if (response.ok)
+            throw new RequestError(
+              'The server returned an invalid response. Try again.',
+              response.status,
+              path,
+            );
+          return null;
+        });
   if (!response.ok)
     throw new RequestError(
-      data?.error ?? data?.message ?? 'Something went wrong. Please try again.',
+      (typeof data?.error === 'string' && data.error) ||
+        (typeof data?.message === 'string' && data.message) ||
+        (response.status === 401
+          ? 'Your session has expired. Sign in again to continue.'
+          : response.status === 403
+            ? 'You do not have permission to complete this request.'
+            : `The server could not complete the request (HTTP ${response.status}). Try again.`),
       response.status,
       path,
     );
   if (response.headers.get('X-Sedna-Cache') === 'purge-failed')
     toast.warning(
-      'Changes saved, but the website cache could not be refreshed. Pages may remain outdated until the cache expires.',
+      'Your changes are saved. We couldn’t refresh the website cache, so pages may show older content until the cache expires.',
       {
         id: 'cache-refresh',
         duration: Infinity,

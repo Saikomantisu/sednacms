@@ -2,10 +2,14 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { test } from 'node:test';
 import { prepareImage } from '../dist/admin/image-processing.js';
-import { uploadImage } from '../dist/admin/uploads.js';
+import { uploadImage, uploadMedia } from '../dist/admin/uploads.js';
 import { createUploadApi } from '../dist/api/uploads.js';
 import {
+  IMAGE_TYPES,
   MAX_IMAGE_BYTES,
+  MAX_SVG_BYTES,
+  MAX_VIDEO_BYTES,
+  maxMediaBytes,
   resolveImageProcessing,
   s3Storage,
   uploadthingStorage,
@@ -64,11 +68,26 @@ test('upload configuration refreshes cookies and is never cached', async () => {
   assert.deepEqual(await response.json(), {
     provider: 'uploadthing',
     maxBytes: MAX_IMAGE_BYTES,
-    types: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'],
+    types: IMAGE_TYPES,
+    limits: Object.fromEntries(IMAGE_TYPES.map((type) => [type, maxMediaBytes(type)])),
     image: { format: 'webp', maxWidth: 2560, maxHeight: 2560, quality: 0.8 },
   });
   const unconfigured = createUploadApi({ origin, getSession: session });
   assert.equal((await unconfigured(request(file))).status, 503);
+});
+
+test('media upload configuration allows images, SVGs and videos while the image endpoint stays image-only', async () => {
+  const handle = createUploadApi({ storage: s3Storage(), origin, getSession: session });
+  const config = await (await handle(request(null, { method: 'GET', path: '?kind=media' }))).json();
+  assert.ok(!config.types.includes('application/pdf'));
+  assert.ok(!config.types.includes('audio/mpeg'));
+  assert.equal(config.limits['video/mp4'], MAX_VIDEO_BYTES);
+  assert.equal(config.limits['image/svg+xml'], MAX_SVG_BYTES);
+  assert.equal(config.limits['image/gif'], MAX_IMAGE_BYTES);
+  assert.ok(config.types.includes('video/mp4'));
+  assert.ok(config.types.includes('image/svg+xml'));
+  assert.ok(!config.types.includes('text/html'));
+  assert.equal((await handle(request({ type: 'video/mp4', size: 10 }))).status, 400);
 });
 
 test('S3 rejects invalid files before issuing signed URLs', async () => {
@@ -127,6 +146,11 @@ test('S3 signs unique object keys, exact size and type, with a five-minute expir
   assert.ok(!JSON.stringify(signed).includes('test-secret-key'));
   const next = await (await handle(request(file))).json();
   assert.notEqual(next.src, signed.src);
+  const videoResponse = await handle(
+    request({ type: 'video/mp4', size: 20 }, { path: '?kind=media' }),
+  );
+  assert.equal(videoResponse.status, 200);
+  assert.match((await videoResponse.json()).src, /\.mp4$/);
   // Independently reconstruct SigV4 to verify that changing the advertised size invalidates the signature.
   const hmac = (key, value) => createHmac('sha256', key).update(value).digest();
   const date = url.searchParams.get('X-Amz-Date');
@@ -236,6 +260,86 @@ test('UploadThing signs a phone photo and registers metadata without transferrin
     400,
   );
   assert.equal(calls.length, 1);
+  const video = await handle(
+    request(
+      { files: [{ name: 'clip.mp4', type: 'video/mp4', size: 20 }], input: null },
+      { path: '?slug=media&actionType=upload' },
+    ),
+  );
+  assert.equal(video.status, 200, await video.clone().text());
+  assert.equal((await video.json()).length, 1);
+  assert.equal(calls.length, 2);
+});
+
+test('video uploads bypass image processing, register in their folder, and do not register failed transfers', async (t) => {
+  const original = new File(['Video content'], 'clip.mp4', { type: 'video/mp4' });
+  const requests = [];
+  let registrationStatus = 200;
+  const folder_id = '17645c0d-d2d8-4926-a841-363b43d8405a';
+  t.mock.method(globalThis, 'fetch', async (url, init) => {
+    requests.push({ url, body: init.body && JSON.parse(init.body) });
+    if (url === '/api/cms/media')
+      return Response.json(
+        registrationStatus === 200
+          ? { media: { ...JSON.parse(init.body), id: 'media-id' } }
+          : { error: 'Registration failed' },
+        { status: registrationStatus },
+      );
+    if (!init.body) return Response.json({ provider: 's3', image: resolveImageProcessing() });
+    return Response.json({
+      url: 'https://bucket.example.com/put',
+      src: 'https://images.example.com/clip.mp4',
+      headers: { 'Content-Type': 'video/mp4' },
+    });
+  });
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'XMLHttpRequest');
+  let fail = false;
+  let sent;
+  Object.defineProperty(globalThis, 'XMLHttpRequest', {
+    configurable: true,
+    value: class {
+      upload = {};
+      status = 200;
+      open() {}
+      setRequestHeader() {}
+      send(file) {
+        sent = file;
+        if (fail) this.onerror();
+        else this.onload();
+      }
+    },
+  });
+  t.after(() => {
+    if (previous) Object.defineProperty(globalThis, 'XMLHttpRequest', previous);
+    else delete globalThis.XMLHttpRequest;
+  });
+  const media = await uploadMedia(original, () => {}, folder_id);
+  assert.equal(sent, original);
+  assert.equal(media.width, null);
+  assert.equal(media.height, null);
+  assert.equal(media.folder_id, folder_id);
+  assert.deepEqual(
+    requests.map((item) => item.url),
+    ['/api/cms/uploads?kind=media', '/api/cms/uploads?kind=media', '/api/cms/media'],
+  );
+  fail = true;
+  requests.length = 0;
+  await assert.rejects(
+    uploadMedia(original, () => {}, folder_id),
+    /Could not reach file storage/,
+  );
+  assert.ok(!requests.some((item) => item.url === '/api/cms/media'));
+  fail = false;
+  registrationStatus = 503;
+  await assert.rejects(
+    uploadMedia(original, () => {}, folder_id),
+    /file is in storage.*media library/,
+  );
+  registrationStatus = 401;
+  await assert.rejects(
+    uploadMedia(original, () => {}, folder_id),
+    (error) => error.status === 401,
+  );
 });
 
 function browserImage(t, { width = 4032, height = 3024, failWorker = false, fail = false } = {}) {
@@ -390,6 +494,20 @@ test('disabled processing preserves the original file and dimensions', async (t)
   assert.deepEqual(calls.revoked, ['blob:photo']);
 });
 
+test('default uploads preserve every GIF animation frame without conversion', async (t) => {
+  const { calls } = browserImage(t, { width: 1, height: 1 });
+  const header = Buffer.from('47494638396101000100800000000000ffffff', 'hex');
+  const frame = Buffer.from('21f90400010000002c0000000001000100000202440100', 'hex');
+  const bytes = Buffer.concat([header, frame, frame, Buffer.from([0x3b])]);
+  const { default: sharp } = await import('sharp');
+  assert.equal((await sharp(bytes, { animated: true }).metadata()).pages, 2);
+  const file = new File([bytes], 'animation.gif', { type: 'image/gif' });
+  const prepared = await prepareImage(file, resolveImageProcessing());
+  assert.equal(prepared.file, file);
+  assert.deepEqual(Buffer.from(await prepared.file.arrayBuffer()), bytes);
+  assert.equal(calls.encodes.length, 0);
+});
+
 for (const settings of [{ fail: true }, { failWorker: true }, { width: 0 }]) {
   test(`failed image processing cleans up and refuses fallback uploads: ${JSON.stringify(settings)}`, async (t) => {
     const { calls, canvas } = browserImage(t, settings);
@@ -420,6 +538,8 @@ test('S3 admin upload signs and transfers the processed file and saves its dimen
   const requests = [];
   t.mock.method(globalThis, 'fetch', async (url, init) => {
     requests.push({ url, init });
+    if (url === '/api/cms/media')
+      return Response.json({ media: { ...JSON.parse(init.body), id: 'media' } });
     if (!init.body) return Response.json({ provider: 's3', image: resolveImageProcessing() });
     return Response.json({
       url: 'https://bucket.example.com/put',
@@ -463,8 +583,19 @@ test('S3 admin upload signs and transfers the processed file and saves its dimen
     { stage: 'uploading', percent: undefined },
     { stage: 'uploading', percent: 50 },
     { stage: 'finalizing' },
+    { stage: 'finalizing' },
   ]);
   assert.deepEqual(JSON.parse(requests[1].init.body), { type: 'image/webp', size: uploaded.size });
+  assert.equal(requests[2].url, '/api/cms/media');
+  assert.deepEqual(JSON.parse(requests[2].init.body), {
+    name: 'photo.webp',
+    src: 'https://images.example.com/photo.webp',
+    type: 'image/webp',
+    size: uploaded.size,
+    width: 2560,
+    height: 1920,
+    folder_id: null,
+  });
   assert.equal(uploaded.name, 'photo.webp');
   assert.equal(await uploaded.text(), 'encoded image');
   assert.deepEqual(result, {

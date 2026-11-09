@@ -43,11 +43,48 @@ export function s3Storage(options: Pick<StorageAdapter, 'image'> = {}): StorageA
 }
 
 export const MAX_IMAGE_BYTES = 32 * 1024 * 1024;
-export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+export const RASTER_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/avif',
+];
+export const SVG_TYPE = 'image/svg+xml';
+export const IMAGE_TYPES = [...RASTER_IMAGE_TYPES, SVG_TYPE];
+export const MAX_SVG_BYTES = 1024 * 1024;
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+
+export const MEDIA_EXTENSIONS: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'image/avif': 'avif',
+  [SVG_TYPE]: 'svg',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+};
+export const MEDIA_TYPES = Object.keys(MEDIA_EXTENSIONS);
+export const MAX_MEDIA_BYTES = MAX_VIDEO_BYTES;
+export function maxMediaBytes(type: string): number {
+  if (type === SVG_TYPE) return MAX_SVG_BYTES;
+  if (RASTER_IMAGE_TYPES.includes(type)) return MAX_IMAGE_BYTES;
+  if (type === 'video/mp4' || type === 'video/webm') return MAX_VIDEO_BYTES;
+  return 0;
+}
+export function mediaSizeError(type: string) {
+  return type === SVG_TYPE
+    ? 'Choose an SVG up to 1 MB.'
+    : type.startsWith('video/')
+      ? 'Choose an MP4 or WebM video up to 100 MB.'
+      : 'Choose a JPEG, PNG, WebP, GIF, or AVIF image up to 32 MB.';
+}
 
 export interface UploadConfig {
   provider: StorageAdapter['provider'];
   maxBytes: number;
+  limits: Record<string, number>;
   types: string[];
   image: ImageProcessingOptions | false;
 }

@@ -1,7 +1,11 @@
-import { IMAGE_TYPES, type ImageProcessingOptions, MAX_IMAGE_BYTES } from '../storage/config.js';
+import {
+  type ImageProcessingOptions,
+  MAX_IMAGE_BYTES,
+  RASTER_IMAGE_TYPES,
+} from '../storage/config.js';
 
 export async function prepareImage(file: File, options: ImageProcessingOptions | false) {
-  if (!IMAGE_TYPES.includes(file.type) || file.size < 1 || file.size > MAX_IMAGE_BYTES)
+  if (!RASTER_IMAGE_TYPES.includes(file.type) || file.size < 1 || file.size > MAX_IMAGE_BYTES)
     throw new Error('Choose a JPEG, PNG, WebP, GIF, or AVIF image up to 32 MB.');
 
   const localUrl = URL.createObjectURL(file);
@@ -15,7 +19,8 @@ export async function prepareImage(file: File, options: ImageProcessingOptions |
     } catch {
       throw new Error('This image could not be opened. Try a JPEG, PNG, or WebP copy.');
     }
-    if (options === false) return { file, width: image.naturalWidth, height: image.naturalHeight };
+    if (options === false || file.type === 'image/gif')
+      return { file, width: image.naturalWidth, height: image.naturalHeight };
 
     // Canvas only decodes pixels and flattens transparency for JPG. jSquash
     // performs the resize and encoding in a worker.

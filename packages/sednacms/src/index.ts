@@ -9,6 +9,7 @@ import { allowMissingDatabase, type CollectionConfig, isSednaLoader } from './lo
 import { formatEntry } from './log.js';
 import type { StorageAdapter } from './storage/config.js';
 
+export type { MediaFile, MediaFolder, MediaResponse } from './api/media.js';
 export type {
   ApiErrorResponse,
   CmsEntry,

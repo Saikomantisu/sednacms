@@ -9,9 +9,12 @@ import { createPool } from '../db/client.js';
 import { isSednaLoader } from '../loader.js';
 import { log, logOnce } from '../log.js';
 import { createContentApi } from './content.js';
+import { createMediaApi } from './media.js';
 import { createUploadApi } from './uploads.js';
 
 export const prerender = false;
+let media: ReturnType<typeof createMediaApi> | undefined;
+let db: ReturnType<typeof createPool> | undefined;
 let content: ReturnType<typeof createContentApi> | undefined;
 let uploads: ReturnType<typeof createUploadApi> | undefined;
 export const ALL: APIRoute = async ({ request, clientAddress }) => {
@@ -40,12 +43,27 @@ export const ALL: APIRoute = async ({ request, clientAddress }) => {
       });
       return await uploads(request);
     }
+    db ??= createPool(process.env.SEDNA_DATABASE_URL!);
+    if (
+      path === '/api/cms/media' ||
+      path.startsWith('/api/cms/media/') ||
+      path === '/api/cms/media-folders' ||
+      path.startsWith('/api/cms/media-folders/')
+    ) {
+      media ??= createMediaApi({
+        db,
+        storage: storage ?? undefined,
+        origin: new URL(process.env.SEDNA_URL!).origin,
+        getSession,
+      });
+      return await media(request);
+    }
     content ??= createContentApi({
       collections: Object.values(collections)
         .map((value) => value.loader)
         .filter(isSednaLoader)
         .map((loader) => loader.sedna),
-      db: createPool(process.env.SEDNA_DATABASE_URL!),
+      db,
       origin: new URL(process.env.SEDNA_URL!).origin,
       getSession,
       invalidate: cache ? createCdnCache(platform)?.purge : undefined,

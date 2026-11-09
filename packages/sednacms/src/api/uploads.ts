@@ -3,11 +3,44 @@ import { log } from '../log.js';
 import {
   IMAGE_TYPES,
   MAX_IMAGE_BYTES,
+  MAX_MEDIA_BYTES,
+  MAX_SVG_BYTES,
+  MEDIA_TYPES,
+  maxMediaBytes,
   resolveImageProcessing,
   type StorageAdapter,
+  SVG_TYPE,
 } from '../storage/config.js';
-import { signS3Upload } from '../storage/s3.js';
-import { createUploadthingHandler } from '../storage/uploadthing.js';
+import { signS3Upload, storeS3Svg } from '../storage/s3.js';
+import { SvgValidationError, sanitizeSvg, svgReceipt } from '../storage/svg.js';
+import { createUploadthingHandler, storeUploadthingSvg } from '../storage/uploadthing.js';
+
+class UploadSizeError extends Error {}
+async function readSvgBody(request: Request) {
+  const reader = request.body?.getReader();
+  if (!reader) throw new SvgValidationError('Choose an SVG file.');
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_SVG_BYTES) {
+        await reader.cancel();
+        throw new UploadSizeError('Choose an SVG up to 1 MB.');
+      }
+      chunks.push(value);
+    }
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks));
+    } catch {
+      throw new SvgValidationError('SVG files must use UTF-8 encoding.');
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
 
 export function createUploadApi(options: {
   storage?: StorageAdapter;
@@ -28,19 +61,46 @@ export function createUploadApi(options: {
     }
     try {
       const storage = options.storage;
+      const url = new URL(request.url);
       // Provider callbacks have no user cookie. The SDK verifies their signatures.
       const callback =
         storage?.provider === 'uploadthing' &&
+        url.searchParams.get('kind') !== 'svg' &&
         request.method === 'POST' &&
         ['callback', 'error'].includes(request.headers.get('uploadthing-hook') ?? '');
       if (!callback) await authorize(request);
       if (!storage) return json({ error: 'Image uploads are not configured' }, 503);
-      const url = new URL(request.url);
-      if (request.method === 'GET' && !url.search) {
+      if (url.searchParams.get('kind') === 'svg') {
+        if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+        if (request.headers.get('content-type')?.split(';')[0].trim() !== SVG_TYPE)
+          return json({ error: 'Expected an SVG file' }, 415);
+        let name: string;
+        try {
+          name = decodeURIComponent(request.headers.get('x-sedna-filename') ?? 'image.svg');
+        } catch {
+          return json({ error: 'Invalid filename' }, 400);
+        }
+        name =
+          (name
+            .replace(/[\\/]/g, '_')
+            .replace(/\.svg$/i, '')
+            .trim()
+            .slice(0, 200) || 'image') + '.svg';
+        const { svg, width, height } = await sanitizeSvg(await readSvgBody(request));
+        // Validate the signing secret before writing any file.
+        svgReceipt({ src: '', size: 0, width, height });
+        const src =
+          storage.provider === 's3' ? await storeS3Svg(svg) : await storeUploadthingSvg(svg, name);
+        const file = { name, src, type: SVG_TYPE, size: Buffer.byteLength(svg), width, height };
+        return json({ ...file, svgProof: svgReceipt(file) });
+      }
+      const types = url.searchParams.get('kind') === 'media' ? MEDIA_TYPES : IMAGE_TYPES;
+      if (request.method === 'GET' && !url.searchParams.has('slug')) {
         return json({
           provider: storage.provider,
-          maxBytes: MAX_IMAGE_BYTES,
-          types: IMAGE_TYPES,
+          maxBytes: url.searchParams.get('kind') === 'media' ? MAX_MEDIA_BYTES : MAX_IMAGE_BYTES,
+          limits: Object.fromEntries(types.map((type) => [type, maxMediaBytes(type)])),
+          types,
           image: resolveImageProcessing(storage.image),
         });
       }
@@ -67,15 +127,21 @@ export function createUploadApi(options: {
         !file ||
         typeof file !== 'object' ||
         typeof file.type !== 'string' ||
-        !IMAGE_TYPES.includes(file.type) ||
+        !types.includes(file.type) ||
+        file.type === SVG_TYPE ||
         typeof file.size !== 'number' ||
         !Number.isInteger(file.size) ||
         file.size < 1 ||
-        file.size > MAX_IMAGE_BYTES
+        file.size > maxMediaBytes(file.type)
       )
-        return json({ error: 'Choose a JPEG, PNG, WebP, GIF, or AVIF image up to 32 MB.' }, 400);
+        return json(
+          { error: 'Choose a supported image, GIF, SVG, MP4, or WebM within its size limit.' },
+          400,
+        );
       return json(await signS3Upload({ type: file.type, size: file.size }));
     } catch (error) {
+      if (error instanceof UploadSizeError) return json({ error: error.message }, 413);
+      if (error instanceof SvgValidationError) return json({ error: error.message }, 400);
       if (error instanceof UploadThingError)
         return json(
           { error: error.message },
