@@ -2656,6 +2656,96 @@ button.clear-object {
   }
 }
 
+/* Keep the picker heading and actions in view while the library scrolls. */
+.dialog.media-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+}
+.media-picker > .dialog-title,
+.media-picker > .actions {
+  flex: none;
+}
+.media-picker > .dialog-title {
+  padding-inline: 0 40px;
+}
+.media-picker > .dialog-close {
+  right: auto;
+  inset-inline-end: 16px;
+}
+.media-picker > .media-library {
+  container: media-picker / inline-size;
+  width: 100%;
+  min-height: 0;
+  align-content: start;
+  gap: 16px;
+  padding: 4px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.media-picker .media-toolbar {
+  gap: 12px;
+}
+.media-picker .media-toolbar > search {
+  flex: 1 1 240px;
+  min-width: 0;
+  width: auto;
+}
+.media-picker .media-layout {
+  flex: none;
+  margin: 0;
+}
+.media-picker .media-grid[data-folders-only]:not(.media-list) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+.media-picker .media-caption {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.media-picker .media-folder-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 88px;
+  padding: 12px;
+}
+.media-picker .media-folder-thumbnail {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  aspect-ratio: auto;
+}
+.media-picker .media-folder-thumbnail > svg {
+  width: 32px;
+  height: 32px;
+}
+.media-picker .media-folder-card .media-caption {
+  flex: 1;
+  padding: 0;
+}
+.media-picker .media-folder-card .media-format {
+  display: none;
+}
+.media-picker .media-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.media-picker .media-breadcrumbs > button {
+  padding-inline: 0;
+}
+@container media-picker (max-width: 400px) {
+  .media-picker .media-toolbar > search {
+    flex-basis: 100%;
+  }
+  .media-picker .media-layout {
+    margin-inline-start: auto;
+  }
+  .media-picker .media-list .media-size {
+    display: none;
+  }
+}
+
 /* The navigation drawer opens from the leading edge in either direction. */
 [dir="rtl"] .dialog.drawer {
   border-radius: 16px 0 0 16px;

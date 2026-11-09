@@ -441,6 +441,7 @@ export function Media({
             <ul
               className={`media-grid${layout === 'list' ? ' media-list' : ''}`}
               data-loading={loading || undefined}
+              data-folders-only={(rootFolders.length > 0 && files.length === 0) || undefined}
             >
               {rootFolders.map((item) => (
                 <li key={item.id || 'uncategorized'}>
