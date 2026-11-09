@@ -26,7 +26,7 @@ const posts = defineLiveCollection({
 export const collections = { posts };
 ```
 
-Sedna creates database columns and admin inputs from these fields and infers the entry types. It generates the slug from the title. Editors can change the slug, but changing the title leaves an existing slug in place.
+Sedna uses these fields to create database columns, build the admin form, and infer entry types. It generates the slug from the title. Editors can change the slug themselves; later title changes leave it in place.
 
 ## Render the posts
 
@@ -62,7 +62,7 @@ Add a [detail page](/guides/live-content/#load-one-entry) for these links. Use y
 
 Restart the dev server to load the new schema. Open `/admin`, select `posts`, and add an entry. Save a draft first, then publish it and reload `/posts/`.
 
-Public live collections return only published entries. Drafts can leave required fields empty; publishing checks those fields and slugs.
+Public live collections return only published entries. You can leave required fields empty in a draft. Sedna checks them and the slugs when you publish.
 
 :::tip[Render on demand]
 Keep `export const prerender = false` on every page that reads CMS content. A prerendered page captures content during the build and needs a rebuild to change.

@@ -13,24 +13,28 @@ To use a different icon, or a site favicon with another filename, set
 integrations: [sedna({ admin: { favicon: '/my-site-icon.svg' } })],
 ```
 
-Sedna uses this URL as written. Include your site's base path if needed, or
-use an absolute URL. When finding the favicon automatically, Sedna uses Astro's
+Sedna uses this URL as written, so include your site's base path if needed or
+use an absolute URL. For automatic favicon detection, Sedna uses Astro's
 `publicDir` and `base` settings.
 Restart the dev server or rebuild after changing favicon configuration or files.
+
+The admin reads the homepage's `<title>` when it opens and uses it in browser tab
+titles. If the title is empty or the homepage cannot be loaded, it uses `Sedna`.
+Set `admin.siteName` to override this lookup.
 
 ## Create an entry
 
 Open `/admin` and sign in. Select a collection from the sidebar, then add an entry. Sedna generates the form from the collection's TypeScript fields.
 
-Text, dates, numbers, rich text, and images have their own inputs. Lists let you add, remove, and move items. Objects group related fields. Configure storage to upload images, or paste an existing image URL with its dimensions.
+The form has inputs for text, dates, numbers, rich text, and images. You can add, remove, and move list items. Objects group related fields. Configure storage to upload images, or paste an existing image URL with its dimensions.
 
 ## Drafts and publishing
 
-Save an incomplete entry as a draft. Drafts stay in the editor and do not appear on the public site. Supplied values must still have the right type.
+Save an incomplete entry as a draft to keep it in the editor without showing it on the public site. Any values you enter must still have the right type.
 
-Publish when required fields are complete. By default, published changes appear on the next request to the server. To remove an entry from the public site while keeping its content, save it as a draft.
+Publish once you have filled in the required fields. By default, published changes appear on the next request to the server. To remove an entry from the public site while keeping its content, save it as a draft.
 
-With [CDN caching](/guides/caching/) enabled, Sedna attempts to purge pages that read the changed collection. If a purge fails, the editor keeps a warning visible. Your content is saved, but cached pages may show the old version until the cache lifetime, or TTL, expires or a later purge succeeds.
+With [CDN caching](/guides/caching/) enabled, Sedna attempts to purge pages that read the changed collection. If a purge fails, your content is still saved. The editor shows a persistent warning because cached pages may show the old version until their cache lifetime, or TTL, expires or a later purge succeeds.
 
 ## Ordering and deleting
 

@@ -28,7 +28,7 @@ fields.list(fields.text({ required: true }), { required: true });
 fields.object({ name: fields.text({ required: true }) }, { required: true });
 ```
 
-Guard nullable values before rendering. Drafts can be incomplete, but supplied values must match their field types.
+Check for null values before rendering. Drafts can be incomplete, but supplied values must match their field types.
 
 ## Lists and grouped fields
 
@@ -55,8 +55,8 @@ can be added or cleared. Live collections return the values in order with inferr
 
 Both helpers accept `{ required: true }` as a second argument. A required list must
 contain at least one item when publishing. An item's `required` option controls
-whether that item may be empty. Required children of an object are checked when
-the object is present; mark the object itself required to require the group.
+whether that item may be empty. Sedna checks required child fields when
+the object is present. To require the whole group, mark the object itself required.
 Missing fields and empty scalar inputs become `null`; an empty list remains `[]`.
 API updates replace a supplied list or object in full. Omitted top-level fields
 keep their previous values. Nested slugs generate from sibling fields within their
@@ -64,9 +64,9 @@ object.
 
 ## Slugs
 
-Set a slug's `from` option to the name of a sibling field. Sedna generates missing slugs from that field's value. Editing the source later preserves an existing slug. Duplicate top-level slugs return a conflict.
+Set a slug's `from` option to the name of a sibling field. Sedna generates missing slugs from that field's value. Later edits to the source leave an existing slug in place. Duplicate top-level slugs return a conflict.
 
-Only top-level slugs have unique indexes and address public live entries. Use a single top-level slug field for the collection's public URLs.
+Only top-level slugs have unique indexes and can identify entries in public live collections. Use a single top-level slug field for the collection's public URLs.
 
 ## Storage
 

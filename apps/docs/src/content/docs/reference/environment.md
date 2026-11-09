@@ -21,16 +21,17 @@ Generate the two secrets independently with `openssl rand -hex 32`.
 
 The live loader, authentication, and content API each use their own pool per server process.
 Each pool defaults to five connections. Set `SEDNA_DATABASE_POOL_MAX` to a positive
-integer to change that limit. Count all three pools across every server process and instance when planning
-your connection limit. For example, a limit of 10 permits up to 30 runtime
+integer to change that limit. When planning your connection limit, count all three pools in every server
+process and instance. For example, a limit of 10 permits up to 30 runtime
 connections per process.
-Startup table synchronization uses a separate single-connection pool temporarily.
+During startup, table synchronization temporarily uses a separate pool with one connection.
 
 `SEDNA_DATABASE_CONNECTION_TIMEOUT_MS` defaults to `10000`. It limits how long a request can wait
-for a pool connection or for a new connection to open. It does not impose a query execution timeout or cancel running SQL.
+for a pool connection or for a new connection to open. It does not limit query execution time or cancel running SQL.
 Sedna reads both settings when it creates the pools. Restart the server after
 changing either setting.
-Increase pool size only after checking the database connection budget and measuring load.
+Before increasing the pool size, measure the load and check how many connections
+your database can support.
 
 ## Uploads
 

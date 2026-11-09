@@ -5,11 +5,11 @@ description: Configure optional CDN caching and collection tag purges.
 ---
 
 By default, responses that read Sedna content send `Cache-Control: no-store`.
-The live loader queries Postgres on every request, so publishing, editing,
-reordering, unpublishing, or deleting content takes effect on the next request
-that reaches your server. You do not need to rebuild or configure a host-specific purge API. Pages must render on demand, with `export const prerender = false`.
-A prerendered page that reads a Sedna collection logs a warning, because its
-content is frozen when the page is built.
+The live loader queries Postgres whenever a request reaches your server. The next
+request sees any changes from publishing, editing, reordering, unpublishing, or
+deleting content. You do not need to rebuild or configure a host-specific purge API. Pages must render on demand, with `export const prerender = false`.
+Sedna logs a warning if a prerendered page reads a collection, because that page
+keeps the content from the build.
 Load CMS content in page frontmatter before the response starts streaming.
 
 Enable CDN caching for public CMS pages in `astro.config.mjs`:
@@ -34,8 +34,8 @@ Sedna requests a purge for the collection's tag. Reordering also triggers a purg
 if it involves published entries. The request waits for the purge attempt after
 the database commits the change.
 
-The purge covers every page that read the collection, including lists, detail
-pages, and paginated results. The next cache miss renders updated HTML. Draft-only
+The purge covers every page that read the collection. This includes lists,
+detail pages, and paginated results. The next cache miss renders updated HTML. Draft-only
 changes, failed or rolled-back writes, and direct SQL changes do not trigger purges.
 
 ## Provider setup
@@ -54,8 +54,8 @@ SEDNA_NETLIFY_SITE_ID=your-site-id
 
 The token must have access to the site. Sedna uses Netlify's
 [cache-tag purge API](https://docs.netlify.com/build/caching/caching-overview/#on-demand-invalidation).
-The request targets all deploys of that site so previews sharing its database are
-also refreshed.
+The request targets all deploys of that site, including previews that share its
+database.
 
 ### Vercel
 
@@ -75,8 +75,7 @@ preview caches in the project.
 Vercel [does not cache responses with `Vary: Cookie`](https://vercel.com/changelog/vary-cookie-responses-no-longer-cached).
 Sedna therefore does not add Cookie variation on Vercel, but preserves any explicit
 `Vary` headers from the page. Enable caching there only for pages whose public
-output is identical regardless of cookies. Cookie-bearing visitors may receive an
-already cached public page. Put personalized content and previews on separate,
+output is identical regardless of cookies. Visitors with cookies may receive an already cached public page. Put personalized content and previews on separate,
 uncached routes. An explicit `Vary: Cookie` keeps the page uncached on Vercel.
 
 ### Cloudflare
@@ -104,8 +103,9 @@ cache-control headers. Admin and CMS API responses stay uncached. On Netlify and
 Cloudflare, Sedna adds `Vary: Cookie, Authorization`; Vercel gets Authorization
 variation only. Other existing `Vary` values are preserved.
 
-Cache only public pages that show the same content to every visitor. Sedna cannot change a CDN response
-that never reaches its middleware. Explicit page `Cache-Control` policies are
+Cache only public pages that show the same content to every visitor. When a CDN
+serves a cached response, the request never reaches Sedna's middleware, so Sedna
+cannot change that response. Explicit page `Cache-Control` policies are
 preserved and opt out of Sedna-managed CDN caching. Unrelated routes keep their
 existing headers. Load CMS content before streaming begins. Prerendered pages
 remain fixed until rebuilt. The collection `pages` option is still reserved.
@@ -114,9 +114,9 @@ With `platform: 'none'`, Sedna sets generic HTTP cache headers but does not
 request provider purges. Standalone Node does not supply a response cache. Local development
 does not simulate the hosting platform's CDN, so local refreshes still query Postgres.
 
-A database commit and its cache purge are separate operations. A purge can take
-time to reach every cache, and a render already in progress can race with it. Cache eviction, expiration, and deploys
-also cause new reads. Keep a finite TTL as a fallback. If a purge fails or times out,
+Saving to the database and purging the cache are separate operations. A purge can
+take time to reach every cache, and a render already in progress can race with it.
+Cache eviction, expiration, and deploys also cause new reads. Keep a finite TTL as a fallback. If a purge fails or times out,
 the content remains saved, the API sends `X-Sedna-Cache: purge-failed`, and the
 dashboard shows a persistent warning. Cached pages may remain outdated until their
 TTL expires or a later successful purge. There is no background retry job.

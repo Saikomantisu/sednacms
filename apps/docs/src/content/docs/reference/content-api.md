@@ -24,10 +24,10 @@ the API can only access configured collections.
 Single-entry responses contain `{ entry }`; lists contain `{ entries }`. An entry
 has its database UUID, status, sort order, timestamps, and a `data` object.
 The public live loader uses the slug when the collection has one.
-Shared request/response types are exported from `sednacms` for typed API clients.
+Import shared request and response types from `sednacms` to type your API client.
 
-Drafts may be incomplete. Publishing checks required fields and requires nonempty
-slugs. The API checks the types of all supplied values, including draft values.
+You can save incomplete drafts. To publish, fill in the required fields and use
+nonempty slugs. The API checks the types of every supplied value, even in drafts.
 Sedna generates missing slugs from their configured source. Changing a title
 preserves an existing slug.
 The API rejects unknown fields and writes to system columns. Duplicate slugs return 409.
@@ -49,6 +49,6 @@ if (!response.ok) throw new Error('Could not save the entry');
 const { entry } = await response.json();
 ```
 
-Browsers supply the `Origin` header for these write requests. Other clients must provide it and retain the session cookie. Omitted top-level fields keep their values; supplied lists and objects replace their previous values in full.
+Browsers supply the `Origin` header for these write requests. Other clients must send it themselves and keep the session cookie. Omitted top-level fields keep their values; supplied lists and objects replace their previous values in full.
 
 Authentication and admin endpoints are always uncached. See [Authentication](/guides/authentication/) for setup and sign-in endpoints and [Image uploads](/guides/uploads/) for storage signing.

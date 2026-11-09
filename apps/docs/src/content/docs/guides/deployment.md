@@ -4,9 +4,9 @@ title: Deployment
 description: Deploy Sedna with a Node-compatible adapter, runtime variables, and Postgres.
 ---
 
-Sedna uses your site's Astro server adapter and requires Node-compatible APIs and a reachable Postgres database. It does not select an adapter or change dependency bundling. Hosting-provider credentials are needed only for optional CDN caching.
+Sedna uses your site's Astro server adapter. It needs Node-compatible APIs and a reachable Postgres database. Sedna leaves adapter selection and dependency bundling to your site configuration. Hosting-provider credentials are needed only if you enable CDN caching.
 
-This guide uses standalone Node; managed hosts use their corresponding Astro adapters.
+The examples use standalone Node. For a managed host, use its Astro adapter.
 
 ## Build and run
 
@@ -17,9 +17,9 @@ npm run build
 node ./dist/server/entry.mjs
 ```
 
-Set [runtime environment variables](/reference/environment/) through your host or process manager before starting the server. A production Node process does not automatically load your development `.env` through Sedna's dev-server hook.
+Set [runtime environment variables](/reference/environment/) through your host or process manager before starting the server. Sedna's dev-server hook loads your development `.env`, but it does not run in a production Node process.
 
-Use HTTPS and set `SEDNA_URL` to your production origin. Use a pooled database connection. Give the database role permission to create and update Sedna's tables. The loader checks collection tables before its first query; authentication migrates its system tables on first use.
+Use HTTPS and set `SEDNA_URL` to your production origin. Use a pooled database connection with a role that can create and update Sedna's tables. The loader checks collection tables before its first query; authentication migrates its system tables on first use.
 
 ## Render CMS pages on demand
 

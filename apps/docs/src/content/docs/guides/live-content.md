@@ -58,7 +58,7 @@ if (error) Astro.response.status = 503;
 </html>
 ```
 
-Add a `/404` page to your site. Treat loader errors as unavailable content rather than an empty collection.
+Add a `/404` page to your site. If the loader returns an error, show an unavailable message so visitors can distinguish it from an empty collection.
 
 Rich-text fields contain HTML. The admin editor sanitizes the HTML it produces. Sanitize HTML from other API clients before rendering it.
 
@@ -76,12 +76,11 @@ const visibleEntries = entries?.slice(0, 10);
 ```
 
 This fetches 11 entries and displays 10. The extra entry tells you whether to show
-a Next link without running a count query. The playground uses this approach for
-its Previous and Next links. `limit` must be an integer
-from 1 to 100. `offset` must be a nonnegative safe integer and requires a limit
-when greater than zero. Invalid filters return a loader error. Validate page numbers
-from the URL before calculating offsets. Ordering is `sort_order`, `created_at`, then
-`id`; content edits between requests can still move entries between pages.
+a Next link without running a count query. `limit` must be an integer from 1 to 100.
+Use a nonnegative safe integer for `offset`; values greater than zero also require
+a limit. Invalid filters return a loader error, so validate page numbers from the
+URL before calculating offsets. Entries follow `sort_order`, `created_at`, then
+`id`. Edits between requests can still move entries between pages.
 Omit the filters to load the full collection. Each entry includes all configured
 fields; the loader does not support field selection.
 

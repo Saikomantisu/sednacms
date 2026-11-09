@@ -4,7 +4,7 @@ title: Introduction
 description: How Sedna connects Astro, Postgres, and the content editor.
 ---
 
-Sedna CMS is an open-source Astro integration for content you publish as entries, such as blog posts or testimonials. Define collections and fields in TypeScript, then let editors manage entries at `/admin`.
+Sedna CMS is an open-source Astro integration for publishing entries such as blog posts or testimonials. You define collections and fields in TypeScript. Editors manage the entries at `/admin`.
 
 ## How content reaches your pages
 
@@ -21,7 +21,7 @@ By default, these responses use `Cache-Control: no-store`. Each request that rea
 - A Postgres database with a pooled connection string.
 - UploadThing or S3-compatible storage if editors need to upload images.
 
-Sedna's admin and API need a server. You cannot deploy them to a static-only host. Cloudflare Workers with Node compatibility is [experimental](/guides/deployment/#cloudflare-workers-compatibility). You can also use Cloudflare's CDN in front of a compatible Node server.
+Sedna's admin and API need a server, so you cannot deploy them to a static-only host. Cloudflare Workers with Node compatibility is [experimental](/guides/deployment/#cloudflare-workers-compatibility). You can also use Cloudflare's CDN in front of a compatible Node server.
 
 ## Current scope
 

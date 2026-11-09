@@ -10,7 +10,7 @@ Install and configure a Node-compatible Astro server adapter. Sedna's admin and 
 
 ## Collections are empty
 
-Check that `SEDNA_DATABASE_URL` is available to the server process. In development, a missing URL logs a warning and returns empty collections.
+Check that `SEDNA_DATABASE_URL` is available to the server process. If the URL is missing during development, Sedna logs a warning and returns empty collections.
 
 Confirm that `src/live.config.ts` exports `collections`, and restart the dev server after schema changes. Public live collections return only published entries. Drafts are visible in `/admin` and the authenticated content API.
 
@@ -18,13 +18,13 @@ Confirm that `src/live.config.ts` exports `collections`, and restart the dev ser
 
 Check for `export const prerender = false` on the page. Prerendered content is fixed at build time. Load CMS content before the response starts streaming.
 
-With CDN caching enabled, a purge warning means the write succeeded but cached pages may be stale. Check purge credentials and provider configuration. The pages refresh after a later successful purge or when their cache lifetime expires. Direct SQL changes do not trigger purges.
+If CDN caching is enabled and you see a purge warning, your changes were saved, but cached pages may still show old content. Check purge credentials and provider configuration. The pages refresh after a later successful purge or when their cache lifetime expires. Direct SQL changes do not trigger purges.
 
 ## Setup or write requests fail
 
 `SEDNA_URL` must match the request's origin, including protocol and port. Write requests need an `Origin` header. First-admin setup also needs the separate `SEDNA_SETUP_TOKEN`, and each secret must have at least 32 characters.
 
-A setup conflict means an account already exists. Use the login screen. Editor invitations and password reset email delivery are not implemented yet.
+If setup returns a conflict, an account already exists. Sign in through the login screen. Editor invitations and password reset email delivery are not implemented yet.
 
 ## Image uploads fail
 
@@ -34,4 +34,4 @@ Inputs must be JPEG, PNG, WebP, GIF, or AVIF and at most 32 MB. If your site set
 
 ## Too many database connections
 
-Sedna has separate loader, authentication, and content API pools per server process. Each defaults to five connections. Budget across all processes and instances before increasing `SEDNA_DATABASE_POOL_MAX`. The connection timeout does not cancel running queries.
+Sedna has separate loader, authentication, and content API pools per server process. Each defaults to five connections. Count connections across all processes and instances before increasing `SEDNA_DATABASE_POOL_MAX`. The connection timeout does not cancel running queries.

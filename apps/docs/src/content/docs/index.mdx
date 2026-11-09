@@ -18,12 +18,12 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 <CardGrid>
   <Card title="Forms from your fields" icon="pencil">
-    Define fields in TypeScript. Sedna builds the forms at `/admin`, where editors
-    can write posts, upload images, and publish content.
+    Define fields in TypeScript to build the forms at `/admin`. Editors use them
+    to write posts, upload images, and publish content.
   </Card>
   <Card title="Publish without a rebuild" icon="rocket">
-    Content lives in Postgres. Astro live collections read published entries on
-    demand, so the next request can show an edit without a deployment.
+    Astro live collections read published entries from Postgres on demand.
+    The next request can show an edit without a deployment.
   </Card>
   <Card title="Inside your Astro site" icon="astro">
     Install an integration and a server adapter. The admin, API, and public pages
@@ -31,7 +31,7 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
   </Card>
   <Card title="Your database and storage" icon="database">
     Store content in Postgres and images in UploadThing or S3-compatible storage.
-    With CDN caching enabled, published changes purge pages that read the collection.
+    If you enable CDN caching, publishing a change purges pages that read the collection.
   </Card>
 </CardGrid>
 
@@ -43,6 +43,5 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 </CardGrid>
 
 :::note[Work in progress]
-These docs cover the current version of Sedna. Editor invitations and password
-reset email delivery are not available yet.
+Editor invitations and password reset email delivery are not available yet.
 :::
