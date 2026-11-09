@@ -1,11 +1,7 @@
 ---
 import '../styles/site.css';
 
-interface Props {
-  title?: string;
-  description?: string;
-}
-const { title = 'Playground', description = 'CMS playground.' } = Astro.props;
+const { title = 'Maya Chen' } = Astro.props;
 ---
 
 <!doctype html>
@@ -13,46 +9,45 @@ const { title = 'Playground', description = 'CMS playground.' } = Astro.props;
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content={description}>
     <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+    >
   </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to content</a>
-    <header class="site-header">
-      <nav class="site-nav" aria-label="Main navigation">
-        <a href="/" aria-current={Astro.url.pathname === '/' ? 'page' : undefined}>Playground</a>
-        <a href="/admin">Admin</a>
+  <body class="bg-white font-sans text-slate-600 antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-white"
+    >
+      Skip to content
+    </a>
+
+    <header class="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+      <a href="/" class="py-3 text-lg font-semibold text-slate-900">Maya Chen</a>
+      <nav aria-label="Main" class="flex items-center text-sm font-medium">
+        <a href="/#posts" class="hidden px-3 py-3 hover:text-blue-600 sm:block">Blog</a>
+        <a href="/#testimonials" class="hidden px-3 py-3 hover:text-blue-600 sm:block"
+          >Kind words</a
+        >
+        <a
+          href="mailto:maya@example.com"
+          class="ml-2 rounded-full bg-slate-900 px-4 py-2.5 text-white hover:bg-slate-700"
+        >
+          Contact
+        </a>
       </nav>
     </header>
-    <main id="main"><slot /></main>
+
+    <main id="main" class="mx-auto max-w-6xl px-5 pb-16 pt-8"><slot /></main>
+
+    <footer class="border-t border-slate-200 text-sm">
+      <p class="mx-auto max-w-6xl px-5 py-8">
+        Maya Chen, freelance web developer.
+        <a href="/admin" class="ml-1 underline hover:text-blue-600">Admin</a>
+      </p>
+    </footer>
   </body>
 </html>
-
-<style>
-.site-header {
-  margin-bottom: 2rem;
-}
-
-.site-nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.site-nav a {
-  color: #52525b;
-  font-size: 0.875rem;
-  text-underline-offset: 0.2em;
-}
-
-.site-nav a:hover,
-.site-nav a[aria-current="page"] {
-  color: #18181b;
-}
-
-.site-nav a:focus-visible {
-  outline: 2px solid #3f3f46;
-  outline-offset: 4px;
-}
-</style>

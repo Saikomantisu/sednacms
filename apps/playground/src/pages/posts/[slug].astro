@@ -3,32 +3,40 @@ export const prerender = false;
 
 import { Image } from 'astro:assets';
 import { getLiveEntry } from 'astro:content';
+import { formatDate } from '../../format';
 import Site from '../../layouts/Site.astro';
 
-const slug = Astro.params.slug;
-if (!slug) return Astro.redirect('/404');
-const { entry, error } = await getLiveEntry('posts', slug);
-if (!entry && (!error || error.name === 'LiveEntryNotFoundError')) return Astro.redirect('/404');
-if (error) Astro.response.status = 503;
-const data = entry?.data;
+const { entry, error } = await getLiveEntry('posts', Astro.params.slug ?? '');
+if (error && error.name !== 'LiveEntryNotFoundError') throw error;
+if (!entry) return Astro.redirect('/404');
+
+const post = entry.data;
 ---
 
-<Site title={`${data?.title || 'Post unavailable'} | Playground`}>
-  {error ? (
-    <p role="status">Could not load this post.</p>
-  ) : (
-    data && (
-      <article>
-        <h1>{data.title}</h1>
-        {data.date && (
-          <p>
-            <time datetime={data.date}>{data.date}</time>
-          </p>
-        )}
-        {data.reading_time != null && <p>{data.reading_time} minute read</p>}
-        {data.image && <Image {...data.image} loading="eager" />}
-        {data.body && <div set:html={data.body} />}
-      </article>
-    )
-  )}
+<Site title={`${post.title} | Maya Chen`}>
+  <article class="mx-auto max-w-2xl">
+    <a href="/#posts" class="inline-block py-2 text-sm font-medium text-blue-600 hover:underline"
+      >← All posts</a
+    >
+    <h1 class="mt-2 text-4xl font-bold text-balance text-slate-900 sm:text-5xl">{post.title}</h1>
+    <p class="mt-4 font-mono text-xs text-blue-600 tabular-nums">
+      {post.date && formatDate(post.date)}
+      {post.reading_time != null && ` · ${post.reading_time} min read`}
+    </p>
+    {post.image && <Image {...post.image} loading="eager" class="my-8 w-full rounded-2xl" />}
+    {post.body && (
+      <div
+        class="prose prose-lg prose-slate max-w-none prose-a:text-blue-600 prose-headings:text-slate-900"
+        set:html={post.body}
+      />
+    )}
+
+    {post.tags && (
+      <ul class="mt-10 flex flex-wrap gap-2">
+        {post.tags.map((tag) => (
+          <li class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">{tag}</li>
+        ))}
+      </ul>
+    )}
+  </article>
 </Site>

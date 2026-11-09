@@ -1,0 +1,46 @@
+---
+import { Image } from 'astro:assets';
+import type { FieldsData } from 'sednacms';
+import { formatDate } from '../format';
+import type { postFields } from '../schema';
+
+interface Props {
+  id: string;
+  data: FieldsData<typeof postFields>;
+  featured?: boolean;
+}
+const { id, data, featured = false } = Astro.props;
+---
+
+<a
+  href={`/posts/${id}`}
+  class:list={[
+    'group block h-full overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md',
+    featured && 'md:grid md:grid-cols-2',
+  ]}
+>
+  {/* Both layouts show a 3:2 crop of the cover image. */}
+  {data.image && (
+    <Image
+      {...data.image}
+      width={featured ? 960 : 640}
+      height={featured ? 640 : 427}
+      class="aspect-[3/2] w-full object-cover"
+    />
+  )}
+  <div class:list={['p-6', featured && 'flex flex-col justify-center md:p-10']}>
+    <p class="font-mono text-xs text-blue-600 tabular-nums">
+      {data.date && formatDate(data.date)}
+      {data.reading_time != null && ` · ${data.reading_time} min read`}
+    </p>
+    <h3
+      class:list={[
+        'mt-3 line-clamp-2 font-semibold text-balance text-slate-900 group-hover:underline',
+        featured ? 'text-3xl' : 'text-xl',
+      ]}
+    >
+      {data.title}
+    </h3>
+    {data.excerpt && <p class="mt-3 line-clamp-3 text-pretty">{data.excerpt}</p>}
+  </div>
+</a>

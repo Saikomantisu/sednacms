@@ -40,12 +40,14 @@ test('built Astro server emits collection tags, preserves query variants, and ex
     join(temporary, 'astro.config.mjs'),
     `
     import node from '@astrojs/node';
+    import tailwindcss from '@tailwindcss/vite';
     import { defineConfig } from 'astro/config';
     import { fileURLToPath } from 'node:url';
     import sedna from 'sednacms';
     export default defineConfig({
       root: fileURLToPath(new URL('../', import.meta.url)),
       outDir: fileURLToPath(new URL('./dist/', import.meta.url)),
+      vite: { plugins: [tailwindcss()] },
       adapter: node({ mode: 'standalone' }),
       integrations: [sedna({ platform: 'netlify', cache: { ttl: 300 } })],
     });
@@ -115,7 +117,7 @@ test('built Astro server emits collection tags, preserves query variants, and ex
     assert.match(response.headers.get('Netlify-CDN-Cache-Control'), /durable, max-age=300/);
     assert.deepEqual(
       new Set(response.headers.get('Netlify-Cache-Tag').split(',')),
-      new Set(['sedna:posts', 'sedna:testimonials', 'sedna:packages']),
+      new Set(['sedna:posts', 'sedna:testimonials']),
     );
     assert.match(await response.text(), /No posts/);
   }

@@ -6,13 +6,17 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "seed": "node --env-file-if-exists=.env scripts/seed.mjs",
-    "seed:packages": "node --env-file-if-exists=.env scripts/seed.mjs packages"
+    "seed": "node --env-file-if-exists=.env scripts/seed.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",
     "@astrojs/vercel": "^11.0.18",
     "astro": "^7.4.2",
     "sednacms": "*"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.5",
+    "tailwindcss": "^4.3.5"
   }
 }
