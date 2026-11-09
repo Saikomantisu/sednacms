@@ -1,4 +1,5 @@
 import { disposableDemo, uploadsEnabled } from 'virtual:sedna/admin';
+import { Menu } from '@base-ui/react/menu';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type { Field } from '../../../fields.js';
 import { type UploadProgress, uploadImage } from '../../uploads.js';
@@ -176,6 +177,14 @@ const icons = {
   down: <path d="M12 5v14m-6-6 6 6 6-6" />,
   remove: <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6m4-6v6" />,
   chevron: <path d="m9 6 6 6-6 6" />,
+  close: <path d="m6 6 12 12M6 18 18 6" />,
+  image: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="m21 15-5-5L5 21" />
+    </>
+  ),
   plus: <path d="M12 5v14M5 12h14" />,
 };
 function Icon({ name }: { name: keyof typeof icons }) {
@@ -623,8 +632,13 @@ function ImageControl({
   run: (action: () => Promise<void>) => void;
 }) {
   const [picker, setPicker] = useState(false);
+  const details = useRef<HTMLDetailsElement>(null);
+  const changeButton = useRef<HTMLButtonElement>(null);
+  const uploadInput = useRef<HTMLInputElement>(null);
+  const hasImage = Boolean(value.src);
   const [failed, setFailed] = useState('');
   const [progress, setProgress] = useState<UploadProgress | null>(null);
+  const busy = disabled || progress !== null;
   const progressLabel =
     progress?.stage === 'preparing'
       ? 'Preparing image…'
@@ -634,10 +648,10 @@ function ImageControl({
   const percent = progress?.stage === 'uploading' ? progress.percent : undefined;
   const input = (key: keyof ImageDraft, label: string, type: string) => (
     <LabelledInput
-      id={id + '-' + key}
+      id={`${id}-${key}`}
       label={label}
       type={type}
-      disabled={disabled}
+      disabled={busy}
       value={value[key]}
       min={type === 'number' ? 1 : undefined}
       step={type === 'number' ? 1 : undefined}
@@ -646,15 +660,122 @@ function ImageControl({
   );
   return (
     <div className="image-control">
-      {!disposableDemo && (
-        <button type="button" disabled={disabled} onClick={() => setPicker(true)}>
-          Choose from media
-        </button>
+      <div
+        className={`image-selection${hasImage ? ' has-image' : ''}`}
+        aria-busy={progress !== null}
+      >
+        <div className="image-preview-area">
+          {validImageSource(value.src) && failed !== value.src ? (
+            <img
+              key={value.src}
+              className="image-preview"
+              src={value.src}
+              alt={value.alt || 'Selected preview'}
+              referrerPolicy="no-referrer"
+              onError={() => setFailed(value.src)}
+            />
+          ) : (
+            <span
+              className="image-placeholder"
+              role="img"
+              aria-label={hasImage ? 'Image preview unavailable' : 'No image selected'}
+            >
+              <Icon name="image" />
+            </span>
+          )}
+        </div>
+        <div className="image-selection-info">
+          <p className="image-selection-title">{hasImage ? 'Selected image' : 'Add an image'}</p>
+          {hasImage ? (
+            value.width &&
+            value.height && (
+              <p className="image-dimensions">
+                <bdi dir="ltr">
+                  {value.width} × {value.height} px
+                </bdi>
+              </p>
+            )
+          ) : (
+            <p className="image-dimensions">
+              {disposableDemo
+                ? 'Choose a file from your computer.'
+                : uploadsEnabled
+                  ? 'Upload a file or choose from your library.'
+                  : 'Choose from your media library.'}
+            </p>
+          )}
+        </div>
+        <div className="image-actions">
+          <Menu.Root>
+            <Menu.Trigger ref={changeButton} className="image-change" disabled={busy}>
+              {hasImage ? 'Change' : 'Choose image'}
+              <span className="image-menu-chevron">
+                <Icon name="chevron" />
+              </span>
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Positioner className="select-positioner" sideOffset={6} align="end">
+                <Menu.Popup className="select-popup image-source-menu">
+                  {uploadsEnabled && (
+                    <Menu.Item
+                      className="select-item"
+                      disabled={busy}
+                      onClick={() => uploadInput.current?.click()}
+                    >
+                      Upload image
+                    </Menu.Item>
+                  )}
+                  {!disposableDemo && (
+                    <Menu.Item
+                      className="select-item"
+                      disabled={busy}
+                      onClick={() => setPicker(true)}
+                    >
+                      Media library
+                    </Menu.Item>
+                  )}
+                  <Menu.Item
+                    className="select-item"
+                    disabled={busy}
+                    onClick={() => {
+                      if (details.current) details.current.open = true;
+                      requestAnimationFrame(() => details.current?.querySelector('input')?.focus());
+                    }}
+                  >
+                    Use an image URL
+                  </Menu.Item>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
+          {hasImage && (
+            <button
+              type="button"
+              className="quiet image-remove"
+              aria-label="Remove image"
+              disabled={busy}
+              onClick={() => {
+                onChange({ src: '', width: '', height: '', alt: '' });
+                setFailed('');
+                changeButton.current?.focus();
+              }}
+            >
+              <Icon name="close" />
+            </button>
+          )}
+        </div>
+      </div>
+      {uploadsEnabled && (
+        <p className={hasImage ? 'sr-only' : 'hint image-upload-hint'} id={`${id}-upload-hint`}>
+          {disposableDemo
+            ? 'Up to 5 MB per image, 25 MB per session. Images stay in this browser.'
+            : 'Images and GIFs up to 32 MB; SVGs up to 1 MB.'}
+        </p>
       )}
       {picker && (
         <Dialog title="Choose an image" className="media-picker" onCancel={() => setPicker(false)}>
           <Media
-            disabled={disabled}
+            disabled={busy}
             run={run}
             onSelect={(media) => {
               onChange({
@@ -674,14 +795,16 @@ function ImageControl({
         </Dialog>
       )}
       {uploadsEnabled && (
-        <div className="field">
-          <label htmlFor={id + '-upload'}>Upload image</label>
+        <>
           <input
-            id={id + '-upload'}
+            ref={uploadInput}
+            hidden
+            aria-label="Upload image file"
+            id={`${id}-upload`}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/svg+xml"
             aria-describedby={`${id}-upload-hint`}
-            disabled={disabled}
+            disabled={busy}
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];
               event.currentTarget.value = '';
@@ -701,11 +824,6 @@ function ImageControl({
               });
             }}
           />
-          <p className="hint" id={`${id}-upload-hint`}>
-            {disposableDemo
-              ? 'Images stay in your browser for this preview. The limits are 5 MB per image and 25 MB per session.'
-              : 'Images and GIFs up to 32 MB; SVGs up to 1 MB.'}
-          </p>
           {progress && (
             <div className="upload-progress">
               <div className="upload-progress-label">
@@ -715,39 +833,34 @@ function ImageControl({
               <progress max={100} value={percent} aria-label={progressLabel} />
             </div>
           )}
-        </div>
+        </>
       )}
-      {input('src', 'Image URL', disposableDemo ? 'text' : 'url')}
-      <div className="field-grid">
-        {input('width', 'Width', 'number')}
-        {input('height', 'Height', 'number')}
-      </div>
-      {input('alt', 'Image description', 'text')}
-      <p className="hint">
-        {disposableDemo
-          ? 'Use a bundled /images/ path or choose an image from your computer. This demo blocks external images.'
-          : uploadsEnabled
-            ? 'You can also paste an existing image URL and enter its dimensions.'
-            : 'Paste an existing image URL and enter its dimensions. To upload files, ask your developer to set up storage.'}
-      </p>
-      {value.src && (
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange({ src: '', width: '', height: '', alt: '' })}
-        >
-          Remove image
-        </button>
-      )}
-      {validImageSource(value.src) && failed !== value.src && (
-        <img
-          className="image-preview"
-          src={value.src}
-          alt={value.alt || 'Selected preview'}
-          referrerPolicy="no-referrer"
-          onError={() => setFailed(value.src)}
+      {hasImage && (
+        <LabelledInput
+          id={`${id}-alt`}
+          label="Alt text"
+          type="text"
+          disabled={busy}
+          value={value.alt}
+          onChange={(event) => onChange({ ...value, alt: event.target.value })}
+          hint="Describe the image for people who cannot see it. Leave empty for decorative images."
         />
       )}
+      <details ref={details} className="image-details">
+        <summary>{hasImage ? 'Image details' : 'Use an image URL'}</summary>
+        <div className="image-details-fields">
+          {input('src', 'Image URL', disposableDemo ? 'text' : 'url')}
+          <div className="field-grid">
+            {input('width', 'Width in pixels', 'number')}
+            {input('height', 'Height in pixels', 'number')}
+          </div>
+          <p className="hint">
+            {disposableDemo
+              ? 'Use a bundled /images/ path. External images are blocked in this demo.'
+              : 'Paste an image URL and enter its dimensions. Uploads and library images fill these in automatically.'}
+          </p>
+        </div>
+      </details>
     </div>
   );
 }

@@ -1130,10 +1130,149 @@ button.select-trigger {
 }
 .image-control {
   display: grid;
+  gap: 20px;
+  min-width: 0;
+  container: image-field / inline-size;
+}
+.image-selection {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
   gap: 12px;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+.image-selection.has-image {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+.image-preview-area {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  min-width: 0;
+  border-radius: 6px;
+  background: var(--field);
+  overflow: hidden;
+}
+.image-placeholder {
+  display: flex;
+  color: var(--ink-3);
+}
+.image-placeholder svg {
+  width: 20px;
+  height: 20px;
+}
+.image-selection-info {
+  min-width: 0;
+}
+.image-selection-title {
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.image-dimensions {
+  margin-block-start: 2px;
+  color: var(--ink-3);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.image-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.image-actions button {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 32px;
+  padding: 5px 10px;
+  font-size: 13px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-shadow: none;
+  transition:
+    background-color 120ms,
+    opacity 150ms;
+}
+.image-actions .image-remove {
+  padding: 8px;
+  color: var(--ink-3);
+}
+.image-menu-chevron {
+  display: flex;
+  rotate: 90deg;
+  color: var(--ink-3);
+}
+.image-source-menu {
+  min-width: min(200px, var(--available-width));
+  max-height: var(--available-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.image-source-menu [data-highlighted] {
+  background: var(--hover);
+  outline: none;
+}
+.image-control > .image-upload-hint {
+  margin-block-start: -12px;
+}
+.image-details {
+  min-width: 0;
+}
+.image-details summary {
+  width: fit-content;
+  max-width: 100%;
+  padding-block: 4px;
+  color: var(--ink-2);
+  cursor: pointer;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.image-details-fields {
+  display: grid;
+  gap: 12px;
+  margin-block-start: 12px;
+}
+.image-details .field-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@container image-field (max-width: 360px) {
+  .image-selection {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .image-preview-area {
+    width: 40px;
+    height: 40px;
+  }
+  .image-actions {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .image-actions button {
+    transition:
+      background-color 120ms,
+      scale 150ms ease-out,
+      opacity 150ms;
+  }
+  .image-actions button:active:not(:disabled) {
+    scale: 0.96;
+  }
+}
+.image-actions button:active:not(:disabled) {
+  transform: none;
 }
 .image-control .field {
   margin-bottom: 0;
+}
+.image-control input[hidden] {
+  display: none;
 }
 .upload-progress {
   display: grid;
@@ -1153,23 +1292,14 @@ button.select-trigger {
   height: 8px;
   accent-color: var(--accent);
 }
-.image-control > :where(button, .image-preview) {
-  justify-self: start;
-}
-.image-preview:not([hidden]) {
-  display: block;
-}
 .image-preview {
-  max-width: 240px;
-  max-height: 160px;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  border-radius: 8px;
-  outline: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 6px;
+  outline: 1px solid oklch(1 0 0 / 0.1);
   outline-offset: -1px;
-  margin-top: 4px;
-}
-.image-control > :where(.hint, .image-preview) {
-  margin: 0;
 }
 .editor-note {
   padding-bottom: 20px;
