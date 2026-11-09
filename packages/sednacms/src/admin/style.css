@@ -187,6 +187,19 @@ button.small {
   flex-wrap: wrap;
 }
 
+/* Text actions grow with their labels; icon controls retain their compact dimensions. */
+.page-head > button,
+.actions > button,
+.pagination > button,
+.editor-bar > button {
+  height: auto;
+  min-height: 36px;
+  max-width: 100%;
+  padding-block: 7px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 /* Base UI portals sit outside the application stacking context. */
 #app {
   isolation: isolate;
@@ -296,20 +309,24 @@ button.dialog-close {
   position: sticky;
   top: 0;
   height: 100dvh;
+  min-width: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   padding: 20px 12px 12px max(12px, env(safe-area-inset-left, 0px));
   background: var(--sidebar);
-  border-right: 1px solid var(--line-soft);
+  border-inline-end: 1px solid var(--line-soft);
 }
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 0 0 8px;
+  padding-inline-start: 8px;
+  flex-shrink: 0;
 }
 .sidebar-brand .brand {
-  margin-right: auto;
+  margin-inline-end: auto;
 }
 button.icon-button {
   flex: none;
@@ -358,7 +375,7 @@ button.icon-button {
   overflow-y: auto;
   padding: calc(14px + env(safe-area-inset-top, 0px)) 12px
     calc(12px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
-  border-right: 0;
+  border-inline-end: 0;
 }
 .github-link {
   display: inline-flex;
@@ -379,19 +396,22 @@ button.icon-button {
 .sidebar nav {
   display: grid;
   gap: 2px;
+  flex-shrink: 0;
 }
 .sidebar .side-library {
   margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line-soft);
 }
 .side-library .side-label {
   margin: 0 10px 6px;
 }
 .sidebar :where(nav) button {
   justify-content: flex-start;
-  height: 34px;
-  padding: 0 10px;
+  min-height: 34px;
+  height: auto;
+  padding: 6px 10px;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
   border: 0;
   border-radius: 7px;
   background: none;
@@ -409,12 +429,18 @@ button.icon-button {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 4px;
+  padding-block-start: 24px;
+  flex-shrink: 0;
 }
 .side-link {
   display: flex;
   align-items: center;
-  height: 34px;
-  padding: 0 10px;
+  min-height: 34px;
+  height: auto;
+  padding: 6px 10px;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
   border-radius: 7px;
   font-size: 14px;
   font-weight: 500;
@@ -422,11 +448,48 @@ button.icon-button {
 }
 .account {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 4px 4px 10px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 4px 4px;
   border-top: 1px solid var(--line-soft);
   margin-top: 8px;
+}
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+button.account-sign-out {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  height: auto;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.account-sign-out svg {
+  flex: none;
+}
+button.account-sign-out:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--ink);
+}
+button.account-sign-out:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
 }
 .avatar {
   flex: none;
@@ -440,7 +503,7 @@ button.icon-button {
   font-size: 14px;
   font-weight: 650;
 }
-/* Fixed line heights so the name and Sign out stack to the avatar's height. */
+/* Keep the account controls grouped when the name wraps. */
 .account-text {
   flex: 1;
   min-width: 0;
@@ -463,13 +526,13 @@ button.text-link {
   font-size: 13px;
   font-weight: 500;
   line-height: 18px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .main {
   width: 100%;
-  max-width: 960px;
+  max-width: 1120px;
+  min-width: 0;
+  container: dashboard / inline-size;
   margin: 0 auto;
   padding: 48px 40px 96px;
   align-self: start;
@@ -480,11 +543,18 @@ button.text-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 24px;
 }
 .page-head > div {
   min-width: 0;
+}
+.page-head > div:first-child {
+  flex: 1 1 200px;
+}
+.page-head > button {
+  flex-shrink: 0;
 }
 .page-head.editor-head {
   flex-direction: row;
@@ -506,19 +576,24 @@ button.text-link {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-left: 4px;
+  padding-inline-start: 4px;
 }
 .crumbs {
   display: flex;
   align-items: center;
   gap: 2px;
-  margin: 0 0 12px -6px;
+  margin-block: 0 12px;
+  margin-inline: -6px 0;
   font-size: 13px;
   color: var(--ink-3);
 }
 .crumbs button {
-  height: 28px;
-  padding: 0 6px;
+  min-height: 28px;
+  padding: 4px 6px;
+  flex-shrink: 0;
+  max-width: 60%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-3);
@@ -545,7 +620,7 @@ button.select-trigger {
   background: var(--field);
   box-shadow: none;
   font-weight: 400;
-  text-align: left;
+  text-align: start;
 }
 .select-trigger > span:first-child {
   overflow: hidden;
@@ -635,13 +710,23 @@ button.select-trigger {
   border-color: var(--accent);
 }
 .list-filters input[type="date"] {
-  display: flex;
-  align-items: center;
+  position: relative;
+  display: block;
+  width: 144px;
+  padding-inline-end: 34px;
+}
+.list-filters input::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
 }
 .list-filters input::-webkit-date-and-time-value {
-  text-align: left;
+  text-align: start;
 }
 .list-filters input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset-inline-end: 10px;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
   width: 14px;
   height: 14px;
   margin: 0;
@@ -669,7 +754,8 @@ button.select-trigger {
   align-items: center;
   gap: 12px;
   min-height: 68px;
-  padding: 12px 12px 12px 8px;
+  padding-block: 12px;
+  padding-inline: 8px 12px;
   border-radius: 12px;
   cursor: pointer;
   -webkit-user-select: none;
@@ -682,8 +768,8 @@ button.select-trigger {
   content: "";
   position: absolute;
   top: 0;
-  left: 40px;
-  right: 0;
+  inset-inline-start: 40px;
+  inset-inline-end: 0;
   height: 1px;
   background: var(--line-soft);
 }
@@ -714,7 +800,7 @@ button.select-trigger {
   box-shadow: none;
   font-size: 15px;
   font-weight: 600;
-  text-align: left;
+  text-align: start;
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -744,10 +830,11 @@ button.select-trigger {
   gap: 2px;
   max-width: 180px;
   font-size: 13px;
-  text-align: right;
+  text-align: end;
+  overflow-wrap: anywhere;
 }
 .editor-head > .entry-dates {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .entry-date {
   color: var(--ink-2);
@@ -798,7 +885,9 @@ button.select-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
   border-top: 1px solid var(--line-soft);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
@@ -809,6 +898,7 @@ button.select-trigger {
   padding: 28px 28px 0;
 }
 .field {
+  min-width: 0;
   margin-bottom: 24px;
 }
 .field > .field-label,
@@ -892,7 +982,7 @@ button.select-trigger {
 }
 .field-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 12px;
 }
 .field .field {
@@ -1095,8 +1185,9 @@ button.select-trigger {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
   margin: 0 -28px;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) 20px;
+  padding: 16px 28px calc(16px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--line-soft);
   border-radius: 0 0 12px 12px;
   background: rgb(26 22 21 / 0.82);
@@ -1104,7 +1195,7 @@ button.select-trigger {
   backdrop-filter: blur(16px) saturate(180%);
 }
 .editor-bar .actions {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 /* Status messages */
@@ -1190,6 +1281,9 @@ button.select-trigger {
   Edge padding respects the notch and rounded corners in landscape (viewport-fit=cover).
 */
 @media (max-width: 750px) {
+  html {
+    scroll-padding-block-start: calc(72px + env(safe-area-inset-top, 0px));
+  }
   .layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
@@ -1225,14 +1319,20 @@ button.select-trigger {
   .page-head {
     margin-bottom: 20px;
   }
+  .auth-card {
+    padding: 24px;
+  }
+}
+/* Adapt list rows and form actions to the space left by the navigation. */
+@container dashboard (max-width: 600px) {
   .editor-head > .entry-dates {
-    margin-left: 0;
+    margin-inline-start: 0;
     max-width: none;
-    text-align: left;
+    text-align: start;
   }
   .list-filters {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
     margin-bottom: 16px;
   }
   .list-filters :is(input, select, .select-trigger) {
@@ -1252,10 +1352,11 @@ button.select-trigger {
       "info order"
       "dates order";
     gap: 4px 8px;
-    padding: 14px 8px 14px 16px;
+    padding-block: 16px;
+    padding-inline: 16px 8px;
   }
   .entry-row + .entry-row::before {
-    left: 16px;
+    inset-inline-start: 16px;
   }
   .entry-info {
     grid-area: info;
@@ -1266,7 +1367,7 @@ button.select-trigger {
     flex-wrap: wrap;
     gap: 0 6px;
     max-width: none;
-    text-align: left;
+    text-align: start;
     color: var(--ink-3);
   }
   .entry-row .entry-date {
@@ -1277,7 +1378,7 @@ button.select-trigger {
   }
   .entry-row .entry-edited::before {
     content: "·" / "";
-    margin-right: 6px;
+    margin-inline-end: 6px;
   }
   .order-controls {
     grid-area: order;
@@ -1288,22 +1389,16 @@ button.select-trigger {
   /* The save bar's buttons share the width so each is an easy thumb target. */
   .editor-bar {
     margin: 0 -16px;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
     flex-wrap: wrap;
   }
   .editor-bar .actions {
-    flex: 1 1 auto;
-    flex-wrap: nowrap;
+    flex: 1 1 100%;
+    min-width: 0;
+    flex-wrap: wrap;
   }
   .editor-bar .actions button {
-    flex: 1 1 auto;
-    padding: 0 12px;
-  }
-  .field-grid {
-    grid-template-columns: 1fr;
-  }
-  .auth-card {
-    padding: 24px;
+    flex: 1 1 120px;
   }
 }
 /*
@@ -1329,6 +1424,13 @@ button.select-trigger {
   button.small {
     height: 36px;
   }
+  .page-head > button,
+  .actions > button,
+  .pagination > button,
+  .editor-bar > button {
+    height: auto;
+    min-height: 44px;
+  }
   .list-filters :is(input, select, .select-trigger),
   .field input:not([type="checkbox"]),
   .field select,
@@ -1346,7 +1448,7 @@ button.select-trigger {
   }
   .sidebar :where(nav) button,
   .side-link {
-    height: 40px;
+    min-height: 40px;
   }
   /* Keep the link compact next to the name; an invisible pseudo-element extends the tap area to ~44px. */
   button.text-link {
@@ -1550,7 +1652,7 @@ button.list-expand {
 .list-actions {
   display: flex;
   flex: none;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .list-actions .icon-button {
   width: 32px;
@@ -1573,7 +1675,7 @@ button.list-expand {
 .list-row > .item-index {
   width: 16px;
   line-height: 40px;
-  text-align: right;
+  text-align: end;
 }
 .list-row-input {
   flex: 1 1 0;
@@ -1622,7 +1724,7 @@ button.item-toggle {
   background: none;
   box-shadow: none;
   font-weight: 500;
-  text-align: left;
+  text-align: start;
 }
 button.item-toggle:active:not(:disabled) {
   transform: none;
@@ -1664,7 +1766,7 @@ button.item-toggle:focus-visible {
 .item-meta,
 .item-missing {
   flex: none;
-  margin-left: auto;
+  margin-inline-start: auto;
   font-size: 13px;
 }
 .item-missing {
@@ -1712,7 +1814,7 @@ fieldset.item-body > .image-control > .field:last-child {
   color: var(--ink-2);
 }
 .list-undo button {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--accent-text);
 }
 .blocks > .list-items > .list-undo {
@@ -1889,7 +1991,7 @@ button.clear-object {
 }
 .media-search .icon-button {
   flex-shrink: 0;
-  margin-right: 4px;
+  margin-inline-end: 4px;
 }
 .media-search input::placeholder {
   color: var(--ink-3);
@@ -1909,7 +2011,7 @@ button.clear-object {
   display: flex;
   gap: 4px;
   padding: 3px;
-  margin: 0 0 0 auto;
+  margin-inline-start: auto;
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1967,7 +2069,7 @@ button.clear-object {
   border-radius: 10px;
   background: transparent;
   box-shadow: none;
-  text-align: left;
+  text-align: start;
   font-weight: 450;
 }
 .media-thumbnail {
@@ -2015,7 +2117,7 @@ button.clear-object {
 }
 .media-format {
   flex-shrink: 0;
-  margin-left: auto;
+  margin-inline-start: auto;
   padding: 2px 8px;
   border-radius: 5px;
   color: var(--ink-2);
@@ -2034,7 +2136,7 @@ button.clear-object {
 .media-list .media-card {
   display: flex;
   align-items: center;
-  padding-right: 16px;
+  padding-inline-end: 16px;
 }
 .media-list .media-thumbnail {
   width: 72px;
@@ -2046,7 +2148,7 @@ button.clear-object {
   flex: 1;
 }
 .media-list .media-format {
-  margin-left: 0;
+  margin-inline-start: 0;
 }
 .dialog.media-picker,
 .dialog.media-details {
@@ -2135,7 +2237,7 @@ button.clear-object {
 }
 .media-detail-metadata dd {
   margin: 0;
-  text-align: right;
+  text-align: end;
   overflow-wrap: anywhere;
 }
 .media-detail-open {
@@ -2185,7 +2287,7 @@ button.clear-object {
     padding-right: 0;
   }
 }
-@media (max-width: 640px) {
+@container dashboard (max-width: 600px) {
   .media-head {
     flex-direction: column;
     align-items: stretch;
@@ -2215,7 +2317,7 @@ button.clear-object {
   min-width: 0;
 }
 .media-breadcrumbs > .small {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .media-grid[data-loading] {
   opacity: 0.45;
@@ -2422,4 +2524,13 @@ button.clear-object {
     margin: 20px -20px -20px;
     padding: 16px 20px;
   }
+}
+
+/* The navigation drawer opens from the leading edge in either direction. */
+[dir="rtl"] .dialog.drawer {
+  border-radius: 16px 0 0 16px;
+}
+[dir="rtl"] .dialog.drawer[data-starting-style],
+[dir="rtl"] .dialog.drawer[data-ending-style] {
+  transform: translateX(100%);
 }

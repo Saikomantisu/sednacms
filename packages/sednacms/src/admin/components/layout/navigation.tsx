@@ -115,25 +115,38 @@ export function AdminNavigation(props: Props) {
             {disposableDemo ? 'Preview changes ↗' : 'View website ↗'}
           </a>
           <div className="account">
-            <span className="avatar" aria-hidden="true">
-              {userName.charAt(0).toUpperCase()}
-            </span>
-            <div className="account-text">
-              <span className="user-name" title={userName}>
-                {userName}
+            <div className="account-identity">
+              <span className="avatar" aria-hidden="true">
+                {userName.charAt(0).toUpperCase()}
               </span>
-              <button
-                type="button"
-                className="text-link"
-                disabled={busy}
-                onClick={() => {
-                  setMenuOpen(false);
-                  onSignOut();
-                }}
-              >
-                {disposableDemo ? 'Reset demo' : 'Sign out'}
-              </button>
+              <div className="account-text">
+                <span className="user-name">{userName}</span>
+              </div>
             </div>
+            <button
+              type="button"
+              className="account-sign-out"
+              disabled={busy}
+              onClick={() => {
+                setMenuOpen(false);
+                onSignOut();
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M9 5H5v14h4M13 8l4 4-4 4M9 12h12" />
+              </svg>
+              <span>{disposableDemo ? 'Reset demo' : 'Sign out'}</span>
+            </button>
           </div>
         </footer>
       </>
