@@ -24,6 +24,9 @@ npm install sednacms
 npx astro add node
 ```
 
+The npm package contains compiled Sedna code. You do not need to clone this
+repository or build Sedna from source.
+
 Add Sedna to `astro.config.mjs`:
 
 ```js title="astro.config.mjs"

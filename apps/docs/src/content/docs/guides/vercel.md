@@ -10,7 +10,10 @@ process. See the [official adapter documentation](https://docs.astro.build/en/gu
 
 ## Configure the adapter
 
+Run these commands in your Astro project:
+
 ```sh
+npm install sednacms
 npx astro add vercel
 ```
 
@@ -58,8 +61,8 @@ so Astro can authorize the image host.
 ## Deploy and verify
 
 Import the site into Vercel and use the Astro framework preset. Build with
-`npm run build`. For the repository example, build the Sedna package first and
-set `SEDNA_HOST=vercel` when building `apps/hybrid`.
+`npm run build` to build your Astro site. Sedna is installed from npm as a
+compiled package.
 
 Open `/admin`, create the first account, then remove `SEDNA_SETUP_TOKEN` and
 redeploy. Keep `SEDNA_SECRET` stable. Follow the
@@ -69,7 +72,3 @@ publishing a new slug without a rebuild.
 Leave Vercel ISR and Sedna caching disabled initially. If you enable caching,
 use the [Sedna Vercel caching guide](/guides/caching/#vercel) and verify purging
 on your actual deployment. Admin and API routes must remain uncached.
-
-The repository's `npm run verify:hybrid -- vercel` builds the example, checks its
-static output, and executes the bundled function locally against Postgres.
-It does not emulate Vercel's CDN or replace a deployed-site check.

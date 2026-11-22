@@ -4,6 +4,12 @@
 demand. Sedna supplies the dynamic `/admin/*` and `/api/cms/*` routes. The shared
 layout has no content reads, so it can serve both static and live pages.
 
+## Contributor setup
+
+This example runs inside Sedna's source repository and links to the local package.
+Contributors build Sedna before running it. Users installing `sednacms` from npm
+receive compiled code and only need to build their own Astro site.
+
 From the repository root:
 
 ```sh
@@ -60,3 +66,22 @@ and logout in isolated schemas. It runs Vercel's and Netlify's generated functio
 Cloudflare in Wrangler's Workers runtime. It does not deploy or test a CDN or
 real storage uploads. Run it from a clean example checkout without local `.env`
 or `.dev.vars` files so those cannot supply build-time secrets.
+
+## Deploy this repository example to Netlify
+
+These settings are for contributors deploying this monorepo example. For a site
+using the npm package, follow the [Netlify guide](../docs/src/content/docs/guides/netlify.md).
+
+Keep the base directory at the repository root, set the package directory to
+`apps/hybrid`, and publish `apps/hybrid/dist`. Use this root build command:
+
+```sh
+npm run build && SEDNA_HOST=netlify npm run build -w sednacms-hybrid
+```
+
+The first command compiles Sedna's source; the second builds the example site.
+See [Netlify's monorepo settings](https://docs.netlify.com/build/configure-builds/monorepos/)
+for base, package, and publish directory behavior.
+
+The root TypeScript 6 dependency supplies the JavaScript compiler API needed by
+Netlify's dependency tracer. Sedna's package workspace keeps TypeScript 7.

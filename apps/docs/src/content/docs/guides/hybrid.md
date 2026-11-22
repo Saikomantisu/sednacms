@@ -73,20 +73,23 @@ With caching disabled, published content changes appear on the next request.
 Static pages update when you rebuild. Shared CDN caching is a separate
 [opt-in setting](/guides/caching/).
 
-## Run the complete example
+## Run your site
 
-The repository's
-[hybrid example](https://github.com/Saikomantisu/sednacms/tree/main/apps/hybrid)
-contains the static homepage, About page, shared layout, collection, and both blog
-routes. From the repository root:
+[Install Sedna from npm](/getting-started/installation/), configure your chosen
+adapter, and add the page examples above to your Astro project. Set the
+[runtime variables](/reference/environment/) in your site's local configuration,
+then start your site:
 
 ```sh
-npm install
-npm run build
-npm run dev -w sednacms-hybrid
+npm run dev
 ```
 
-Set the [runtime variables](/reference/environment/) in `apps/hybrid/.env` first.
-Open `/admin` to create your account and publish a post. Choose Node, Vercel,
-Netlify, or Cloudflare with `SEDNA_HOST`; the example defaults to standalone Node. Follow
-the host's deployment guide before going live.
+Open `/admin` to create an account and publish a post.
+Build your Astro site for deployment with `npm run build`. The installed Sedna
+package is already compiled; you do not build Sedna itself.
+
+## Example source
+
+The [hybrid example source](https://github.com/Saikomantisu/sednacms/tree/main/apps/hybrid/src)
+includes a static homepage, About page, shared layout, collection, and both blog
+routes. Use it as a reference when adding these routes to your own site.

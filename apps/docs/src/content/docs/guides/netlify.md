@@ -10,7 +10,10 @@ Node process. See the [official adapter guide](https://docs.astro.build/en/guide
 
 ## Configure the adapter
 
+Run these commands in your Astro project:
+
 ```sh
+npm install sednacms
 npx astro add netlify
 ```
 
@@ -61,18 +64,6 @@ Connect the site repository in Netlify. For a standard Astro site, build with
 function output so `/admin/*`, `/api/cms/*`, and your content pages reach the
 function.
 
-For this repository's example, keep the base directory at the repository root,
-set the package directory to `apps/hybrid`, and publish `apps/hybrid/dist`.
-Use this build command from the root:
-
-```sh
-npm run build && SEDNA_HOST=netlify npm run build -w sednacms-hybrid
-```
-
-The first command builds the Sedna package; the second builds the site. See
-[Netlify's monorepo settings](https://docs.netlify.com/build/configure-builds/monorepos/)
-for the distinction between base, package, and publish directories.
-
 Open `/admin`, create your first account, then remove `SEDNA_SETUP_TOKEN` and
 redeploy. Keep `SEDNA_SECRET` stable. Follow the
 [deployed-site checks](/guides/deployment/#check-the-deployed-site), including
@@ -82,14 +73,9 @@ Leave caching disabled initially. To enable it, follow the
 [Netlify caching guide](/guides/caching/#netlify), then verify cache hits and
 publishing purges on the deployed site. Admin and API routes must stay uncached.
 
-From the repository root, run
-`SEDNA_TEST_DATABASE_URL=postgres://... npm run verify:hybrid -- netlify`
-to check static output and the generated function locally against Postgres.
-This does not emulate Netlify's CDN, deployed database networking, or real
-storage uploads.
-
-The Netlify adapter does not provide an `astro preview` entry point for this
-hybrid site. Use the verification command above for its built function.
+Use `npm run dev` for local development. The Netlify adapter does not provide
+an `astro preview` entry point for a hybrid site. Use a Netlify deploy preview
+to test the production build before publishing it to your main domain.
 
 ## TypeScript compiler API error
 
@@ -102,6 +88,3 @@ Install TypeScript 6 in the build environment and rebuild:
 npm install -D typescript@6.0.3
 npm run build
 ```
-
-The repository supplies TypeScript 6 at its root for build tooling and keeps
-Sedna's TypeScript 7 compiler in the package workspace.

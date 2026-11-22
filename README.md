@@ -68,6 +68,9 @@ Follow the [installation guide](apps/docs/src/content/docs/getting-started/insta
 
 ## Development
 
+These instructions are for contributors working on Sedna's source. Installing
+Sedna from npm does not require building the package.
+
 This repository is an npm workspace:
 
 ```text

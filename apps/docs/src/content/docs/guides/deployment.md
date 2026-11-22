@@ -6,6 +6,9 @@ description: Deploy a static Astro site with live Sedna routes on Node, Vercel, 
 
 Sedna uses your site's Astro server adapter. It needs Node-compatible APIs and a reachable Postgres database. Sedna leaves adapter selection and dependency bundling to your site configuration. Hosting-provider credentials are needed only if you enable CDN caching.
 
+Install Sedna from npm using the [installation guide](/getting-started/installation/).
+The package is already compiled. The build commands below build your Astro site.
+
 Keep `output: 'static'`, Astro's default. Your adapter runs pages that opt into
 on-demand rendering, plus Sedna's admin and API. Marketing pages that do not read
 live content remain static HTML.
@@ -54,21 +57,3 @@ On a new production database, open `/admin` to create the first account with you
 Caching is disabled by default. If you enable [CDN caching](/guides/caching/), check it on the deployed host. Confirm that pages produce cache hits, publishing purges cached content, pagination respects query strings, and private routes bypass the cache. Local Node development does not simulate a CDN.
 
 You can put Cloudflare CDN in front of a compatible Node server with explicit cache rules.
-
-## Verify the hybrid example
-
-The [example site](https://github.com/Saikomantisu/sednacms/tree/main/apps/hybrid)
-keeps its homepage and About page static and renders its blog on demand.
-From the repository root, run:
-
-```sh
-SEDNA_TEST_DATABASE_URL=postgres://... npm run verify:hybrid
-```
-
-Use a disposable Postgres database with schema creation permissions. The check
-creates and removes an isolated schema per adapter. It builds without runtime
-secrets, checks the static HTML, and exercises setup, login, draft visibility,
-publishing, editing, concurrent reads, unpublishing, and logout. Vercel's and
-Netlify's generated functions run through a local HTTP bridge; Workers runs in `workerd` through
-Wrangler. This does not verify a host's CDN, production database networking, or
-real object-storage uploads. Run the deployed-site checks above after deployment.

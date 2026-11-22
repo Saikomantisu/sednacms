@@ -11,7 +11,10 @@ See the [official adapter guide](https://docs.astro.build/en/guides/integrations
 
 ## Configure Workers
 
+Run these commands in your Astro project:
+
 ```sh
+npm install sednacms
 npx astro add cloudflare
 ```
 
@@ -29,7 +32,7 @@ export default defineConfig({
 ```
 
 Keep the Wrangler configuration generated for your adapter version. Enable
-`nodejs_compat` and use a current compatibility date. The repository example uses:
+`nodejs_compat` and use a current compatibility date. For example:
 
 ```json title="wrangler.jsonc"
 {
@@ -69,9 +72,8 @@ Use separate databases and origins for previews. `nodejs_compat` with the date
 above exposes Worker text bindings and secrets through `process.env`.
 
 For local development, set the same values in an ignored `.dev.vars` file in the
-site root. Use a disposable database and `http://localhost:4321` as the local
-origin. In the repository example, set `SEDNA_HOST=cloudflare` for dev, build,
-and preview commands. Static routes do not require database or auth secrets to build.
+site root. Use a development database and `http://localhost:4321` as the local
+origin. Static routes do not require database or auth secrets to build.
 
 ## Build and test before deployment
 
@@ -81,13 +83,9 @@ npm run preview
 ```
 
 The adapter previews the application in `workerd`. If preview uses a different
-port, update the local `SEDNA_URL` to match it. Check `/`, `/about`, `/blog`, and
-`/admin`, then publish and edit a post. Repeat requests and open the blog in
+port, update the local `SEDNA_URL` to match it. Check your static pages, live
+content routes, and `/admin`, then publish and edit a post. Repeat requests and open the blog in
 multiple tabs to catch connection lifetime problems.
-
-From the repository root, run
-`SEDNA_TEST_DATABASE_URL=postgres://... npm run verify:hybrid -- cloudflare`
-for the repeatable local auth and publishing check.
 
 ## Deploy and verify the host
 
