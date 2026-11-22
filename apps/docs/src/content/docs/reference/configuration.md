@@ -34,6 +34,8 @@ Without an explicit favicon, Sedna checks `favicon.svg`, `favicon.ico`, then `fa
 ## Collection loader
 
 ```ts
+import { fields, sednaLoader } from 'sednacms';
+
 sednaLoader({
   collection: 'posts',
   fields: {

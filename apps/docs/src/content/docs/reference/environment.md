@@ -4,7 +4,9 @@ title: Environment variables
 description: Server environment variables for database, sessions, uploads, and caching.
 ---
 
-Keep secrets in your server environment. Do not prefix them with `PUBLIC_` or include them in client code. Sedna loads `.env` during development; configure runtime variables on your production host.
+Keep secrets in your server environment. Do not prefix them with `PUBLIC_` or include them in client code. For local Node, Vercel, or Netlify development, use your Astro project's `.env`.
+For [Cloudflare Workers](/guides/cloudflare/), use `.dev.vars`. Configure runtime
+variables on your production host.
 
 ## Database and authentication
 

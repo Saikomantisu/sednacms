@@ -8,7 +8,7 @@ From the repository root:
 ```sh
 npm ci
 npm run docs:dev      # development server
-npm run docs:check    # Astro and TypeScript diagnostics
+npm run docs:check    # Astro diagnostics and link-checker regression tests
 npm run docs:build    # static output in apps/docs/dist/
 npm run docs:preview  # serve the production build locally
 ```
@@ -21,6 +21,10 @@ Pages live in `src/content/docs/`. Use Markdown or MDX with `title` and
 `description` frontmatter. Add routes to the sidebar in `astro.config.mjs`.
 Starlight handles search, navigation, page outlines, and theme switching.
 The Sedna colors and typography live in `src/styles/custom.css`.
+
+The root `npm run docs:build` command also checks generated internal links and
+anchors. Run `node scripts/check-docs-links.mjs` from the repository root to
+repeat that check without rebuilding.
 
 The `SPEC*.md` files are internal product specs. They are outside the content collection and
 are not published as part of this site. Document implemented behavior in the published pages. The specs can include

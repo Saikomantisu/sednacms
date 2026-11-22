@@ -85,7 +85,14 @@ SEDNA_CLOUDFLARE_TOKEN=your-api-token-with-zone-cache-purge-permission
 SEDNA_CLOUDFLARE_ZONE_ID=your-zone-id
 ```
 
-Use this with Cloudflare's CDN in front of a compatible Node deployment.
+For Cloudflare's CDN in front of a Node deployment, select the platform explicitly.
+The Node adapter is detected as `none`, so CDN credentials alone do not enable
+Cloudflare purges:
+
+```js
+sedna({ platform: 'cloudflare', cache: { ttl: 3600 } });
+```
+
 Caching Worker-generated responses has not been verified. For a Node origin, proxy the domain through
 Cloudflare and configure a Cache Rule making public HTML eligible for caching,
 respecting origin cache-control headers and query strings. Bypass `/admin`,

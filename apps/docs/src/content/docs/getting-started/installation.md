@@ -17,17 +17,27 @@ Sedna sets this for its own admin and API routes. See the
 
 ## Install the integration
 
-Run these commands inside your Astro project:
+Install the package inside your Astro project:
 
 ```sh
 npm install sednacms
-npx astro add node
 ```
 
 The npm package contains compiled Sedna code. You do not need to clone this
 repository or build Sedna from source.
 
-Add Sedna to `astro.config.mjs`:
+If your site already has a compatible adapter, keep it. In your existing
+`astro.config.mjs`, import `sedna` from `sednacms` and add `sedna()` to the
+`integrations` array, preserving your other integrations and settings.
+
+If you need an adapter, follow your host's guide linked above or install Node
+for a standalone server:
+
+```sh
+npx astro add node
+```
+
+For standalone Node, the configuration looks like this:
 
 ```js title="astro.config.mjs"
 import node from '@astrojs/node';
@@ -51,7 +61,9 @@ SEDNA_SECRET=replace-with-a-random-secret-at-least-32-characters-long
 SEDNA_SETUP_TOKEN=replace-with-a-separate-random-token-at-least-32-characters-long
 ```
 
-Use a pooled connection string from your database provider. Run this command separately for each secret:
+Use a pooled connection string from your database provider. The database role
+must be able to create and alter Sedna's tables in the target schema. Run this
+command separately for each secret:
 
 ```sh
 openssl rand -hex 32
@@ -73,6 +85,8 @@ Sedna creates missing collection tables when the dev server starts. Restart afte
 
 Open `/admin`. On an empty database, enter your name, email, a password of 12 to 128 characters, and your setup token. Then sign in.
 
-You can only run setup while the database has no accounts. Once an account exists, setup returns a conflict. Remove `SEDNA_SETUP_TOKEN` from your environment after setup and restart the server. Public registration is disabled.
+You can only run setup while the database has no accounts. Further valid setup
+requests return a conflict once an account exists. Remove `SEDNA_SETUP_TOKEN`
+from your environment after setup and restart the server. Public registration is disabled.
 
 You can now create and publish entries. See [Edit and publish](/guides/admin/) for instructions on editing content and [Deployment](/guides/deployment/) before going live.
