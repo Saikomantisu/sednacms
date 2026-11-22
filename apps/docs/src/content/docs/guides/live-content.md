@@ -6,6 +6,12 @@ description: Read collections, load entries by slug, and paginate published cont
 
 Read content in Astro page frontmatter before the response starts streaming. Sedna returns published entries only; use the authenticated [content API](/reference/content-api/) to access drafts.
 
+Keep `output: 'static'`, Astro's default. Add `export const prerender = false` to
+each page that reads live content. Fetch in page frontmatter and pass the results
+to components and layouts as props. Reads inside streamed components or layouts
+are unsupported on Workers because their request resources may already be closed.
+Other pages stay static. See [Static pages with live content](/guides/hybrid/).
+
 ## Load a collection
 
 ```astro

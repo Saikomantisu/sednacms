@@ -14,8 +14,9 @@ integrations: [sedna({ storage: uploadthingStorage() })],
 ```
 
 Set `UPLOADTHING_TOKEN` from your UploadThing dashboard in your server's runtime
-environment. The playground uses this adapter and loads the token from `.env`
-during development. Restart the dev server after changing storage configuration.
+environment. For local Node, Vercel, or Netlify development, put the token in
+your Astro project's `.env`. For [Cloudflare Workers](/guides/cloudflare/), use
+`.dev.vars`. Restart the dev server after changing storage configuration.
 The SDK handles upload signatures and verifies provider callbacks at
 `/api/cms/uploads`. Uploads finish without waiting for the callback, so local
 development does not require a public tunnel.

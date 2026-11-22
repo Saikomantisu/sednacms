@@ -17,6 +17,9 @@ test('loader bounds SQL pages and uses indexed slug/UUID predicates', async (t) 
     queries.push({ sql, args });
     return { rows: [] };
   });
+  t.mock.method(Pool.prototype, 'connect', async function () {
+    return { query: this.query.bind(this), release() {} };
+  });
   const loader = sednaLoader({ collection: 'packages', fields: { slug: fields.slug() } });
   await loader.loadCollection({ filter: { limit: 11, offset: 10 } });
   assert.match(queries.at(-1).sql, /order by sort_order, created_at, id limit \$1 offset \$2/);

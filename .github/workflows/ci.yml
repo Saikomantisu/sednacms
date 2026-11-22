@@ -62,6 +62,9 @@ jobs:
       - name: Test
         run: npm test -w sednacms
 
+      - name: Verify hybrid output and runtimes
+        run: npm run verify:hybrid
+
   # Workspace links can hide files or dependencies missing from the published
   # package, so build the playground against the packed tarball as well.
   package:

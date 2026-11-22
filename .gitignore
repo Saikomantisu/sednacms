@@ -6,6 +6,8 @@ dist/
 !.env.example
 .netlify/
 .vercel/
+.wrangler/
+.dev.vars*
 
 .playwright-cli/
 output/playwright/

@@ -14,6 +14,10 @@ declare module 'virtual:sedna/storage' {
 declare module 'virtual:sedna/cache' {
   export const cache: false | import('./cache.js').CacheOptions;
 }
+declare module 'virtual:sedna/runtime' {
+  export const requestScoped: boolean;
+}
+
 declare module 'virtual:sedna/platform' {
   export const platform: import('./index.js').SednaPlatform;
 }

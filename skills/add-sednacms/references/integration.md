@@ -17,6 +17,15 @@ export default defineConfig({
 
 Install `@astrojs/node` only if using that adapter. Choose a release compatible with the site's Astro version. No experimental live-content flag is needed on Astro 6+.
 
+Keep `output` unset or `'static'`. Only live content pages, admin, and API need
+the runtime. For Vercel, use `adapter: vercel()` from `@astrojs/vercel` instead
+of Node. For Netlify, use `adapter: netlify()` from `@astrojs/netlify`.
+For Cloudflare Workers, use `adapter: cloudflare()` from
+`@astrojs/cloudflare`, enable `nodejs_compat` with a current compatibility date,
+and configure runtime secrets. Follow the repository's host guides, including
+their verification limits. Workers is a separate runtime from standalone Node;
+do not assume Cloudflare Pages or every storage path is verified.
+
 Sedna installs `/admin/[...path]`, `/api/cms/[...path]`, and middleware. Check that existing auth middleware allows requests to Sedna's login, setup, and auth handlers. Sedna protects its own content endpoints. Adjust overlapping middleware without disabling authentication elsewhere. Test URLs when the site uses a custom base path; CMS paths are not all configurable.
 
 ## Live collections
@@ -102,7 +111,7 @@ const data = entry?.data;
 )}
 ```
 
-Use the site's existing missing-page convention and account for `base` in links and redirects. `set:html` is for CMS rich text saved through Sedna's sanitizing API, not arbitrary unsanitized imported HTML. Astro remote-image authorization may need configuring for manually pasted image URLs.
+Use the site's existing missing-page convention and account for `base` in links and redirects. The admin editor sanitizes its rich-text output; the content API validates rich text as a string and does not sanitize HTML. Sanitize HTML from imports or other API clients before rendering it with `set:html`. Astro remote-image authorization may need configuring for manually pasted image URLs.
 
 For large listings, `getLiveCollection('posts', { limit: 11, offset: 0 })` allows ten visible items and one next-page indicator. `limit` must be an integer 1–100; `offset` must be a nonnegative safe integer and a positive offset requires a limit. Validate URL pagination inputs. Ordering is `sort_order`, `created_at`, then `id`.
 
@@ -117,13 +126,13 @@ SEDNA_SECRET=
 SEDNA_SETUP_TOKEN=
 ```
 
-Use a pooled Postgres connection URL suitable for the hosting runtime. The database role needs permission to create Sedna's tables and columns. Development loads `.env` into the server environment. Set production variables in the runtime environment as well as anywhere they are needed during builds. Use the actual dev port in `SEDNA_URL`, and the HTTPS site origin in production.
+Use a pooled Postgres connection URL suitable for the hosting runtime. The database role needs permission to create Sedna's tables and columns. Local Node, Vercel, and Netlify development loads `.env` into the server environment; Cloudflare Workers uses `.dev.vars`. Set production variables in the runtime environment as well as anywhere they are needed during builds. Use the actual dev port in `SEDNA_URL`, and the HTTPS site origin in production.
 
 Generate `SEDNA_SECRET` and `SEDNA_SETUP_TOKEN` independently, each with at least 32 characters, for example using `openssl rand -hex 32` for each. Keep the session secret stable across restarts. Do not use example database credentials as if they were configured.
 
 Visit `/admin` on an empty database. The setup form needs a name, email, password of 12–128 characters, and the setup token. Remove `SEDNA_SETUP_TOKEN` from the runtime environment after the first account is created, then restart. Public signup is disabled. Editor invitations and password reset emails are not implemented.
 
-For scripted setup, `POST /api/cms/setup` accepts JSON `{ name, email, password }` and requires `Origin: <SEDNA_URL>` plus `X-Sedna-Setup-Token`. It does not log the new account in and returns 409 if an account exists. Sign in through `/api/cms/auth/sign-in/email` with email/password and retain cookies. Subsequent authenticated writes require the same-origin header. Avoid putting passwords/tokens in shell arguments or logs.
+For scripted setup, `POST /api/cms/setup` accepts JSON `{ name, email, password }` and requires `Content-Type: application/json`, `Origin: <SEDNA_URL>`, and `X-Sedna-Setup-Token`. It does not log the new account in. An otherwise valid setup request returns 409 if an account exists; a missing, removed, or incorrect setup token returns 403 before that check. Sign in through `/api/cms/auth/sign-in/email` with email/password and retain cookies. Subsequent authenticated writes require the same-origin header. Avoid putting passwords/tokens in shell arguments or logs.
 
 For requested imports, use authenticated `POST /api/cms/collections/:collection` with `{ data: { ... }, status: 'draft' }`. Single-entry responses contain `{ entry }`, including its UUID. `PATCH /api/cms/collections/:collection/:id` changes fields or status. List responses contain `{ entries }` and include drafts. Fetch existing records and compare stable slugs before retrying an import. Publishing checks required fields and nonempty slugs. Existing slugs survive title edits.
 
@@ -150,4 +159,4 @@ Set `SEDNA_S3_ENDPOINT`, `SEDNA_S3_BUCKET`, `SEDNA_S3_KEY`, `SEDNA_S3_SECRET`, `
 
 Images default to browser-side resizing within 2560 × 2560 and WebP encoding at quality 0.8. Both adapters accept `{ image: { format: 'avif', quality: 0.85, maxWidth: 1920, maxHeight: 1920 } }` or `{ image: false }` to retain originals and animation. CSP may need `worker-src 'self'` and `script-src 'self' 'wasm-unsafe-eval'` added to existing directives. Removing an image field does not delete the stored object.
 
-Default CMS responses use `Cache-Control: no-store`. Optional `sedna({ cache: { ttl: 60 } })` sends shared-cache headers for eligible anonymous requests, but writes do not purge caches. The standalone Node server has no shared response cache. Admin/API responses remain uncached. Use the main `sednacms` integration for a real site. `sednacms/demo` has no database or authentication backend.
+Default CMS responses use `Cache-Control: no-store`. Optional `sedna({ cache: { ttl: 60 } })` sends shared-cache headers for eligible anonymous requests. On recognized platforms, configure the required purge credentials; published-content writes attempt collection-tag purges. With `platform: 'none'`, Sedna does not request provider purges. For Cloudflare CDN in front of a Node origin, explicitly set `platform: 'cloudflare'`. The standalone Node server has no shared response cache. Admin/API responses remain uncached. Use the main `sednacms` integration for a real site. `sednacms/demo` has no database or authentication backend.

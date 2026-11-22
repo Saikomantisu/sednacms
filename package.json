@@ -17,16 +17,18 @@
     "build": "npm run build -w sednacms",
     "build:playground": "npm run build -w sednacms && npm run build -w sednacms-playground",
     "test": "npm run build:playground && npm run test:types -w sednacms && npm test -w sednacms",
+    "verify:hybrid": "npm run build && node scripts/verify-hybrid.mjs",
     "playground:dev": "npm run dev -w sednacms-playground",
     "playground:seed": "npm run seed -w sednacms-playground",
     "docs:dev": "npm run dev -w sednacms-docs",
-    "docs:build": "npm run build -w sednacms-docs",
+    "docs:build": "npm run build -w sednacms-docs && node scripts/check-docs-links.mjs",
     "docs:preview": "npm run preview -w sednacms-docs",
-    "docs:check": "npm run check -w sednacms-docs"
+    "docs:check": "npm run check -w sednacms-docs && node --test scripts/check-docs-links.test.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "typescript": "^6.0.3"
   },
   "overrides": {
     "effect": "3.22.4"

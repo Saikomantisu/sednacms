@@ -1,0 +1,23 @@
+---
+export const prerender = false;
+
+import { getLiveEntry } from 'astro:content';
+import Site from '../../layouts/Site.astro';
+
+const { entry, error } = await getLiveEntry('posts', Astro.params.slug ?? '');
+if (!entry && (!error || error.name === 'LiveEntryNotFoundError')) return Astro.redirect('/404');
+if (error) Astro.response.status = 503;
+---
+
+<Site title={entry?.data.title ?? 'Post unavailable'}>
+  {error ? (
+    <p>This post is temporarily unavailable.</p>
+  ) : (
+    entry && (
+      <article>
+        <h1>{entry.data.title}</h1>
+        {entry.data.body && <div set:html={entry.data.body} />}
+      </article>
+    )
+  )}
+</Site>

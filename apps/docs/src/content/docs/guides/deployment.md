@@ -1,12 +1,24 @@
 ---
 
 title: Deployment
-description: Deploy Sedna with a Node-compatible adapter, runtime variables, and Postgres.
+description: Deploy a static Astro site with live Sedna routes on Node, Vercel, Netlify, or Cloudflare Workers.
 ---
 
 Sedna uses your site's Astro server adapter. It needs Node-compatible APIs and a reachable Postgres database. Sedna leaves adapter selection and dependency bundling to your site configuration. Hosting-provider credentials are needed only if you enable CDN caching.
 
-The examples use standalone Node. For a managed host, use its Astro adapter.
+Install Sedna from npm using the [installation guide](/getting-started/installation/).
+The package is already compiled. The build commands below build your Astro site.
+
+Keep `output: 'static'`, Astro's default. Your adapter runs pages that opt into
+on-demand rendering, plus Sedna's admin and API. Marketing pages that do not read
+live content remain static HTML.
+
+Choose the deployment guide for your host:
+
+- [Vercel](/guides/vercel/) uses Node functions and serves static pages from its CDN.
+- [Netlify](/guides/netlify/) uses Node functions alongside static pages.
+- [Cloudflare Workers](/guides/cloudflare/) uses the Workers runtime with Node compatibility.
+- Standalone Node uses the commands below.
 
 ## Build and run
 
@@ -45,11 +57,3 @@ On a new production database, open `/admin` to create the first account with you
 Caching is disabled by default. If you enable [CDN caching](/guides/caching/), check it on the deployed host. Confirm that pages produce cache hits, publishing purges cached content, pagination respects query strings, and private routes bypass the cache. Local Node development does not simulate a CDN.
 
 You can put Cloudflare CDN in front of a compatible Node server with explicit cache rules.
-
-## Cloudflare Workers compatibility
-
-Cloudflare Workers with `nodejs_compat` is experimental. Local build and basic route
-checks pass, but database connection reuse, auth flows, publishing, uploads, and
-CDN purging still need verification. Keep caching disabled during compatibility
-testing. The [Cloudflare caching guide](/guides/caching/#cloudflare) covers a CDN
-in front of a Node origin.

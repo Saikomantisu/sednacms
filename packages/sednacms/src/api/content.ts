@@ -1,5 +1,5 @@
 import { ident, type Pool, transaction } from '../db/client.js';
-import { ensureTables, tableName } from '../db/tables.js';
+import { ensureContentTables, tableName } from '../db/tables.js';
 import type { Field } from '../fields.js';
 import type { CollectionConfig } from '../loader.js';
 import { log } from '../log.js';
@@ -147,12 +147,9 @@ export function createContentApi(options: {
   let ready: Promise<void> | undefined;
   async function ensureReady() {
     if (!ready) {
-      ready = transaction(db, async (client) => {
-        await client.query("select pg_advisory_xact_lock(hashtext('sedna:content:tables'))");
-        await ensureTables(client, collections, {
-          info: () => {},
-          warn: log.warn,
-        });
+      ready = ensureContentTables(db, collections, {
+        info: () => {},
+        warn: log.warn,
       });
       ready.catch(() => {
         ready = undefined;

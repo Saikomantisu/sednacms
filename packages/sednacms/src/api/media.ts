@@ -77,6 +77,8 @@ function managedSource(src: unknown, storage?: StorageAdapter): src is string {
   return url.host === `${appId}.ufs.sh` && /^\/f\/[a-zA-Z0-9_-]+$/.test(url.pathname);
 }
 
+const preparedDatabases = new Set<string>();
+
 export function createMediaApi(options: {
   db: Pool;
   storage?: StorageAdapter;
@@ -84,8 +86,10 @@ export function createMediaApi(options: {
   getSession: (headers: Headers) => Promise<{ session: unknown; headers: Headers }>;
 }) {
   const { db } = options;
+  const database = db.options?.connectionString;
   let ready: Promise<void> | undefined;
   async function ensureReady() {
+    if (database && preparedDatabases.has(database)) return;
     ready ??= transaction(db, async (client) => {
       await client.query("select pg_advisory_xact_lock(hashtext('sedna:media:tables'))");
       await client.query(`create table if not exists sedna__media_folders (
@@ -106,6 +110,7 @@ export function createMediaApi(options: {
       throw error;
     });
     await ready;
+    if (database) preparedDatabases.add(database);
   }
   return async (request: Request): Promise<Response> => {
     const headers = new Headers({ 'Cache-Control': 'no-store' });

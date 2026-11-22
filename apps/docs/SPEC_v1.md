@@ -12,7 +12,7 @@ Sedna is an open-source Astro integration. Clients edit content at `/admin`. By 
 
 With a Git-based CMS such as Pages CMS or Decap, saving content commits to the repository. When commits trigger deployments, frequent edits consume hosting build credits. Sedna saves content to Postgres and reads it when a page renders. Publishing does not require a build.
 
-The trade-off is that the site needs a server adapter.
+The site needs an adapter for live content, admin, and API routes. Keep Astro's default static output; unrelated pages remain static.
 
 ## Technical decisions
 
@@ -130,7 +130,7 @@ Supported helpers are `text`, `richText`, `number`, `image`, `boolean`, `date`, 
 - Loader only returns published entries; admin sees drafts.
 - Public live collections accept optional `limit` and `offset` filters applied in SQL. `limit` accepts 1 to 100. Results are ordered by `sort_order`, `created_at`, then `id`. Without filters the full collection is returned. The playground demonstrates ten-item pages. Field selection is not supported.
 - Entry lookups use indexed slug and typed UUID predicates without casting the ID column to text.
-- Each runtime pool defaults to five connections, configurable with `SEDNA_DATABASE_POOL_MAX`. `SEDNA_DATABASE_CONNECTION_TIMEOUT_MS` defaults to 10000 for connection acquisition/opening; it does not cancel running queries. The loader, authentication, and content API have three separate pools per process.
+- Each runtime pool defaults to five connections, configurable with `SEDNA_DATABASE_POOL_MAX`. `SEDNA_DATABASE_CONNECTION_TIMEOUT_MS` defaults to 10000 for connection acquisition/opening; it does not cancel running queries. The loader, authentication, and content API have three separate pools per process on Node-compatible servers. On Cloudflare Workers, resources are scoped to the request and close when its handler finishes.
 
 ### Caching
 

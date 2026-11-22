@@ -1,0 +1,26 @@
+---
+export const prerender = false;
+
+import { getLiveCollection } from 'astro:content';
+import Site from '../../layouts/Site.astro';
+
+const { entries, error } = await getLiveCollection('posts');
+if (error) Astro.response.status = 503;
+---
+
+<Site title="Blog">
+  <h1>From the studio</h1>
+  {error ? (
+    <p>Posts are temporarily unavailable.</p>
+  ) : entries?.length ? (
+    <ul>
+      {entries.map(({ id, data }) => (
+        <li>
+          <a href={`/blog/${encodeURIComponent(id)}`}>{data.title}</a>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>No posts yet.</p>
+  )}
+</Site>

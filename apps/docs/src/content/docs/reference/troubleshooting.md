@@ -30,8 +30,12 @@ If setup returns a conflict, an account already exists. Sign in through the logi
 
 Configure a storage adapter and its server-side credentials. For S3, check the public URL and bucket CORS permissions for your exact origin, `PUT`, and `Content-Type`. Set `SEDNA_S3_PUBLIC_URL` at build time and runtime.
 
-Inputs must be JPEG, PNG, WebP, GIF, or AVIF and at most 32 MB. If your site sets a Content Security Policy, it must allow same-origin workers and WebAssembly compilation for image processing. See [Image uploads](/guides/uploads/) for details.
+Raster images must be JPEG, PNG, WebP, GIF, or AVIF and at most 32 MB. SVGs
+have a separate sanitised upload path and a 1 MB limit. The Media library also
+accepts MP4 and WebM videos up to 100 MB. If your site sets a Content Security
+Policy, it must allow same-origin workers and WebAssembly compilation for image
+processing. See [Media and uploads](/guides/uploads/) for details.
 
 ## Too many database connections
 
-Sedna has separate loader, authentication, and content API pools per server process. Each defaults to five connections. Count connections across all processes and instances before increasing `SEDNA_DATABASE_POOL_MAX`. The connection timeout does not cancel running queries.
+Sedna has separate loader, authentication, and content API pools per server process. Each defaults to five connections. Count connections across all processes and instances before increasing `SEDNA_DATABASE_POOL_MAX`. Workers uses request-local pools instead, so count concurrent requests too. Keep the pool maximum above one for authentication migrations. The connection timeout does not cancel running queries.
