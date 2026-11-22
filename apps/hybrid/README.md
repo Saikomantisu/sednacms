@@ -12,7 +12,7 @@ npm run build
 npm run dev -w sednacms-hybrid
 ```
 
-For Node or Vercel, put these variables in `apps/hybrid/.env` for development:
+For Node, Vercel, or Netlify, put these variables in `apps/hybrid/.env` for development:
 
 ```dotenv
 SEDNA_DATABASE_URL=postgres://user:password@host-pooler/database?sslmode=require
@@ -31,8 +31,15 @@ Choose the adapter when building:
 ```sh
 SEDNA_HOST=node npm run build -w sednacms-hybrid
 SEDNA_HOST=vercel npm run build -w sednacms-hybrid
+SEDNA_HOST=netlify npm run build -w sednacms-hybrid
 SEDNA_HOST=cloudflare npm run build -w sednacms-hybrid
 ```
+
+`SEDNA_HOST` is only this example's adapter selector. Use the same value for dev
+and build. A real site can import its adapter directly without this variable.
+Netlify does not support `astro preview` for this hybrid site. Use
+`npm run verify:hybrid -- netlify` with `SEDNA_TEST_DATABASE_URL` to exercise its
+generated function locally.
 
 Node is the default. Start its built server with
 `node apps/hybrid/dist/server/entry.mjs` and supply the variables in that process's
@@ -46,10 +53,10 @@ Run the verification script against a disposable Postgres database:
 SEDNA_TEST_DATABASE_URL=postgres://... npm run verify:hybrid
 ```
 
-Optionally append `-- node`, `-- vercel`, or `-- cloudflare` to test one adapter.
+Optionally append `-- node`, `-- vercel`, `-- netlify`, or `-- cloudflare` to test one adapter.
 The script builds without runtime secrets and verifies static output, admin
 setup, login, drafts, publishing, editing, concurrent content reads, unpublishing,
-and logout in isolated schemas. It runs Vercel's bundled function locally and
+and logout in isolated schemas. It runs Vercel's and Netlify's generated functions locally and
 Cloudflare in Wrangler's Workers runtime. It does not deploy or test a CDN or
 real storage uploads. Run it from a clean example checkout without local `.env`
 or `.dev.vars` files so those cannot supply build-time secrets.

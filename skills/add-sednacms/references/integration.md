@@ -19,7 +19,8 @@ Install `@astrojs/node` only if using that adapter. Choose a release compatible 
 
 Keep `output` unset or `'static'`. Only live content pages, admin, and API need
 the runtime. For Vercel, use `adapter: vercel()` from `@astrojs/vercel` instead
-of Node. For Cloudflare Workers, use `adapter: cloudflare()` from
+of Node. For Netlify, use `adapter: netlify()` from `@astrojs/netlify`.
+For Cloudflare Workers, use `adapter: cloudflare()` from
 `@astrojs/cloudflare`, enable `nodejs_compat` with a current compatibility date,
 and configure runtime secrets. Follow the repository's host guides, including
 their verification limits. Workers is a separate runtime from standalone Node;

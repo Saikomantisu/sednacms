@@ -5,6 +5,7 @@ const host = process.env.SEDNA_HOST ?? 'node';
 const adapters = {
   node: async () => (await import('@astrojs/node')).default({ mode: 'standalone' }),
   vercel: async () => (await import('@astrojs/vercel')).default(),
+  netlify: async () => (await import('@astrojs/netlify')).default(),
   cloudflare: async () => (await import('@astrojs/cloudflare')).default(),
 };
 if (!Object.hasOwn(adapters, host)) throw new Error(`Unknown SEDNA_HOST: ${host}`);

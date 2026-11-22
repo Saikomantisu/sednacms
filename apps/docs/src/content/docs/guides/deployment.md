@@ -1,7 +1,7 @@
 ---
 
 title: Deployment
-description: Deploy a static Astro site with live Sedna routes on Node, Vercel, or Cloudflare Workers.
+description: Deploy a static Astro site with live Sedna routes on Node, Vercel, Netlify, or Cloudflare Workers.
 ---
 
 Sedna uses your site's Astro server adapter. It needs Node-compatible APIs and a reachable Postgres database. Sedna leaves adapter selection and dependency bundling to your site configuration. Hosting-provider credentials are needed only if you enable CDN caching.
@@ -13,12 +13,9 @@ live content remain static HTML.
 Choose the deployment guide for your host:
 
 - [Vercel](/guides/vercel/) uses Node functions and serves static pages from its CDN.
+- [Netlify](/guides/netlify/) uses Node functions alongside static pages.
 - [Cloudflare Workers](/guides/cloudflare/) uses the Workers runtime with Node compatibility.
 - Standalone Node uses the commands below.
-
-For Netlify, keep the official `@astrojs/netlify` adapter and set the same runtime
-variables. The repository's hybrid runtime verification currently covers Node,
-Vercel's bundled function, and local Cloudflare Workers, not a deployed Netlify site.
 
 ## Build and run
 
@@ -71,7 +68,7 @@ SEDNA_TEST_DATABASE_URL=postgres://... npm run verify:hybrid
 Use a disposable Postgres database with schema creation permissions. The check
 creates and removes an isolated schema per adapter. It builds without runtime
 secrets, checks the static HTML, and exercises setup, login, draft visibility,
-publishing, editing, concurrent reads, unpublishing, and logout. Vercel's bundled
-function runs through a local HTTP bridge; Workers runs in `workerd` through
+publishing, editing, concurrent reads, unpublishing, and logout. Vercel's and
+Netlify's generated functions run through a local HTTP bridge; Workers runs in `workerd` through
 Wrangler. This does not verify a host's CDN, production database networking, or
 real object-storage uploads. Run the deployed-site checks above after deployment.

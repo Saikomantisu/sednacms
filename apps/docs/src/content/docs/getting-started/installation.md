@@ -8,7 +8,7 @@ This guide uses the Node adapter. If your site already has a compatible server a
 
 Keep Astro's default `output: 'static'`. The adapter powers your live content
 pages, admin, and CMS API. Everything else stays static. You can also use
-[Vercel](/guides/vercel/) or [Cloudflare Workers](/guides/cloudflare/) without
+[Vercel](/guides/vercel/), [Netlify](/guides/netlify/), or [Cloudflare Workers](/guides/cloudflare/) without
 running a long-lived Node server.
 
 Only pages that read live Sedna content need `export const prerender = false`.

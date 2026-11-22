@@ -33,6 +33,7 @@ export default defineConfig({
             { label: 'Caching', slug: 'guides/caching' },
             { label: 'Deployment', slug: 'guides/deployment' },
             { label: 'Vercel', slug: 'guides/vercel' },
+            { label: 'Netlify', slug: 'guides/netlify' },
             { label: 'Cloudflare Workers', slug: 'guides/cloudflare' },
             { label: 'Add Sedna with an agent', slug: 'guides/agents' },
           ],

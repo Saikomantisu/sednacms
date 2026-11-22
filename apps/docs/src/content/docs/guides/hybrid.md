@@ -87,6 +87,6 @@ npm run dev -w sednacms-hybrid
 ```
 
 Set the [runtime variables](/reference/environment/) in `apps/hybrid/.env` first.
-Open `/admin` to create your account and publish a post. Choose Node, Vercel, or
-Cloudflare with `SEDNA_HOST`; the example defaults to standalone Node. Follow
+Open `/admin` to create your account and publish a post. Choose Node, Vercel,
+Netlify, or Cloudflare with `SEDNA_HOST`; the example defaults to standalone Node. Follow
 the host's deployment guide before going live.

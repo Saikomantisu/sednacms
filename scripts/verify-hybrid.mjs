@@ -12,8 +12,8 @@ import { Pool } from 'pg';
 const root = new URL('../', import.meta.url);
 const site = new URL('apps/hybrid/', root);
 const hosts = process.argv.slice(2);
-if (!hosts.length) hosts.push('node', 'vercel', 'cloudflare');
-assert.ok(hosts.every((host) => ['node', 'vercel', 'cloudflare'].includes(host)));
+if (!hosts.length) hosts.push('node', 'vercel', 'netlify', 'cloudflare');
+assert.ok(hosts.every((host) => ['node', 'vercel', 'netlify', 'cloudflare'].includes(host)));
 const databaseUrl = process.env.SEDNA_TEST_DATABASE_URL;
 assert.ok(databaseUrl, 'Set SEDNA_TEST_DATABASE_URL to a disposable Postgres database.');
 assert.ok(
@@ -165,7 +165,10 @@ for (const host of hosts) {
     ...buildEnv,
     SEDNA_HOST: host,
   }).done;
-  const staticDir = new URL(host === 'vercel' ? '.vercel/output/static/' : 'dist/client/', site);
+  const staticDir = new URL(
+    host === 'vercel' ? '.vercel/output/static/' : host === 'netlify' ? 'dist/' : 'dist/client/',
+    site,
+  );
   assert.match(
     await readFile(new URL('index.html', staticDir), 'utf8'),
     /Websites for small teams/,
@@ -197,23 +200,39 @@ for (const host of hosts) {
     await database.query(`CREATE SCHEMA ${schema}`);
     let args;
     if (host === 'node') args = [fileURLToPath(new URL('dist/server/entry.mjs', site))];
-    if (host === 'vercel') {
-      // Execute the actual bundled function through a local HTTP bridge. This does not emulate the CDN.
-      const dir = new URL('.vercel/output/functions/_render.func/', site);
-      const config = JSON.parse(await readFile(new URL('.vc-config.json', dir), 'utf8'));
+    if (host === 'vercel' || host === 'netlify') {
+      // Execute the generated function through a local HTTP bridge. This does not emulate the CDN.
+      let entry;
+      if (host === 'vercel') {
+        const dir = new URL('.vercel/output/functions/_render.func/', site);
+        const config = JSON.parse(await readFile(new URL('.vc-config.json', dir), 'utf8'));
+        entry = new URL(config.handler, dir);
+      } else {
+        entry = new URL('.netlify/v1/functions/ssr/ssr.mjs', site);
+      }
       args = [
         '--input-type=module',
         '-e',
         `
         import { createServer } from 'node:http';
         import { Readable } from 'node:stream';
-        import handler from ${JSON.stringify(new URL(config.handler, dir).href)};
+        import handler${host === 'netlify' ? ', { config }' : ''} from ${JSON.stringify(entry.href)};
+        ${
+          host === 'netlify'
+            ? `
+        import assert from 'node:assert/strict';
+        assert.equal(config.preferStatic, true, 'Netlify must serve static files before the function');
+        `
+            : ''
+        }
         createServer(async (req, res) => {
           const request = new Request(${JSON.stringify(origin)} + req.url, {
             method: req.method, headers: { ...req.headers, 'x-forwarded-for': '127.0.0.1' },
             ...(['GET', 'HEAD'].includes(req.method) ? {} : { body: Readable.toWeb(req), duplex: 'half' }),
           });
-          const response = await handler.fetch(request);
+          const response = await ${
+            host === 'vercel' ? 'handler.fetch(request)' : "handler(request, { ip: '127.0.0.1' })"
+          };
           res.writeHead(response.status, {
             ...Object.fromEntries(response.headers), 'set-cookie': response.headers.getSetCookie(),
           });

@@ -62,6 +62,7 @@ Follow the [installation guide](apps/docs/src/content/docs/getting-started/insta
 - [Deployment](apps/docs/src/content/docs/guides/deployment.md)
 - [Static pages with live content](apps/docs/src/content/docs/guides/hybrid.md)
 - [Vercel](apps/docs/src/content/docs/guides/vercel.md)
+- [Netlify](apps/docs/src/content/docs/guides/netlify.md)
 - [Cloudflare Workers](apps/docs/src/content/docs/guides/cloudflare.md)
 - [Add Sedna with a coding agent](skills/add-sednacms/SKILL.md)
 
@@ -88,7 +89,7 @@ Fill in `apps/playground/.env` before starting the playground. The playground li
 
 See [apps/docs/README.md](apps/docs/README.md) to run the documentation site locally.
 
-The [hybrid example](apps/hybrid/README.md) runs with Node, Vercel, or Cloudflare.
+The [hybrid example](apps/hybrid/README.md) runs with Node, Vercel, Netlify, or Cloudflare.
 Run `SEDNA_TEST_DATABASE_URL=postgres://... npm run verify:hybrid` to build it with
 each adapter without runtime secrets, then check auth and live publishing against
 an isolated database schema. This is a local runtime check, not a deployment or CDN check.
