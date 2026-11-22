@@ -1,12 +1,24 @@
 ---
 
 title: Deployment
-description: Deploy Sedna with a Node-compatible adapter, runtime variables, and Postgres.
+description: Deploy a static Astro site with live Sedna routes on Node, Vercel, or Cloudflare Workers.
 ---
 
 Sedna uses your site's Astro server adapter. It needs Node-compatible APIs and a reachable Postgres database. Sedna leaves adapter selection and dependency bundling to your site configuration. Hosting-provider credentials are needed only if you enable CDN caching.
 
-The examples use standalone Node. For a managed host, use its Astro adapter.
+Keep `output: 'static'`, Astro's default. Your adapter runs pages that opt into
+on-demand rendering, plus Sedna's admin and API. Marketing pages that do not read
+live content remain static HTML.
+
+Choose the deployment guide for your host:
+
+- [Vercel](/guides/vercel/) uses Node functions and serves static pages from its CDN.
+- [Cloudflare Workers](/guides/cloudflare/) uses the Workers runtime with Node compatibility.
+- Standalone Node uses the commands below.
+
+For Netlify, keep the official `@astrojs/netlify` adapter and set the same runtime
+variables. The repository's hybrid runtime verification currently covers Node,
+Vercel's bundled function, and local Cloudflare Workers, not a deployed Netlify site.
 
 ## Build and run
 
@@ -46,10 +58,20 @@ Caching is disabled by default. If you enable [CDN caching](/guides/caching/), c
 
 You can put Cloudflare CDN in front of a compatible Node server with explicit cache rules.
 
-## Cloudflare Workers compatibility
+## Verify the hybrid example
 
-Cloudflare Workers with `nodejs_compat` is experimental. Local build and basic route
-checks pass, but database connection reuse, auth flows, publishing, uploads, and
-CDN purging still need verification. Keep caching disabled during compatibility
-testing. The [Cloudflare caching guide](/guides/caching/#cloudflare) covers a CDN
-in front of a Node origin.
+The [example site](https://github.com/Saikomantisu/sednacms/tree/main/apps/hybrid)
+keeps its homepage and About page static and renders its blog on demand.
+From the repository root, run:
+
+```sh
+SEDNA_TEST_DATABASE_URL=postgres://... npm run verify:hybrid
+```
+
+Use a disposable Postgres database with schema creation permissions. The check
+creates and removes an isolated schema per adapter. It builds without runtime
+secrets, checks the static HTML, and exercises setup, login, draft visibility,
+publishing, editing, concurrent reads, unpublishing, and logout. Vercel's bundled
+function runs through a local HTTP bridge; Workers runs in `workerd` through
+Wrangler. This does not verify a host's CDN, production database networking, or
+real object-storage uploads. Run the deployed-site checks above after deployment.

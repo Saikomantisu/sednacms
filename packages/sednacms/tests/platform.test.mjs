@@ -34,7 +34,11 @@ async function configure(adapterName, options = {}) {
   const { platform } = await import(`data:text/javascript,${encodeURIComponent(source)}`);
   const cacheSource = plugin.load(plugin.resolveId('virtual:sedna/cache'));
   const { cache } = await import(`data:text/javascript,${encodeURIComponent(cacheSource)}`);
-  return { platform, messages, cache, update, routes };
+  const runtimeSource = plugin.load(plugin.resolveId('virtual:sedna/runtime'));
+  const { requestScoped } = await import(
+    `data:text/javascript,${encodeURIComponent(runtimeSource)}`
+  );
+  return { platform, messages, cache, update, routes, requestScoped };
 }
 
 test('core CMS setup preserves the chosen adapter and disables provider caching by default', async () => {
@@ -69,6 +73,11 @@ test('identifies the final Astro adapter without an explicit platform', async ()
     assert.equal(platform, expected);
     assert.ok(messages.includes(`Platform: ${expected} (automatic)`));
   }
+});
+
+test('Worker resource lifetime follows the adapter independently of CDN platform overrides', async () => {
+  assert.equal((await configure('@astrojs/cloudflare', { platform: 'none' })).requestScoped, true);
+  assert.equal((await configure('@astrojs/node', { platform: 'cloudflare' })).requestScoped, false);
 });
 
 test('explicit platform overrides detection, including opting out', async () => {

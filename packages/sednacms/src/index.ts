@@ -100,6 +100,7 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
   )
     throw new Error('sednacms: platform must be none, cloudflare, vercel, or netlify.');
   let platform: SednaPlatform = options.platform ?? 'none';
+  let requestScoped = false;
   let root = '';
   let srcDir = '';
 
@@ -146,11 +147,14 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
                   if (id === 'virtual:sedna/storage') return '\0virtual:sedna/storage';
                   if (id === 'virtual:sedna/cache') return '\0virtual:sedna/cache';
                   if (id === 'virtual:sedna/platform') return '\0virtual:sedna/platform';
+                  if (id === 'virtual:sedna/runtime') return '\0virtual:sedna/runtime';
                 },
                 load(id) {
                   if (id === '\0virtual:sedna/adapter') return 'export const adapter = null;';
                   if (id === '\0virtual:sedna/platform')
                     return `export const platform = ${JSON.stringify(platform)};`;
+                  if (id === '\0virtual:sedna/runtime')
+                    return `export const requestScoped = ${requestScoped};`;
                   if (id === '\0virtual:sedna/cache')
                     return `export const cache = ${JSON.stringify(options.cache ?? false)};`;
                   if (id === '\0virtual:sedna/storage')
@@ -186,6 +190,7 @@ export default function sedna(options: SednaOptions = {}): AstroIntegration {
       'astro:config:done': ({ config, logger }) => {
         // Read the final adapter after its integration has called setAdapter().
         const adapter = config.adapter?.name;
+        requestScoped = adapter === '@astrojs/cloudflare';
         if (!adapter)
           throw new Error(
             'sednacms needs a Node-compatible Astro server adapter. Configure one for your deployment host.',

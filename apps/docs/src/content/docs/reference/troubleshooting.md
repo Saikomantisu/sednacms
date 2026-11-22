@@ -34,4 +34,4 @@ Inputs must be JPEG, PNG, WebP, GIF, or AVIF and at most 32 MB. If your site set
 
 ## Too many database connections
 
-Sedna has separate loader, authentication, and content API pools per server process. Each defaults to five connections. Count connections across all processes and instances before increasing `SEDNA_DATABASE_POOL_MAX`. The connection timeout does not cancel running queries.
+Sedna has separate loader, authentication, and content API pools per server process. Each defaults to five connections. Count connections across all processes and instances before increasing `SEDNA_DATABASE_POOL_MAX`. Workers uses request-local pools instead, so count concurrent requests too. Keep the pool maximum above one for authentication migrations. The connection timeout does not cancel running queries.

@@ -17,6 +17,7 @@
     "build": "npm run build -w sednacms",
     "build:playground": "npm run build -w sednacms && npm run build -w sednacms-playground",
     "test": "npm run build:playground && npm run test:types -w sednacms && npm test -w sednacms",
+    "verify:hybrid": "npm run build && node scripts/verify-hybrid.mjs",
     "playground:dev": "npm run dev -w sednacms-playground",
     "playground:seed": "npm run seed -w sednacms-playground",
     "docs:dev": "npm run dev -w sednacms-docs",

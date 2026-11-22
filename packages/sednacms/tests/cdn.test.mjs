@@ -364,6 +364,9 @@ test('cached refreshes skip loader reads and publishing regenerates all affected
     return { rows: [] };
   });
   const loader = sednaLoader(config);
+  t.mock.method(Pool.prototype, 'connect', async function () {
+    return { query: this.query.bind(this), release() {} };
+  });
   const middleware = createCacheMiddleware({ ttl: 300 }, cdn);
   // A CDN boundary simulator honors tags and only invokes Astro on cache misses.
   const visit = async (path) => {

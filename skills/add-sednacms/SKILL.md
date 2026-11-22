@@ -16,7 +16,7 @@ Read the project instructions, `package.json`, lockfile, Astro config, content c
 
 Choose collections and fields from the request and existing content. Ask if the editable content or hosting target is unclear. Missing credentials should not prevent you from finishing the code and configuration.
 
-Sedna requires Astro 6+ and a Node-compatible server adapter. Explain any required major Astro upgrade and check that it fits the requested scope. Keep a compatible adapter already in use. Otherwise, use Node standalone for local use or an adapter that matches the deployment host. Cloudflare Workers with `nodejs_compat` is experimental; verify database connections, auth, publishing, uploads, and CDN purging before recommending it for production. Runtimes without the required Node APIs are unsupported.
+Sedna requires Astro 6+ and a Node-compatible server adapter. Explain any required major Astro upgrade and check that it fits the requested scope. Keep a compatible adapter already in use. Otherwise, use Node standalone for local use or an adapter that matches the deployment host. Cloudflare Workers with `nodejs_compat` has local auth and publishing verification; follow the Workers guide and verify production database networking, uploads, and CDN behavior on the deployed site. Runtimes without the required Node APIs are unsupported.
 
 ## Install and configure
 
@@ -28,7 +28,7 @@ Sedna requires Astro 6+ and a Node-compatible server adapter. Explain any requir
 
 ## Connect the pages
 
-Replace content reads for the collections moving to Sedna. Fetch with `getLiveCollection` or `getLiveEntry` in page frontmatter before streaming. Add `export const prerender = false` to each affected route. Unrelated pages can stay static, and these routes do not require a global `output: 'server'` setting.
+Replace content reads for the collections moving to Sedna. Fetch with `getLiveCollection` or `getLiveEntry` in page frontmatter before streaming. Keep Astro's default `output: 'static'` and add `export const prerender = false` to each affected page. Fetch in page frontmatter and pass data to components and layouts as props; streamed component or layout reads can outlive Workers database resources. Unrelated pages stay static. The adapter powers live content pages plus Sedna's injected admin and API routes. Do not switch the entire site to `output: 'server'` to add Sedna.
 
 For dynamic detail routes, replace `getStaticPaths` with a lookup on each request. Preserve URL patterns and slug values. Distinguish missing entries from database failures, and return an error status and message when the loader fails.
 

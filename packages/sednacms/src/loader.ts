@@ -1,9 +1,10 @@
 import type { LiveLoader } from 'astro/loaders';
 import { markContentRequest } from './cache.js';
 import { createPool, ident, type Pool } from './db/client.js';
-import { ensureTables, tableName } from './db/tables.js';
+import { ensureContentTables, tableName } from './db/tables.js';
 import type { Field, FieldsData } from './fields.js';
 import { log } from './log.js';
+import { runtimeResource } from './runtime.js';
 
 type Fields = Record<string, Field>;
 
@@ -67,8 +68,14 @@ function validateFields(fields: Fields, path: string, topLevel = false) {
   }
 }
 
-// One pool per server process, shared by all collections.
-let pool: Pool | undefined;
+const loaderState = runtimeResource(
+  (): {
+    pool?: Pool;
+    ready: Map<string, Promise<void>>;
+  } => ({
+    ready: new Map<string, Promise<void>>(),
+  }),
+);
 
 // The dev server may load this module separately from the integration, so the flag lives on globalThis.
 const MISSING_DATABASE_OK = Symbol.for('sednacms.allowMissingDatabase');
@@ -85,17 +92,17 @@ function getPool() {
     if ((globalThis as Record<symbol, unknown>)[MISSING_DATABASE_OK]) return undefined;
     throw new Error('sednacms: SEDNA_DATABASE_URL is not set.');
   }
-  pool ??= createPool(url);
-  return pool;
+  const state = loaderState();
+  state.pool ??= createPool(url);
+  return state.pool;
 }
 
 // Production has no dev server hook, so each collection checks its table once, before its first query.
-const ready = new Map<string, Promise<void>>();
-
 function ensureReady(pool: Pool, config: CollectionConfig) {
+  const { ready } = loaderState();
   let promise = ready.get(config.collection);
   if (!promise) {
-    promise = ensureTables(pool, [config], log);
+    promise = ensureContentTables(pool, [config], log);
     // Let the next query try again instead of caching the failure.
     promise.catch(() => ready.delete(config.collection));
     ready.set(config.collection, promise);

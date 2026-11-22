@@ -60,6 +60,9 @@ test('built Astro server emits collection tags, preserves query variants, and ex
     `
     import { Pool } from 'pg';
     Pool.prototype.query = async function () { return { rows: [], rowCount: 0 }; };
+    Pool.prototype.connect = async function () {
+      return { query: this.query.bind(this), release() {} };
+    };
   `,
   );
   const env = {

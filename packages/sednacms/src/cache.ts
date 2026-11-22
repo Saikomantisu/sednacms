@@ -52,7 +52,10 @@ const warnedRoutes = new Set<string>();
 export function createCacheMiddleware(
   cache?: false | CacheOptions,
   cdn?: CdnCache,
-): MiddlewareHandler {
+): (
+  context: Parameters<MiddlewareHandler>[0],
+  next: Parameters<MiddlewareHandler>[1],
+) => Promise<Response> {
   validateCache(cache);
   return async (context, next) => {
     if (context.isPrerendered) {

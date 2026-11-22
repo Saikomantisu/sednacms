@@ -24,7 +24,11 @@ Each pool defaults to five connections. Set `SEDNA_DATABASE_POOL_MAX` to a posit
 integer to change that limit. When planning your connection limit, count all three pools in every server
 process and instance. For example, a limit of 10 permits up to 30 runtime
 connections per process.
-During startup, table synchronization temporarily uses a separate pool with one connection.
+On Cloudflare Workers these resources belong to one request and close when its
+handler finishes. Count concurrent requests when planning the connection budget.
+Authentication migrations need more than one connection; keep the default rather
+than setting `SEDNA_DATABASE_POOL_MAX=1`.
+During development startup, table synchronization temporarily uses a separate pool with one connection.
 
 `SEDNA_DATABASE_CONNECTION_TIMEOUT_MS` defaults to `10000`. It limits how long a request can wait
 for a pool connection or for a new connection to open. It does not limit query execution time or cancel running SQL.

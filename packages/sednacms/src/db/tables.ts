@@ -1,7 +1,7 @@
 import type { AstroIntegrationLogger } from 'astro';
 import type { FieldType } from '../fields.js';
 import type { CollectionConfig } from '../loader.js';
-import { ident, type Queryable } from './client.js';
+import { ident, type Pool, type Queryable, transaction } from './client.js';
 
 const COLUMN_TYPES: Record<FieldType, string> = {
   text: 'text',
@@ -21,6 +21,27 @@ export type Logger = Pick<AstroIntegrationLogger, 'info' | 'warn'>;
 
 export function tableName(collection: string) {
   return `sedna_${collection}`;
+}
+
+// Share only completed setup, never connections or in-flight database work.
+const preparedCollections = new Set<string>();
+
+export async function ensureContentTables(
+  db: Pool,
+  collections: CollectionConfig[],
+  logger: Logger,
+) {
+  const database = db.options?.connectionString;
+  const key = (config: CollectionConfig) => JSON.stringify([database, config]);
+  const pending = collections.filter(
+    (config) => !database || !preparedCollections.has(key(config)),
+  );
+  if (!pending.length) return;
+  await transaction(db, async (client) => {
+    await client.query("select pg_advisory_xact_lock(hashtext('sedna:content:tables'))");
+    await ensureTables(client, pending, logger);
+  });
+  if (database) for (const config of pending) preparedCollections.add(key(config));
 }
 
 /**

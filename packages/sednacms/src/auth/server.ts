@@ -3,6 +3,7 @@ import { betterAuth } from 'better-auth';
 import { hashPassword } from 'better-auth/crypto';
 import { getMigrations } from 'better-auth/db/migration';
 import { createPool } from '../db/client.js';
+import { runtimeResource } from '../runtime.js';
 
 // Messages in this error type contain configuration names only, never their values.
 export class AuthConfigurationError extends Error {
@@ -14,6 +15,8 @@ export class AuthConfigurationError extends Error {
     super(message);
   }
 }
+
+const migratedDatabases = new Set<string>();
 
 // System tables are separate from collection tables, including in an existing site database.
 export function createAuthServer(env: Record<string, string | undefined> = process.env) {
@@ -46,6 +49,7 @@ export function createAuthServer(env: Record<string, string | undefined> = proce
     );
   }
   const pool = createPool(connectionString, undefined, env);
+  const databaseKey = connectionString;
   const auth = betterAuth({
     database: pool,
     secret,
@@ -78,6 +82,7 @@ export function createAuthServer(env: Record<string, string | undefined> = proce
   });
   let ready: Promise<void> | undefined;
   async function ensureReady() {
+    if (migratedDatabases.has(databaseKey)) return;
     if (!ready) {
       ready = (async () => {
         const client = await pool.connect();
@@ -88,6 +93,7 @@ export function createAuthServer(env: Record<string, string | undefined> = proce
           const migrations = await getMigrations(auth.options);
           await migrations.runMigrations();
           await client.query('COMMIT');
+          migratedDatabases.add(databaseKey);
         } catch (error) {
           await client.query('ROLLBACK');
           throw error;
@@ -196,8 +202,4 @@ export function createAuthServer(env: Record<string, string | undefined> = proce
   return { auth, ensureReady, handle, close: () => pool.end() };
 }
 
-let server: ReturnType<typeof createAuthServer> | undefined;
-export function getAuthServer() {
-  server ??= createAuthServer();
-  return server;
-}
+export const getAuthServer = runtimeResource(() => createAuthServer());

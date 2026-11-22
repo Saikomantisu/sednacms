@@ -36,6 +36,10 @@ npx astro add node
 
 If you already use a compatible server adapter, keep it.
 
+Keep Astro's default `output: 'static'`. The adapter runs live content pages,
+`/admin/*`, and `/api/cms/*`; your other pages remain static HTML. Add
+`export const prerender = false` only to pages that read live Sedna content.
+
 ```js
 // astro.config.mjs
 import node from '@astrojs/node';
@@ -56,6 +60,9 @@ Follow the [installation guide](apps/docs/src/content/docs/getting-started/insta
 - [Image uploads](apps/docs/src/content/docs/guides/uploads.md)
 - [Caching](apps/docs/src/content/docs/guides/caching.md)
 - [Deployment](apps/docs/src/content/docs/guides/deployment.md)
+- [Static pages with live content](apps/docs/src/content/docs/guides/hybrid.md)
+- [Vercel](apps/docs/src/content/docs/guides/vercel.md)
+- [Cloudflare Workers](apps/docs/src/content/docs/guides/cloudflare.md)
 - [Add Sedna with a coding agent](skills/add-sednacms/SKILL.md)
 
 ## Development
@@ -65,6 +72,7 @@ This repository is an npm workspace:
 ```text
 packages/sednacms/   the published package, with its tests
 apps/playground/     Astro site for trying changes against a real database
+apps/hybrid/         static marketing pages with an on-demand blog
 apps/docs/           documentation site
 skills/              agent skill for adding Sedna to a site
 ```
@@ -79,6 +87,11 @@ npm run playground:dev
 Fill in `apps/playground/.env` before starting the playground. The playground links to the local package, so rebuild with `npm run build` after changing its source; no reinstall is needed. Run `npm run check` for formatting and lint checks, and `npm test` to build everything and run the tests.
 
 See [apps/docs/README.md](apps/docs/README.md) to run the documentation site locally.
+
+The [hybrid example](apps/hybrid/README.md) runs with Node, Vercel, or Cloudflare.
+Run `SEDNA_TEST_DATABASE_URL=postgres://... npm run verify:hybrid` to build it with
+each adapter without runtime secrets, then check auth and live publishing against
+an isolated database schema. This is a local runtime check, not a deployment or CDN check.
 
 ## License
 

@@ -8,17 +8,23 @@ import { createCdnCache } from '../cdn.js';
 import { createPool } from '../db/client.js';
 import { isSednaLoader } from '../loader.js';
 import { log, logOnce } from '../log.js';
+import { runtimeResource } from '../runtime.js';
 import { createContentApi } from './content.js';
 import { createMediaApi } from './media.js';
 import { createUploadApi } from './uploads.js';
 
 export const prerender = false;
-let media: ReturnType<typeof createMediaApi> | undefined;
-let db: ReturnType<typeof createPool> | undefined;
-let content: ReturnType<typeof createContentApi> | undefined;
-let uploads: ReturnType<typeof createUploadApi> | undefined;
+const apiState = runtimeResource(
+  (): {
+    media?: ReturnType<typeof createMediaApi>;
+    db?: ReturnType<typeof createPool>;
+    content?: ReturnType<typeof createContentApi>;
+    uploads?: ReturnType<typeof createUploadApi>;
+  } => ({}),
+);
 export const ALL: APIRoute = async ({ request, clientAddress }) => {
   try {
+    const state = apiState();
     const authServer = getAuthServer();
     const path = new URL(request.url).pathname;
     if (path === '/api/cms/setup' || path.startsWith('/api/cms/auth/')) {
@@ -36,29 +42,30 @@ export const ALL: APIRoute = async ({ request, clientAddress }) => {
       return { session, headers: responseHeaders };
     };
     if (path === '/api/cms/uploads') {
-      uploads ??= createUploadApi({
+      state.uploads ??= createUploadApi({
         storage: storage ?? undefined,
         origin: new URL(process.env.SEDNA_URL!).origin,
         getSession,
       });
-      return await uploads(request);
+      return await state.uploads(request);
     }
-    db ??= createPool(process.env.SEDNA_DATABASE_URL!);
+    state.db ??= createPool(process.env.SEDNA_DATABASE_URL!);
+    const db = state.db;
     if (
       path === '/api/cms/media' ||
       path.startsWith('/api/cms/media/') ||
       path === '/api/cms/media-folders' ||
       path.startsWith('/api/cms/media-folders/')
     ) {
-      media ??= createMediaApi({
+      state.media ??= createMediaApi({
         db,
         storage: storage ?? undefined,
         origin: new URL(process.env.SEDNA_URL!).origin,
         getSession,
       });
-      return await media(request);
+      return await state.media(request);
     }
-    content ??= createContentApi({
+    state.content ??= createContentApi({
       collections: Object.values(collections)
         .map((value) => value.loader)
         .filter(isSednaLoader)
@@ -68,7 +75,7 @@ export const ALL: APIRoute = async ({ request, clientAddress }) => {
       getSession,
       invalidate: cache ? createCdnCache(platform)?.purge : undefined,
     });
-    return await content(request);
+    return await state.content(request);
   } catch (error) {
     if (error instanceof AuthConfigurationError) {
       // The same configuration error repeats on every request until the server restarts.

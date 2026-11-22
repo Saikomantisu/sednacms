@@ -6,6 +6,15 @@ description: Install Sedna in an Astro site and configure the database and admin
 
 This guide uses the Node adapter. If your site already has a compatible server adapter, keep it.
 
+Keep Astro's default `output: 'static'`. The adapter powers your live content
+pages, admin, and CMS API. Everything else stays static. You can also use
+[Vercel](/guides/vercel/) or [Cloudflare Workers](/guides/cloudflare/) without
+running a long-lived Node server.
+
+Only pages that read live Sedna content need `export const prerender = false`.
+Sedna sets this for its own admin and API routes. See the
+[mixed static and live example](/guides/hybrid/).
+
 ## Install the integration
 
 Run these commands inside your Astro project:

@@ -27,7 +27,7 @@ Start with `sedna()` and add options as your site needs them.
 | `admin.siteName` | Homepage title, then Sedna    | Override the website title used in admin page titles.                               |
 | `admin.favicon`  | Site favicon, then Sedna icon | URL used as written, including any base path.                                       |
 
-The `platform` option selects caching behavior. You still need to install an adapter that supports Sedna's runtime requirements. Sedna detects Node and unknown adapters as `none`. Cloudflare Workers with Node compatibility is [experimental](/guides/deployment/#cloudflare-workers-compatibility). See [Caching](/guides/caching/) for provider credentials and limitations.
+The `platform` option selects caching behavior. You still need to install an adapter that supports Sedna's runtime requirements. Sedna detects Node and unknown adapters as `none`. Cloudflare Workers uses request-local database resources with Node compatibility. See the [Workers deployment guide](/guides/cloudflare/) for setup and verification limits. See [Caching](/guides/caching/) for provider credentials and limitations.
 
 Without an explicit favicon, Sedna checks `favicon.svg`, `favicon.ico`, then `favicon.png` in Astro's public directory. It uses Astro's `publicDir` and `base` settings to find the file and build its URL.
 

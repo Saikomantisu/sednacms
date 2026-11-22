@@ -17,6 +17,14 @@ export default defineConfig({
 
 Install `@astrojs/node` only if using that adapter. Choose a release compatible with the site's Astro version. No experimental live-content flag is needed on Astro 6+.
 
+Keep `output` unset or `'static'`. Only live content pages, admin, and API need
+the runtime. For Vercel, use `adapter: vercel()` from `@astrojs/vercel` instead
+of Node. For Cloudflare Workers, use `adapter: cloudflare()` from
+`@astrojs/cloudflare`, enable `nodejs_compat` with a current compatibility date,
+and configure runtime secrets. Follow the repository's host guides, including
+their verification limits. Workers is a separate runtime from standalone Node;
+do not assume Cloudflare Pages or every storage path is verified.
+
 Sedna installs `/admin/[...path]`, `/api/cms/[...path]`, and middleware. Check that existing auth middleware allows requests to Sedna's login, setup, and auth handlers. Sedna protects its own content endpoints. Adjust overlapping middleware without disabling authentication elsewhere. Test URLs when the site uses a custom base path; CMS paths are not all configurable.
 
 ## Live collections
